@@ -2,9 +2,7 @@ import atexit
 import datetime
 import uuid
 
-from flask import Flask
-from flask import render_template
-from flask import request
+from flask import Flask, render_template, request, session
 from google.auth.transport import requests
 from google.oauth2 import id_token
 
@@ -18,10 +16,9 @@ if app.config['ENV'] == 'prod':
     config = 'config.prod_config.ProdConfig'
 app.config.from_object(config)
 
-print(app.config['DB_SERVER'])
 CLIENT_ID = app.config['CLIENT_ID']
-print(app.config.keys())
-print(app.config.values())
+BASE_URL = app.config['BASE_URL']
+
 global current_code, db
 current_code = Code()
 db = DbClient()
@@ -29,6 +26,7 @@ db = DbClient()
 
 def close_db():
     global db
+    print('closing db connection...')
     db.con.close()
 
 
@@ -37,14 +35,21 @@ atexit.register(close_db)
 
 @app.route("/signin/", methods=['GET'])
 def home():
-    return render_template('signin.html', code=request.args['code'])
+    if 'visits' in session:
+        session['visits'] = session.get('visits') + 1
+    else:
+        session['visits'] = 1
+    query_param_code = request.args.get('code', None)
+    if not query_param_code:
+        return render_template('done.html', status='failed', reason='no code provided - try again', )
+    return render_template('signin.html', code=query_param_code, visits=session['visits'])
 
 
 @app.route("/code/", methods=['GET'])
 def code():
     global current_code
     new_code = str(uuid.uuid4())
-    qr_code.generate_qr(new_code, 'http://10.5.207.96:5000/signin')
+    qr_code.generate_qr(new_code, f'{BASE_URL}signin')
     db.insert_code(new_code)
     current_code = Code(new_code, datetime.datetime.utcnow())
     return render_template('code.html')

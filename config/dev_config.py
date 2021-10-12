@@ -1,4 +1,6 @@
 from config.base_config import Config
 
 class DevConfig(Config):
-    DB_SERVER = 'dev server'
+    BASE_URL = 'http://localhost:5000/'
+    SECRET_KEY = 'abc123'
+    CODE_REFRESH_RATE = '10'

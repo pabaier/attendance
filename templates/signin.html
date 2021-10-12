@@ -5,10 +5,11 @@
 </head>
 <body>
   <h1>{{ code }}</h1>
+  <h2>{{ visits }}</h2>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <div id="g_id_onload"
-     data-client_id="274437993487-186tmakn0ltmafu7sirjgfa5ui6lfbup.apps.googleusercontent.com"
-     data-login_uri="http://localhost:5000/signin?code={{ code }}"
+     data-client_id="{{ config['CLIENT_ID'] }}"
+     data-login_uri="{{ config['BASE_URL'] }}signin?code={{ code }}"
      data-auto_prompt="false">
   </div>
   <div class="g_id_signin"
