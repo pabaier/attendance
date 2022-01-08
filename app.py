@@ -1,6 +1,9 @@
 import atexit
 import datetime
+import os
+import sqlite3
 import uuid
+import psycopg
 
 from flask import Flask, render_template, request, session
 from google.auth.transport import requests
@@ -21,7 +24,15 @@ BASE_URL = app.config['BASE_URL']
 
 global current_code, db
 current_code = Code()
-db = DbClient()
+
+# set the db based on the env
+if app.config['ENV'] == 'prod':
+    connection = psycopg.connect(os.getenv('DATABASE_URL'))
+else:
+    db_name = 'attendance.db'
+    connection = sqlite3.connect(db_name, check_same_thread=False)
+
+db = DbClient(connection)
 
 
 def close_db():
@@ -35,6 +46,10 @@ atexit.register(close_db)
 
 @app.route("/signin/", methods=['GET'])
 def home():
+    """
+    this is where the QR code sends users
+    :return:
+    """
     if 'visits' in session:
         session['visits'] = session.get('visits') + 1
     else:
@@ -45,18 +60,12 @@ def home():
     return render_template('signin.html', code=query_param_code, visits=session['visits'])
 
 
-@app.route("/code/", methods=['GET'])
-def code():
-    global current_code
-    new_code = str(uuid.uuid4())
-    qr_code.generate_qr(new_code, f'{BASE_URL}signin')
-    db.insert_code(new_code)
-    current_code = Code(new_code, datetime.datetime.utcnow())
-    return render_template('code.html')
-
-
 @app.route("/signin/", methods=['POST'])
 def sign_in():
+    """
+    this is where google sends login creds
+    :return:
+    """
     # get request args
     user_code = request.args['code']
     token = request.form['credential']
@@ -81,6 +90,22 @@ def sign_in():
     db.add_user_attendance(user_email)
 
     return render_template('done.html', status='success')
+
+
+@app.route("/code/", methods=['GET'])
+def code():
+    """
+    this is where the qr code is displayed
+    TODO: put this behind a login. this logic should be behind a POST endpoint that is the redirect
+    TODO: of a google login. this GET endpoint should render the google button page
+    :return:
+    """
+    global current_code
+    new_code = str(uuid.uuid4())
+    qr_code.generate_qr(new_code, f'{BASE_URL}signin')
+    db.insert_code(new_code)
+    current_code = Code(new_code, datetime.datetime.utcnow())
+    return render_template('code.html')
 
 
 def code_is_valid(value):

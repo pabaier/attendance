@@ -46,3 +46,15 @@ CREATE TABLE code (
   date_created DATETIME DEFAULT (DATETIME('now'))
 );
 
+--POSTGRES
+CREATE TABLE public.attendance (
+	user_name varchar NOT NULL,
+	date_created timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE public.code (
+	value varchar NOT NULL,
+	date_created timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
