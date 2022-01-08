@@ -5,4 +5,4 @@
 * `DATABASE_URL`
 * `BASE_URL`
 * `FLASK_ENV` - currently, anything not 'prod' is considered dev
-* `CODE_REFRESH_RATE` - optional, default set to 10
+* `CODE_REFRESH_RATE` - how long codes last, and how quickly the code page refreshes, in seconds

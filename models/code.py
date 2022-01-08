@@ -10,7 +10,8 @@ class Code:
 
     @classmethod
     def init(cls, res):
-        return cls(res[0], time.strptime(res[1], '%Y-%m-%d %H:%M:%S'))
+        # time, res[1], comes in as '2022-01-08 23:32:06.587841'
+        return cls(res[0], time.strptime(str(res[1]).split('.')[0], '%Y-%m-%d %H:%M:%S'))
 
     def get_date_created(self):
         return self.date_created
