@@ -3,9 +3,9 @@ import datetime
 import os
 import sqlite3
 import uuid
-import psycopg
 
-from flask import Flask, render_template, request, session
+import psycopg
+from flask import Flask, render_template, request
 from google.auth.transport import requests
 from google.oauth2 import id_token
 
@@ -50,14 +50,14 @@ def home():
     this is where the QR code sends users
     :return:
     """
-    if 'visits' in session:
-        session['visits'] = session.get('visits') + 1
-    else:
-        session['visits'] = 1
+    # if 'visits' in session:
+    #     session['visits'] = session.get('visits') + 1
+    # else:
+    #     session['visits'] = 1
     query_param_code = request.args.get('code', None)
     if not query_param_code:
         return render_template('done.html', status='failed', reason='no code provided - try again', )
-    return render_template('signin.html', code=query_param_code, visits=session['visits'])
+    return render_template('signin.html', code=query_param_code)
 
 
 @app.route("/signin/", methods=['POST'])
