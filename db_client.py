@@ -14,14 +14,14 @@ class DbClient:
 
     def insert_code(self, code):
         self.delete_code()
-        self.cur.execute(f'INSERT INTO code (value) VALUES ("{code}")')
+        self.cur.execute(f"INSERT INTO code (value) VALUES ('{code}')")
         self.con.commit()
 
     def delete_code(self):
         self.cur.execute('DELETE FROM code')
 
     def add_user_attendance(self, user):
-        self.cur.execute(f'INSERT INTO attendance (user_name) VALUES ("{user}")')
+        self.cur.execute(f"INSERT INTO attendance (user_name) VALUES ('{user}')")
         self.con.commit()
 
     # def add_user_attendance_old(self, email):
