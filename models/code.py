@@ -27,7 +27,7 @@ class Code:
     def is_expired(self, ttl=None):
         ttl_value = self.ttl if ttl is None else ttl
         if ttl_value == 0: return False
-        return self.date_created + dt.timedelta(seconds=ttl_value) <= time.utcnow()
+        return self.date_created + dt.timedelta(seconds=float(ttl_value)) <= time.utcnow()
 
     def is_valid(self, code):
         return code == self.value and not self.is_expired()

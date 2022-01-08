@@ -104,7 +104,7 @@ def code():
     new_code = str(uuid.uuid4())
     qr_code.generate_qr(new_code, f'{BASE_URL}signin')
     db.insert_code(new_code)
-    current_code = Code(new_code, datetime.datetime.utcnow())
+    current_code = Code(new_code, datetime.datetime.utcnow(), os.getenv('CODE_REFRESH_RATE'))
     return render_template('code.html')
 
 
@@ -112,4 +112,6 @@ def code_is_valid(value):
     global current_code, db
     if current_code.is_empty() or current_code.is_expired():
         current_code = db.get_code()
+        current_code.set_ttl(os.getenv('CODE_REFRESH_RATE'))
+    print(f'******************** current code: {current_code.value} ********************')
     return current_code.is_valid(value)
