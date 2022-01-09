@@ -1,10 +1,9 @@
-<html>
-
-<head>
-    <meta name="google-signin-client_id"
-          content="274437993487-186tmakn0ltmafu7sirjgfa5ui6lfbup.apps.googleusercontent.com.apps.googleusercontent.com">
-</head>
-<body>
+{% extends "base.html" %}
+{% block head %}
+<meta name="google-signin-client_id"
+      content="274437993487-186tmakn0ltmafu7sirjgfa5ui6lfbup.apps.googleusercontent.com.apps.googleusercontent.com">
+{% endblock %}
+{% block content %}
 <h1>Log In</h1>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <div id="g_id_onload"
@@ -20,8 +19,4 @@
      data-shape="rectangular"
      data-logo_alignment="left">
 </div>
-
-
-</body>
-
-</html>
+{% endblock %}

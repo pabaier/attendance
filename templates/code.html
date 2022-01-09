@@ -1,10 +1,7 @@
-<html>
-
-<head>
-    <meta http-equiv="refresh" content="{{ config['CODE_REFRESH_RATE'] }}">
-</head>
-<body>
-    <img src="{{ url_for('static', filename='qr.svg') }}">
-</body>
-
-</html>
+{% extends "base.html" %}
+{% block head %}
+<meta http-equiv="refresh" content="{{ config['CODE_REFRESH_RATE'] }}">
+{% endblock %}
+{% block content %}
+<img src="{{ url_for('static', filename='qr.svg') }}">
+{% endblock %}
