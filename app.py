@@ -84,7 +84,7 @@ def sign_in():
 
     # check that the code is valid
     if not code_is_valid(user_code):
-        return render_template('done.html', status='failed', reason='invalid code - try again', )
+        return render_template('done.html', status='failed', reason='code expired - try again', )
 
     # add user to attendance table
     db.add_user_attendance(user_email)

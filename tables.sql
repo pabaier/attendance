@@ -51,6 +51,7 @@ CREATE TABLE public.attendance (
 	user_name varchar NOT NULL,
 	date_created timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX attendance_user_name_idx ON public.attendance (user_name);
 
 CREATE TABLE public.code (
 	value varchar NOT NULL,

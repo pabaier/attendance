@@ -1,7 +1,36 @@
 {% extends "base.html" %}
 {% block head %}
-<meta http-equiv="refresh" content="{{ config['CODE_REFRESH_RATE'] }}">
+<!--<meta http-equiv="refresh" content="{{ config['CODE_REFRESH_RATE'] }}">-->
+<style>
+    .container{
+        display: flex;
+          flex-wrap: nowrap;
+    }
+    .flex-item{
+        align-self: center;
+    }
+</style>
 {% endblock %}
 {% block content %}
-<img src="{{ url_for('static', filename='qr.svg') }}">
+
+<div class="container">
+    <div class="fixed">
+        <img src="{{ url_for('static', filename='qr.svg') }}">
+    </div>
+    <div class="flex-item">
+        <h1 id="timer">{{ config['CODE_REFRESH_RATE'] }}</h1>
+    </div>
+</div>
+
+<script type="application/javascript">
+    seconds = parseInt({{ config['CODE_REFRESH_RATE'] }}) - 1
+    setInterval(function() {
+      if (seconds <= 0) {
+        window.location.href = location.href;
+        // location.reload(true);
+      }
+      document.getElementById("timer").innerHTML = seconds;
+      seconds -= 1
+    }, 1000);
+</script>
 {% endblock %}
