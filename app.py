@@ -4,8 +4,9 @@ import os
 import sqlite3
 import uuid
 
+import jwt
 import psycopg
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, make_response, Response
 from google.auth.transport import requests
 from google.oauth2 import id_token
 
@@ -21,6 +22,7 @@ app.config.from_object(config)
 
 CLIENT_ID = app.config['CLIENT_ID']
 BASE_URL = app.config['BASE_URL']
+JWT_SECRET = app.config['SECRET']
 
 global current_code, db
 current_code = Code()
@@ -29,8 +31,7 @@ current_code = Code()
 if app.config['ENV'] == 'prod':
     connection = psycopg.connect(os.getenv('DATABASE_URL'))
 else:
-    db_name = 'attendance.db'
-    connection = sqlite3.connect(db_name, check_same_thread=False)
+    connection = sqlite3.connect(app.config.get('DB_NAME', 'test.db'), check_same_thread=False)
 
 db = DbClient(connection)
 
@@ -57,6 +58,17 @@ def home():
     query_param_code = request.args.get('code', None)
     if not query_param_code:
         return render_template('done.html', status='failed', reason='no code provided - try again', )
+    cookie = request.cookies.get('attendance')
+    if cookie:
+        try:
+            user_cookie_info = jwt.decode(cookie, JWT_SECRET, algorithms=["HS256"])
+            user_name = user_cookie_info["user_name"]
+            date_created = user_cookie_info["date_created"].split('.')[0]
+            user_time = datetime.datetime.strptime(date_created, '%Y-%m-%d %H:%M:%S')
+            if user_time + datetime.timedelta(5) > datetime.datetime.now():
+                return finish_login(user_name, query_param_code)
+        except:
+            pass
     return render_template('signin.html', code=query_param_code)
 
 
@@ -67,7 +79,7 @@ def sign_in():
     :return:
     """
     # get request args
-    user_code = request.args['code']
+    user_code = request.args.get('code', None)
     token = request.form['credential']
 
     # verify the user credentials
@@ -82,14 +94,12 @@ def sign_in():
     if not user_org == 'g.cofc.edu' or not returned_client_id == CLIENT_ID:
         return render_template('done.html', status='failed', reason='please use your cofc account - try again')
 
-    # check that the code is valid
-    if not code_is_valid(user_code):
-        return render_template('done.html', status='failed', reason='code expired - try again', )
-
-    # add user to attendance table
-    db.add_user_attendance(user_email)
-
-    return render_template('done.html', status='success')
+    # create jwt
+    encoded = jwt.encode({"user_name": user_email, "date_created": str(datetime.datetime.now())}, JWT_SECRET,
+                         algorithm="HS256")
+    response = make_response(render_template('done.html', status='success'))
+    response.set_cookie("attendance", encoded)
+    return finish_login(user_email, user_code, response)
 
 
 @app.route("/code/", methods=['GET'])
@@ -100,12 +110,25 @@ def code():
     TODO: of a google login. this GET endpoint should render the google button page
     :return:
     """
-    global current_code
-    new_code = str(uuid.uuid4())
-    qr_code.generate_qr(new_code, f'{BASE_URL}signin')
-    db.insert_code(new_code)
-    current_code = Code(new_code, datetime.datetime.utcnow(), os.getenv('CODE_REFRESH_RATE'))
-    return render_template('code.html')
+    cookie = request.cookies.get('attendance')
+    able_to_access = False
+    if cookie:
+        try:
+            user_cookie_info = jwt.decode(cookie, JWT_SECRET, algorithms=["HS256"])
+            user_name = user_cookie_info["user_name"].split('@')[0]
+            if user_name == 'baierpa':
+                able_to_access = True
+        except:
+            pass
+    if able_to_access:
+        global current_code
+        new_code = str(uuid.uuid4())
+        qr_code.generate_qr(new_code, f'{BASE_URL}signin')
+        db.insert_code(new_code)
+        current_code = Code(new_code, datetime.datetime.utcnow(), os.getenv('CODE_REFRESH_RATE'))
+        return render_template('code.html')
+    else:
+        return Response("403 Forbidden", status=403, mimetype='text/plain')
 
 
 def code_is_valid(value):
@@ -113,5 +136,15 @@ def code_is_valid(value):
     if current_code.is_empty() or current_code.is_expired():
         current_code = db.get_code()
         current_code.set_ttl(os.getenv('CODE_REFRESH_RATE'))
-    print(f'******************** current code: {current_code.value} ********************')
     return current_code.is_valid(value)
+
+
+def finish_login(user, user_code, response=None):
+    # check that the code is valid
+    if app.config['ENV'] == 'prod' and not code_is_valid(user_code):
+        return render_template('done.html', status='failed', reason='code expired - try again', )
+
+    # add user to attendance table
+    db.add_user_attendance(user)
+
+    return response or render_template('done.html', status='success')
