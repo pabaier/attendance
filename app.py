@@ -98,7 +98,7 @@ def sign_in():
     encoded = jwt.encode({"user_name": user_email, "date_created": str(datetime.datetime.now())}, JWT_SECRET,
                          algorithm="HS256")
     response = make_response(render_template('done.html', status='success'))
-    response.set_cookie("attendance", encoded)
+    response.set_cookie("attendance", encoded, domain='cofc-attendance.herokuapp.com', samesite='Lax')
     return finish_login(user_email, user_code, response)
 
 
