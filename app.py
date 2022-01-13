@@ -71,8 +71,8 @@ def home():
             user_name = user_cookie_info["user_name"]
             date_created = user_cookie_info["date_created"].split('.')[0]
             user_time = datetime.datetime.strptime(date_created, '%Y-%m-%d %H:%M:%S')
-            if user_time + datetime.timedelta(5) > datetime.datetime.now():
-                finish_login(user_name, query_param_code)
+            if user_time + datetime.timedelta(5) > datetime.datetime.now() and finish_login(user_name,
+                                                                                            query_param_code):
                 return render_template('done.html', status='success')
         except:
             pass
@@ -109,9 +109,9 @@ def sign_in():
     response = make_response(render_template('done.html', status='success'))
     response.set_cookie("attendance", encoded, samesite='Lax')
     response.cache_control.no_cache = True
-    finish_login(user_email, user_code)
-    return response
-
+    if finish_login(user_email, user_code):
+        return response
+    return render_template('done.html', status='failed', reason='code expired - try again', )
 
 
 @app.route("/code/", methods=['GET'])
@@ -154,7 +154,8 @@ def code_is_valid(value):
 def finish_login(user, user_code):
     # check that the code is valid
     if app.config['ENV'] == 'prod' and not code_is_valid(user_code):
-        return render_template('done.html', status='failed', reason='code expired - try again', )
+        return False
 
     # add user to attendance table
     db.add_user_attendance(user)
+    return True
