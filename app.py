@@ -61,13 +61,11 @@ def home():
     #     session['visits'] = 1
     query_param_code = request.args.get('code', None)
     if not query_param_code:
-        return render_template('done.html', status='failed', reason='no code provided - try again', )
+        return render_template('done.html', status='failed', reason='no code provided - try again')
     cookie = request.cookies.get('attendance')
     if cookie:
         try:
-            print(f'******* cookie found! *******')
             user_cookie_info = jwt.decode(cookie, JWT_SECRET, algorithms=["HS256"])
-            print(f'******* cookie info: {user_cookie_info} *******')
             user_name = user_cookie_info["user_name"]
             date_created = user_cookie_info["date_created"].split('.')[0]
             user_time = datetime.datetime.strptime(date_created, '%Y-%m-%d %H:%M:%S')
@@ -102,16 +100,15 @@ def sign_in():
         return render_template('done.html', status='failed', reason='please use your cofc account - try again')
 
     # create jwt
-    print(f'******* jwt secret: {JWT_SECRET} *******')
     encoded = jwt.encode({"user_name": user_email, "date_created": str(datetime.datetime.now())}, JWT_SECRET,
                          algorithm="HS256")
-    print(f'******* jwt: {encoded} *******')
-    response = make_response(render_template('done.html', status='success'))
-    response.set_cookie("attendance", encoded, samesite='Lax')
-    response.cache_control.no_cache = True
     if finish_login(user_email, user_code):
-        return response
-    return render_template('done.html', status='failed', reason='code expired - try again', )
+        response = make_response(render_template('done.html', status='success'))
+    else:
+        response = make_response(render_template('done.html', status='failed', reason='code expired - try again'))
+    response.set_cookie("attendance", encoded, samesite='Lax')
+    # response.cache_control.no_cache = True
+    return response
 
 
 @app.route("/code/", methods=['GET'])
