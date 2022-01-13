@@ -1,7 +1,9 @@
 import atexit
 import datetime
+import logging
 import os
 import sqlite3
+import sys
 import uuid
 
 import jwt
@@ -15,6 +17,8 @@ from db_client import DbClient
 from models.code import Code
 
 app = Flask(__name__)
+app.logger.addHandler(logging.StreamHandler(sys.stdout))
+app.logger.setLevel(logging.ERROR)
 config = 'config.dev_config.DevConfig'
 if app.config['ENV'] == 'prod':
     config = 'config.prod_config.ProdConfig'
@@ -61,12 +65,15 @@ def home():
     cookie = request.cookies.get('attendance')
     if cookie:
         try:
+            print(f'******* cookie found! *******')
             user_cookie_info = jwt.decode(cookie, JWT_SECRET, algorithms=["HS256"])
+            print(f'******* cookie info: {user_cookie_info} *******')
             user_name = user_cookie_info["user_name"]
             date_created = user_cookie_info["date_created"].split('.')[0]
             user_time = datetime.datetime.strptime(date_created, '%Y-%m-%d %H:%M:%S')
             if user_time + datetime.timedelta(5) > datetime.datetime.now():
-                return finish_login(user_name, query_param_code)
+                finish_login(user_name, query_param_code)
+                return render_template('done.html', status='success')
         except:
             pass
     return render_template('signin.html', code=query_param_code)
@@ -95,11 +102,16 @@ def sign_in():
         return render_template('done.html', status='failed', reason='please use your cofc account - try again')
 
     # create jwt
+    print(f'******* jwt secret: {JWT_SECRET} *******')
     encoded = jwt.encode({"user_name": user_email, "date_created": str(datetime.datetime.now())}, JWT_SECRET,
                          algorithm="HS256")
+    print(f'******* jwt: {encoded} *******')
     response = make_response(render_template('done.html', status='success'))
-    response.set_cookie("attendance", encoded, domain='cofc-attendance.herokuapp.com', samesite='Lax')
-    return finish_login(user_email, user_code, response)
+    response.set_cookie("attendance", encoded, samesite='Lax')
+    response.cache_control.no_cache = True
+    finish_login(user_email, user_code)
+    return response
+
 
 
 @app.route("/code/", methods=['GET'])
@@ -139,12 +151,10 @@ def code_is_valid(value):
     return current_code.is_valid(value)
 
 
-def finish_login(user, user_code, response=None):
+def finish_login(user, user_code):
     # check that the code is valid
     if app.config['ENV'] == 'prod' and not code_is_valid(user_code):
         return render_template('done.html', status='failed', reason='code expired - try again', )
 
     # add user to attendance table
     db.add_user_attendance(user)
-
-    return response or render_template('done.html', status='success')
