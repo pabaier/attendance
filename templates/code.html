@@ -14,12 +14,19 @@
 {% block content %}
 
 <div class="container">
-    <div class="fixed">
-        <img src="{{ url_for('static', filename='qr.svg') }}">
-    </div>
-    <div class="flex-item">
-        <h1 id="timer">{{ config['CODE_REFRESH_RATE'] }}</h1>
-    </div>
+    {% if is_open %}
+        <div class="fixed">
+            <img src="{{ url_for('static', filename='qr.svg') }}">
+        </div>
+        <div class="flex-item">
+            <h1 id="timer">{{ config['CODE_REFRESH_RATE'] }}</h1>
+        </div>
+    {% else %}
+        <h1>Sign-in closed</h1>
+        <br>
+        <h3>{{ hour }}:{{ minute }}</h3>
+        <span hidden id="timer">{{ config['CODE_REFRESH_RATE'] }}</span>
+    {% endif %}
 </div>
 
 <script type="application/javascript">

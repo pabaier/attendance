@@ -27,8 +27,11 @@ app.config.from_object(config)
 CLIENT_ID = app.config['CLIENT_ID']
 BASE_URL = app.config['BASE_URL']
 JWT_SECRET = app.config['SECRET']
-QR_SCALE = app.config['QR_SCALE']
+QR_SCALE = int(app.config['QR_SCALE'])
 if QR_SCALE not in [8, 10, 12]: QR_SCALE = 12
+CLASS_TIMES = list(map(int, app.config['CLASS_TIMES'].split(',')))
+OPEN_START = int(app.config['OPEN_START'])
+OPEN_END = int(app.config['OPEN_END'])
 
 global current_code, db
 current_code = Code()
@@ -137,7 +140,11 @@ def code():
         qr_code.generate_qr(new_code, f'{BASE_URL}signin', QR_SCALE)
         db.insert_code(new_code)
         current_code = Code(new_code, datetime.datetime.utcnow(), os.getenv('CODE_REFRESH_RATE'))
-        return render_template('code.html')
+        now = datetime.datetime.now()
+        # time is GMT
+        hour = (now.hour + 20) % 24
+        is_open = hour in CLASS_TIMES and OPEN_START <= now.minute <= OPEN_END
+        return render_template('code.html', is_open=is_open, hour=hour, minute='{:0>2}'.format(now.minute))
     else:
         return Response("403 Forbidden", status=403, mimetype='text/plain')
 
