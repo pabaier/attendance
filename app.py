@@ -27,6 +27,8 @@ app.config.from_object(config)
 CLIENT_ID = app.config['CLIENT_ID']
 BASE_URL = app.config['BASE_URL']
 JWT_SECRET = app.config['SECRET']
+QR_SCALE = app.config['QR_SCALE']
+if QR_SCALE not in [8, 10, 12]: QR_SCALE = 12
 
 global current_code, db
 current_code = Code()
@@ -132,7 +134,7 @@ def code():
     if able_to_access:
         global current_code
         new_code = str(uuid.uuid4())
-        qr_code.generate_qr(new_code, f'{BASE_URL}signin')
+        qr_code.generate_qr(new_code, f'{BASE_URL}signin', QR_SCALE)
         db.insert_code(new_code)
         current_code = Code(new_code, datetime.datetime.utcnow(), os.getenv('CODE_REFRESH_RATE'))
         return render_template('code.html')
