@@ -5,6 +5,7 @@ const MemoryStore = require('memorystore')(session)
 import expressLayouts from 'express-ejs-layouts';
 import path from 'path';
 import { OAuth2Client } from 'google-auth-library';
+import { authCheckMiddleware, rollCheckMiddleware } from './middleware/auth';
 
 dotenv.config();
 
@@ -26,6 +27,8 @@ app.set('view engine', 'ejs');
 declare module "express-session" {
   interface SessionData {
     userName: string;
+    userEmail: string;
+    isAuthed: boolean;
   }
 }
 
@@ -58,15 +61,29 @@ app.get('/about', (req: Request, res: Response) => {
 });
 
 app.post('/login/verify', async (req: Request, res: Response) => {
-  req.session.userName = await verify(req.body.credential)
-  res.redirect('/dashboard')
+  const ticket = await client.verifyIdToken({
+    idToken: req.body.credential,
+    audience: clientId,
+  });
+  const payload = ticket.getPayload();
+  if (payload) {
+    req.session.userName = payload['given_name'];
+    req.session.userEmail = payload['email'];
+    req.session.isAuthed = true;
+    const userid = payload['sub'];
+    const lastName = payload['family_name'];
+    const fullName = payload['name'];
+    const domain = payload['hd'];
+  }
+  var redirect: string = req.query.redirect?.toString() || '/'
+  res.redirect(redirect)
 });
 
 app.get('/login', (req: Request, res: Response) => {
-  res.render('login', { clientId, baseURL })
+  res.render('login', { clientId, baseURL, redirect: req.query.redirect })
 });
 
-app.get('/dashboard', (req: Request, res: Response) => {
+app.get('/dashboard', authCheckMiddleware, (req: Request, res: Response) => {
   const userName = req.session.userName;
   res.render('dashboard', { userName })
 });
@@ -74,20 +91,3 @@ app.get('/dashboard', (req: Request, res: Response) => {
 app.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
 });
-
-async function verify(token: string) {
-  const ticket = await client.verifyIdToken({
-    idToken: token,
-    audience: clientId,
-  });
-  const payload = ticket.getPayload();
-  if (payload) {
-    const userid = payload['sub'];
-    const firstName = payload['given_name'];
-    const lastName = payload['family_name'];
-    const fullName = payload['name'];
-    const email = payload['email'];
-    const domain = payload['hd'];
-    return firstName
-  }
-}
