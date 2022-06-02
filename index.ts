@@ -13,7 +13,7 @@ const port = process.env.PORT;
 // EJS
 app.use(expressLayouts)
 // Setting the root path for views directory
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', path.join(`${__dirname}/..`, 'views'));
 app.use(express.static(path.join(__dirname, "public")));
 // Setting the view engine
 app.set('view engine', 'ejs');
