@@ -1,9 +1,25 @@
-<html>
-    <head>
-        <title>
-            <%- title%>
-        </title>
-    </head>
-    <p>This is the home page and it takes the full width of the layout</p>
-    <a href="/about">About</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/head'); %>
+
+</head>
+<body class="container">
+
+<header>
+  <%- include('partials/header'); %>
+</header>
+
+<main>
+  <div class="jumbotron">
+    <h1>This is great</h1>
+    <p>Welcome to templating using EJS</p>
+  </div>
+</main>
+
+<footer>
+  <%- include('partials/footer'); %>
+</footer>
+
+</body>
 </html>

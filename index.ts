@@ -33,7 +33,13 @@ app.use(session({
 // **********************************************************************************************
 
 app.get('/', (req: Request, res: Response) => {
-  res.render('index.ejs', { title: 'Attendance'})
+  res.render('index', { title: 'Attendance'})
+
+  // res.send('Express + TypeScript Server');
+});
+
+app.get('/about', (req: Request, res: Response) => {
+  res.render('about')
 
   // res.send('Express + TypeScript Server');
 });
