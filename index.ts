@@ -1,4 +1,4 @@
-import express, { Express, Request, Response, NextFunction } from 'express';
+import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import session from 'express-session';
 const MemoryStore = require('memorystore')(session)
@@ -93,6 +93,11 @@ app.post('/login/verify', async (req: Request, res: Response) => {
 
 app.get('/login', (req: Request, res: Response) => {
   res.render('login', { clientId, baseURL, redirect: req.query.redirect, userInfo: req.session.userInfo })
+});
+
+app.get('/logout', (req: Request, res: Response) => {
+  req.session.destroy(() => null);
+  res.redirect('/')
 });
 
 app.get('/dashboard', authCheckMiddleware, (req: Request, res: Response) => {
