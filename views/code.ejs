@@ -1,0 +1,13 @@
+<%- include('partials/header', {userInfo}); %>
+<div class="jumbotron">
+    <h1>Code <%- userInfo.userName %></h1>
+    <h1 id="number"></h1>
+</div>
+
+<script type="application/javascript">
+    setInterval(function () {
+        $.get( "/admin/code/update", function( data ) {
+            $("#number").html( data.code )
+        })
+    }, 2000);
+</script>

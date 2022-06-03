@@ -7,6 +7,7 @@ import path from 'path';
 import { OAuth2Client } from 'google-auth-library';
 import { authCheckMiddleware, rollCheckMiddleware } from './middleware/auth';
 import { userInfo } from 'os';
+import NodeCache from "node-cache";
 
 dotenv.config();
 
@@ -53,6 +54,9 @@ const client = new OAuth2Client(clientId);
 // used to get the body from post requests
 app.use(express.json());
 app.use(express.urlencoded());
+
+// IN MEMORY CACHE
+const myCache = new NodeCache();
 
 // **********************************************************************************************
 
@@ -109,6 +113,19 @@ app.get('/attendance', authCheckMiddleware, (req: Request, res: Response) => {
 app.get('/admin', authCheckMiddleware, rollCheckMiddleware(['admin']), (req: Request, res: Response) => {
   res.render('admin', { userInfo: req.session.userInfo })
 });
+
+app.get('/admin/code/', authCheckMiddleware, rollCheckMiddleware(['admin']), (req: Request, res: Response) => {
+  res.render('code', { userInfo: req.session.userInfo })
+});
+
+app.get('/admin/code/update', authCheckMiddleware, rollCheckMiddleware(['admin']), (req: Request, res: Response) => {
+  const newNumber: number = Math.floor(Math.random() * 9) + 1;
+  const value: number = myCache.has( 'code' ) ? myCache.take( 'code' ) as number : 0;
+  myCache.set( 'code', (value * 10 + newNumber) % 100000, 5);
+  console.log(value)
+  res.json({ code: newNumber })
+});
+
 
 app.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
