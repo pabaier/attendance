@@ -1,4 +1,4 @@
-import express, { Express, Request, Response } from 'express';
+import express, { Express, Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
 import session from 'express-session';
 const MemoryStore = require('memorystore')(session)
@@ -6,6 +6,7 @@ import expressLayouts from 'express-ejs-layouts';
 import path from 'path';
 import { OAuth2Client } from 'google-auth-library';
 import { authCheckMiddleware, rollCheckMiddleware } from './middleware/auth';
+import { userInfo } from 'os';
 
 dotenv.config();
 
@@ -23,12 +24,18 @@ app.use(express.static(path.join(__dirname, "public")));
 app.set('view engine', 'ejs');
 
 // SESSIONS
+class UserInfo {
+  userName: string = '';
+  userEmail: string = '';
+  isAuthed: boolean = false;
+  rolls: string[] = [];
+  isAdmin: boolean = false;
+}
+
 // overload SessionData so our custom properties exist on the session object
 declare module "express-session" {
   interface SessionData {
-    userName: string;
-    userEmail: string;
-    isAuthed: boolean;
+    userInfo: UserInfo
   }
 }
 
@@ -51,13 +58,13 @@ app.use(express.urlencoded());
 // **********************************************************************************************
 
 app.get('/', (req: Request, res: Response) => {
-  res.render('index', { title: 'Attendance' })
+  res.render('index', { title: 'Attendance', userInfo: req.session.userInfo })
 
   // res.send('Express + TypeScript Server');
 });
 
 app.get('/about', (req: Request, res: Response) => {
-  res.render('about')
+  res.render('about', {userInfo: req.session.userInfo})
 });
 
 app.post('/login/verify', async (req: Request, res: Response) => {
@@ -65,11 +72,16 @@ app.post('/login/verify', async (req: Request, res: Response) => {
     idToken: req.body.credential,
     audience: clientId,
   });
-  const payload = ticket.getPayload();
+  const payload = ticket.getPayload() || null;
+  if (!req.session.userInfo) {
+    req.session.userInfo = new UserInfo();
+  }
   if (payload) {
-    req.session.userName = payload['given_name'];
-    req.session.userEmail = payload['email'];
-    req.session.isAuthed = true;
+    req.session.userInfo.userName = payload['given_name'] || '';
+    req.session.userInfo.userEmail = payload['email'] || '';
+    req.session.userInfo.isAuthed = true;
+    if (payload['email'] == 'baierpa@g.cofc.edu' || payload['email'] == 'baierpa@cofc.edu')
+      req.session.userInfo.rolls.push('admin')
     const userid = payload['sub'];
     const lastName = payload['family_name'];
     const fullName = payload['name'];
@@ -80,12 +92,11 @@ app.post('/login/verify', async (req: Request, res: Response) => {
 });
 
 app.get('/login', (req: Request, res: Response) => {
-  res.render('login', { clientId, baseURL, redirect: req.query.redirect })
+  res.render('login', { clientId, baseURL, redirect: req.query.redirect, userInfo: req.session.userInfo })
 });
 
 app.get('/dashboard', authCheckMiddleware, (req: Request, res: Response) => {
-  const userName = req.session.userName;
-  res.render('dashboard', { userName })
+  res.render('dashboard', { userInfo: req.session.userInfo })
 });
 
 app.listen(port, () => {

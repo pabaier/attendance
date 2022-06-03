@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 
 export const authCheckMiddleware = (req: Request, res: Response, next: NextFunction) => {
-    if (req.session.isAuthed) {
+    if (req.session.userInfo?.isAuthed) {
         next()
     }
     else {

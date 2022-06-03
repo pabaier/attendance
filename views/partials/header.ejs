@@ -1,5 +1,8 @@
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <a class="navbar-brand" href="/">EJS Is Fun</a>
+<header>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="/">
+      <%- userInfo?.userName || '220' -%>
+    </a>
     <ul class="navbar-nav mr-auto">
       <li class="nav-item">
         <a class="nav-link" href="/">Home</a>
@@ -8,10 +11,20 @@
         <a class="nav-link" href="/about">About</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="/login">Login</a>
-      </li>
-      <li class="nav-item">
         <a class="nav-link" href="/dashboard">Dashboard</a>
+      </li>
+      <% if (userInfo?.rolls.includes('admin')) { %>
+      <li class="nav-item">
+        <a class="nav-link" href="/admin">Admin</a>
+      </li>
+      <% } %>
+      <li class="nav-item">
+      <% if (userInfo) { %>
+        <a class="nav-link" href="/logout">Logout</a>
+      <% } else { %>
+        <a class="nav-link" href="/login">Login</a>
+      <% } %>
       </li>
     </ul>
   </nav>
+</header>
