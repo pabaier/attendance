@@ -102,6 +102,10 @@ app.get('/dashboard', authCheckMiddleware, (req: Request, res: Response) => {
   res.render('dashboard', { userInfo: req.session.userInfo })
 });
 
+app.get('/attendance', authCheckMiddleware, (req: Request, res: Response) => {
+  res.render('attendance', { userInfo: req.session.userInfo })
+});
+
 app.get('/admin', authCheckMiddleware, rollCheckMiddleware(['admin']), (req: Request, res: Response) => {
   res.render('admin', { userInfo: req.session.userInfo })
 });
