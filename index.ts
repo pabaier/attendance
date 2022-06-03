@@ -27,8 +27,7 @@ app.set('view engine', 'ejs');
 class UserInfo {
   userName: string = '';
   userEmail: string = '';
-  isAuthed: boolean = false;
-  rolls: string[] = [];
+  roles: string[] = [];
   isAdmin: boolean = false;
 }
 
@@ -79,9 +78,8 @@ app.post('/login/verify', async (req: Request, res: Response) => {
   if (payload) {
     req.session.userInfo.userName = payload['given_name'] || '';
     req.session.userInfo.userEmail = payload['email'] || '';
-    req.session.userInfo.isAuthed = true;
-    if (payload['email'] == 'baierpa@g.cofc.edu' || payload['email'] == 'baierpa@cofc.edu')
-      req.session.userInfo.rolls.push('admin')
+    if (payload['email'] == 'baierpa@cofc.edu' || payload['email'] == 'baierpa@cofc.edu')
+      req.session.userInfo.roles.push('admin')
     const userid = payload['sub'];
     const lastName = payload['family_name'];
     const fullName = payload['name'];
@@ -102,6 +100,10 @@ app.get('/logout', (req: Request, res: Response) => {
 
 app.get('/dashboard', authCheckMiddleware, (req: Request, res: Response) => {
   res.render('dashboard', { userInfo: req.session.userInfo })
+});
+
+app.get('/admin', authCheckMiddleware, rollCheckMiddleware(['admin']), (req: Request, res: Response) => {
+  res.render('admin', { userInfo: req.session.userInfo })
 });
 
 app.listen(port, () => {

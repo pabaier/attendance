@@ -1,7 +1,7 @@
 <header>
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <a class="navbar-brand" href="/">
-      <%- userInfo?.userName || '220' -%>
+      <%- userInfo?.userName ? `220 | ${userInfo.userName}` : '220' -%>
     </a>
     <ul class="navbar-nav mr-auto">
       <li class="nav-item">
@@ -13,7 +13,7 @@
       <li class="nav-item">
         <a class="nav-link" href="/dashboard">Dashboard</a>
       </li>
-      <% if (userInfo?.rolls.includes('admin')) { %>
+      <% if (userInfo?.roles.includes('admin')) { %>
       <li class="nav-item">
         <a class="nav-link" href="/admin">Admin</a>
       </li>
