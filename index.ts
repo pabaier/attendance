@@ -111,6 +111,12 @@ app.get('/attendance', authCheckMiddleware, (req: Request, res: Response) => {
   res.render('attendance', { userInfo: req.session.userInfo })
 });
 
+app.post('/attendance', authCheckMiddleware, (req: Request, res: Response) => {
+  const result = parseInt(req.body.code) == myCache.get( 'code' ) as number
+  // console.log(req.body.code)
+  res.json({result: result})
+});
+
 app.get('/admin', authCheckMiddleware, rollCheckMiddleware(['admin']), (req: Request, res: Response) => {
   res.render('admin', { userInfo: req.session.userInfo })
 });
