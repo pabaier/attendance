@@ -9,5 +9,5 @@
         $.get( "/admin/code/update", function( data ) {
             $("#number").html( data.code )
         })
-    }, 2000);
+    }, parseInt('<%= process.env.CODE_REFRESH_RATE %>'))
 </script>

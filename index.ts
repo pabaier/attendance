@@ -15,6 +15,7 @@ const app = express();
 const port = process.env.PORT;
 const clientId = process.env.CLIENTID;
 const baseURL = process.env.BASEURL;
+const codeRefreshRate: number = parseInt(process.env.CODE_REFRESH_RATE as string);
 
 // EJS
 app.use(expressLayouts)
@@ -121,8 +122,7 @@ app.get('/admin/code/', authCheckMiddleware, rollCheckMiddleware(['admin']), (re
 app.get('/admin/code/update', authCheckMiddleware, rollCheckMiddleware(['admin']), (req: Request, res: Response) => {
   const newNumber: number = Math.floor(Math.random() * 9) + 1;
   const value: number = myCache.has( 'code' ) ? myCache.take( 'code' ) as number : 0;
-  myCache.set( 'code', (value * 10 + newNumber) % 100000, 5);
-  console.log(value)
+  myCache.set( 'code', (value * 10 + newNumber) % 100000, codeRefreshRate/1000 + 500);
   res.json({ code: newNumber })
 });
 
