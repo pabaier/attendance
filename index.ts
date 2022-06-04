@@ -8,6 +8,8 @@ import { OAuth2Client } from 'google-auth-library';
 import { authCheckMiddleware, rollCheckMiddleware } from './middleware/auth';
 import { userInfo } from 'os';
 import NodeCache from "node-cache";
+import pgp from 'pg-promise'
+import { DBClient } from './db';
 
 dotenv.config();
 
@@ -15,7 +17,8 @@ const app = express();
 const port = process.env.PORT;
 const clientId = process.env.CLIENTID;
 const baseURL = process.env.BASEURL;
-const codeRefreshRate: number = parseInt(process.env.CODE_REFRESH_RATE as string);
+const codeRefreshRate: number = parseInt(process.env.CODE_REFRESH_RATE || '2');
+const databaseURL: string = process.env.DATABASE_URL as string;
 
 // EJS
 app.use(expressLayouts)
@@ -58,6 +61,16 @@ app.use(express.urlencoded());
 
 // IN MEMORY CACHE
 const myCache = new NodeCache();
+
+// DATABASE
+const db = pgp()(
+  {
+    connectionString: databaseURL, 
+    ssl: baseURL?.includes('localhost') ? false : { rejectUnauthorized: false }
+}
+)
+const dbClient = new DBClient(db)
+
 
 // **********************************************************************************************
 
@@ -113,7 +126,9 @@ app.get('/attendance', authCheckMiddleware, (req: Request, res: Response) => {
 
 app.post('/attendance', authCheckMiddleware, (req: Request, res: Response) => {
   const result = parseInt(req.body.code) == myCache.get( 'code' ) as number
-  // console.log(req.body.code)
+  if (result) {
+    dbClient.signIn(req.session.userInfo?.userEmail as string)
+  }
   res.json({result: result})
 });
 
