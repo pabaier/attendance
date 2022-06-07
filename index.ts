@@ -7,6 +7,7 @@ import path from 'path';
 import { OAuth2Client } from 'google-auth-library';
 import { authCheckMiddleware, rollCheckMiddleware } from './middleware/auth';
 import NodeCache from "node-cache";
+import { UserInfo } from './models/';
 
 dotenv.config();
 import dbClient from './db/dbClientPSQLImpl';
@@ -24,15 +25,6 @@ app.set('views', path.join(`${__dirname}/..`, 'views'));
 app.use(express.static(path.join(__dirname, "public")));
 // Setting the view engine
 app.set('view engine', 'ejs');
-
-// SESSIONS
-class UserInfo {
-  userName: string = '';
-  userEmail: string = '';
-  userId: number = 0;
-  roles: string[] = [];
-  isAdmin: boolean = false;
-}
 
 // overload SessionData so our custom properties exist on the session object
 declare module "express-session" {
