@@ -46,7 +46,7 @@ app.use(express.urlencoded());
 
 app.use('/admin', admin(myCache));
 app.use('/user', user(myCache, dbClient));
-app.use('/', base)
+app.use('/', base(dbClient))
 
 app.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
