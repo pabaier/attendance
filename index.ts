@@ -9,7 +9,8 @@ import { authCheckMiddleware, rollCheckMiddleware } from './middleware/auth';
 import { userInfo } from 'os';
 import NodeCache from "node-cache";
 import pgp from 'pg-promise'
-import { DBClient } from './db';
+import { DbClientPSQLImpl } from './db/dbClientPSQLImpl';
+import { DbClient } from './db/dbClient';
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.set('view engine', 'ejs');
 class UserInfo {
   userName: string = '';
   userEmail: string = '';
+  userId: number = 0;
   roles: string[] = [];
   isAdmin: boolean = false;
 }
@@ -69,7 +71,7 @@ const db = pgp()(
     ssl: baseURL?.includes('localhost') ? false : { rejectUnauthorized: false }
 }
 )
-const dbClient = new DBClient(db)
+const dbClient: DbClient = new DbClientPSQLImpl(db)
 
 
 // **********************************************************************************************
@@ -94,26 +96,36 @@ app.post('/login/verify', async (req: Request, res: Response) => {
     req.session.userInfo = new UserInfo();
   }
   if (payload) {
+    const email = payload['email'] || ''
     req.session.userInfo.userName = payload['given_name'] || '';
-    req.session.userInfo.userEmail = payload['email'] || '';
+    req.session.userInfo.userEmail = email;
     if (payload['email'] == 'baierpa@cofc.edu' || payload['email'] == 'baierpa@cofc.edu')
       req.session.userInfo.roles.push('admin')
     const userid = payload['sub'];
     const lastName = payload['family_name'];
     const fullName = payload['name'];
     const domain = payload['hd'];
+    const userId = await dbClient.getUserId(email);
+    if(!userId) {
+      const message = 'Sorry, user not found. Contact your administrator.'
+      res.redirect(`/logout?message=${message}`)
+      return
+    }
+    req.session.userInfo.userId = userId;
   }
-  var redirect: string = req.query.redirect?.toString() || '/'
+  const redirect: string = req.query.redirect?.toString() || '/'
   res.redirect(redirect)
 });
 
 app.get('/login', (req: Request, res: Response) => {
-  res.render('login', { clientId, baseURL, redirect: req.query.redirect, userInfo: req.session.userInfo })
+  const message =  req.query.message ? req.query.message : ''
+  res.render('login', { clientId, baseURL, redirect: req.query.redirect, userInfo: req.session.userInfo, message: message})
 });
 
 app.get('/logout', (req: Request, res: Response) => {
   req.session.destroy(() => null);
-  res.redirect('/')
+  const redirect =  req.query.message ? `/login?message=${req.query.message}` : '/login';
+  res.redirect(redirect)
 });
 
 app.get('/dashboard', authCheckMiddleware, (req: Request, res: Response) => {
