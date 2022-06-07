@@ -1,22 +1,22 @@
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
+dotenv.config();
 import session from 'express-session';
 const MemoryStore = require('memorystore')(session)
 import expressLayouts from 'express-ejs-layouts';
 import path from 'path';
 import { OAuth2Client } from 'google-auth-library';
-import { authCheckMiddleware, rollCheckMiddleware } from './middleware/auth';
+import { authCheckMiddleware } from './middleware/auth';
 import NodeCache from "node-cache";
-import { UserInfo } from './models/';
-
-dotenv.config();
+import { UserInfo } from './models';
 import dbClient from './db/dbClientPSQLImpl';
+import { admin } from './routes';
 
 const app = express();
 const port = process.env.PORT;
 const clientId = process.env.CLIENTID;
 const baseURL = process.env.BASEURL;
-const codeRefreshRate: number = parseInt(process.env.CODE_REFRESH_RATE || '2');
+const myCache = new NodeCache();
 
 // EJS
 app.use(expressLayouts)
@@ -49,8 +49,7 @@ const client = new OAuth2Client(clientId);
 app.use(express.json());
 app.use(express.urlencoded());
 
-// IN MEMORY CACHE
-const myCache = new NodeCache();
+app.use('/admin', admin(myCache));
 
 // **********************************************************************************************
 
@@ -121,22 +120,6 @@ app.post('/attendance', authCheckMiddleware, (req: Request, res: Response) => {
   }
   res.json({result: result})
 });
-
-app.get('/admin', authCheckMiddleware, rollCheckMiddleware(['admin']), (req: Request, res: Response) => {
-  res.render('admin', { userInfo: req.session.userInfo })
-});
-
-app.get('/admin/code/', authCheckMiddleware, rollCheckMiddleware(['admin']), (req: Request, res: Response) => {
-  res.render('code', { userInfo: req.session.userInfo })
-});
-
-app.get('/admin/code/update', authCheckMiddleware, rollCheckMiddleware(['admin']), (req: Request, res: Response) => {
-  const newNumber: number = Math.floor(Math.random() * 9) + 1;
-  const value: number = myCache.has( 'code' ) ? myCache.take( 'code' ) as number : 0;
-  myCache.set( 'code', (value * 10 + newNumber) % 100000, codeRefreshRate/1000 + 500);
-  res.json({ code: newNumber })
-});
-
 
 app.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
