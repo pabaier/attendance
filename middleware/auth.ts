@@ -5,7 +5,7 @@ export const authCheckMiddleware = (req: Request, res: Response, next: NextFunct
         next()
     }
     else {
-        res.redirect(`/login?redirect=${req.route.path}`)
+        res.redirect(`/login?redirect=${req.originalUrl}`)
     }
 };
 

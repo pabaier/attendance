@@ -9,7 +9,7 @@
     $( "#code" ).keyup(function (event) {
         const code = event.target.value;
         if (code > 9999) {
-            $.post( "/attendance", {code}, function( data ) {
+            $.post( "/user/attendance", {code}, function( data ) {
                 if (data.result) {
                     $( "#result" ).html("Success!")
                 }

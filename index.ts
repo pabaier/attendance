@@ -5,11 +5,10 @@ import session from 'express-session';
 const MemoryStore = require('memorystore')(session)
 import expressLayouts from 'express-ejs-layouts';
 import path from 'path';
-import { authCheckMiddleware } from './middleware/auth';
 import NodeCache from "node-cache";
 import { UserInfo } from './models';
+import { admin, base, user } from './routes';
 import dbClient from './db/dbClientPSQLImpl';
-import { admin, base } from './routes';
 
 const app = express();
 const port = process.env.PORT;
@@ -46,25 +45,8 @@ app.use(express.json());
 app.use(express.urlencoded());
 
 app.use('/admin', admin(myCache));
+app.use('/user', user(myCache, dbClient));
 app.use('/', base)
-
-// **********************************************************************************************
-
-app.get('/dashboard', authCheckMiddleware, (req: Request, res: Response) => {
-  res.render('dashboard', { userInfo: req.session.userInfo })
-});
-
-app.get('/attendance', authCheckMiddleware, (req: Request, res: Response) => {
-  res.render('attendance', { userInfo: req.session.userInfo })
-});
-
-app.post('/attendance', authCheckMiddleware, (req: Request, res: Response) => {
-  const result = parseInt(req.body.code) == myCache.get( 'code' ) as number
-  if (result) {
-    dbClient.signIn(req.session.userInfo?.userEmail as string)
-  }
-  res.json({result: result})
-});
 
 app.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
