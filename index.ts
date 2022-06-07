@@ -6,20 +6,16 @@ import expressLayouts from 'express-ejs-layouts';
 import path from 'path';
 import { OAuth2Client } from 'google-auth-library';
 import { authCheckMiddleware, rollCheckMiddleware } from './middleware/auth';
-import { userInfo } from 'os';
 import NodeCache from "node-cache";
-import pgp from 'pg-promise'
-import { DbClientPSQLImpl } from './db/dbClientPSQLImpl';
-import { DbClient } from './db/dbClient';
 
 dotenv.config();
+import dbClient from './db/dbClientPSQLImpl';
 
 const app = express();
 const port = process.env.PORT;
 const clientId = process.env.CLIENTID;
 const baseURL = process.env.BASEURL;
 const codeRefreshRate: number = parseInt(process.env.CODE_REFRESH_RATE || '2');
-const databaseURL: string = process.env.DATABASE_URL as string;
 
 // EJS
 app.use(expressLayouts)
@@ -63,16 +59,6 @@ app.use(express.urlencoded());
 
 // IN MEMORY CACHE
 const myCache = new NodeCache();
-
-// DATABASE
-const db = pgp()(
-  {
-    connectionString: databaseURL, 
-    ssl: baseURL?.includes('localhost') ? false : { rejectUnauthorized: false }
-}
-)
-const dbClient: DbClient = new DbClientPSQLImpl(db)
-
 
 // **********************************************************************************************
 
