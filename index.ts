@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import dotenv from 'dotenv';
 dotenv.config();
 import session from 'express-session';
@@ -38,7 +38,6 @@ app.use(session({
   secret: 'keyboard cat',
   saveUninitialized: true
 }))
-
 
 // used to get the body from post requests
 app.use(express.json());

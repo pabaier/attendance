@@ -17,8 +17,8 @@ class DbClientPSQLImpl implements DbClient {
     this.connection = db;
   }
 
-  signIn(userName: string) {
-    return this.connection.none('INSERT INTO attendance (user_id) VALUES ($1)', [userName])
+  signIn(userId: number) {
+    return this.connection.none('INSERT INTO attendance (user_id) VALUES ($1)', [userId])
       .then((data: any) => { return true; })
       .catch((error: any) => {
         console.log('ERROR:', error);

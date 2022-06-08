@@ -1,5 +1,5 @@
 export interface DbClient {
     connection: any;
-    signIn(userName: string): boolean;
+    signIn(userId: number): boolean;
     getUserId(userEmail: string): Promise<number | null>;
 }

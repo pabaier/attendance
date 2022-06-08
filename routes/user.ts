@@ -19,7 +19,7 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     router.post('/attendance', (req: Request, res: Response) => {
         const result = parseInt(req.body.code) == myCache.get('code') as number
         if (result) {
-            dbClient.signIn(req.session.userInfo?.userEmail as string)
+            dbClient.signIn(req.session.userInfo?.userId as number)
         }
         res.json({ result: result })
     });
