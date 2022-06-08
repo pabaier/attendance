@@ -26,8 +26,9 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     });
 
     router.get('/users', async (req: Request, res: Response) => {
-        const users = await dbClient.getUsers();
-        res.render('users', { user: req.session.user });
+        const group = req.query.group ? req.query.group as string : '';
+        const users = await dbClient.getUsers(group);
+        res.render('users', { user: req.session.user, users });
     });
 
     return router;

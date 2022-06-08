@@ -18,8 +18,14 @@ class DbClientPSQLImpl implements DbClient {
     this.connection = db;
   }
 
-  async getUsers(): Promise<User[] | null> {
-    return this.connection.any('SELECT * FROM users')
+  async getUsers(group?: string | null): Promise<User[] | null> {
+    var query = 'SELECT * FROM users'
+    var grouping = '';
+    if (group) {
+      query = query + ' WHERE groups LIKE $1';
+      grouping = `%"${group}"%`;
+    }
+    return this.connection.any(query, [grouping])
     .then((data: User[]) => {
       console.log(data)
       return data;
@@ -42,7 +48,8 @@ class DbClientPSQLImpl implements DbClient {
   async getUser(userEmail: string): Promise<User | null> {
     return this.connection.one('SELECT * FROM users WHERE email = $1', userEmail)
       .then((data: User) => {
-        data.roles = JSON.parse(data.roles as string);
+        data.roles = data.roles? JSON.parse(data.roles as string) : '';
+        data.groups = data.groups? JSON.parse(data.groups as string) : '';
         return data;
       })
       .catch((error: any) => {

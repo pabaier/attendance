@@ -3,5 +3,6 @@ export default interface User {
     email: string,
     first_name: string,
     last_name: string,
-    roles: string | string[]
+    roles: string | string[],
+    groups: string | string[],
 }

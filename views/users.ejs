@@ -2,7 +2,22 @@
 <div class="jumbotron">
     <h1>Users</h1>
     <h3>Welcome <%- user.first_name %></h3>
-    <a href="/admin/code">code</a>
-    <br>
-    <a href="/admin/users">users</a>
+    <% if (users) { %>
+        <% users.forEach( user => { %>
+        <h5> <%- user.first_name %></h5>
+        <% }); %>
+    <% } %>
+
+    <input type="text" class="form-control" placeholder="Email" aria-label="Email" aria-describedby="basic-addon1">
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="inputGroupSelect01">Roles</label>
+        </div>
+        <select multiple class="form-control" id="exampleFormControlSelect2">
+            <option value="1">One</option>
+            <option value="2">Two</option>
+            <option value="3">Three</option>
+        </select>
+    </div>
+    <button type="button" class="btn btn-primary form-control">Add</button>
 </div>
