@@ -1,5 +1,6 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
+import { UserInfo } from '../models';
 
 
 class DbClientPSQLImpl implements DbClient {
@@ -26,10 +27,10 @@ class DbClientPSQLImpl implements DbClient {
       });
   }
 
-  async getUserId(userEmail: string) {
+  async getUser(userEmail: string) {
     return this.connection.one('SELECT * FROM users WHERE email = $1', userEmail)
       .then((data: any) => {
-        return data.id;
+        return new UserInfo(data.first_name, data.email, data.id, JSON.parse(data.roles));
       })
       .catch((error: any) => {
         console.log('ERROR:', error);

@@ -27,26 +27,15 @@ export default function (dbClient: DbClient) {
             audience: clientId,
         });
         const payload = ticket.getPayload() || null;
-        if (!req.session.userInfo) {
-            req.session.userInfo = new UserInfo();
-        }
         if (payload) {
             const email = payload['email'] || ''
-            req.session.userInfo.userName = payload['given_name'] || '';
-            req.session.userInfo.userEmail = email;
-            if (payload['email'] == 'baierpa@cofc.edu' || payload['email'] == 'baierpa@cofc.edu')
-                req.session.userInfo.roles.push('admin')
-            const userid = payload['sub'];
-            const lastName = payload['family_name'];
-            const fullName = payload['name'];
-            const domain = payload['hd'];
-            const userId = await dbClient.getUserId(email);
-            if (!userId) {
+            const userInfo = await dbClient.getUser(email);
+            if (!userInfo) {
                 const message = 'Sorry, user not found. Contact your administrator.'
                 res.redirect(`/logout?message=${message}`)
                 return
             }
-            req.session.userInfo.userId = userId;
+            req.session.userInfo = userInfo;
         }
         const redirect: string = req.query.redirect?.toString() || '/'
         res.redirect(redirect)

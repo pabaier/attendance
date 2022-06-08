@@ -3,7 +3,8 @@ CREATE TABLE users (
 	id SERIAL PRIMARY KEY,
 	email VARCHAR (50) UNIQUE,
 	first_name VARCHAR (50),
-	last_name VARCHAR (50)
+	last_name VARCHAR (50),
+	roles TEXT
 );
 CREATE INDEX users_email_idx ON users (email);
 
