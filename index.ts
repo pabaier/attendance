@@ -6,7 +6,7 @@ const MemoryStore = require('memorystore')(session)
 import expressLayouts from 'express-ejs-layouts';
 import path from 'path';
 import NodeCache from "node-cache";
-import { UserInfo } from './models';
+import { User } from './models';
 import { admin, base, user } from './routes';
 import dbClient from './db/dbClientPSQLImpl';
 
@@ -25,7 +25,7 @@ app.set('view engine', 'ejs');
 // overload SessionData so our custom properties exist on the session object
 declare module "express-session" {
   interface SessionData {
-    userInfo: UserInfo
+    user: User
   }
 }
 
@@ -43,7 +43,7 @@ app.use(session({
 app.use(express.json());
 app.use(express.urlencoded());
 
-app.use('/admin', admin(myCache));
+app.use('/admin', admin(myCache, dbClient));
 app.use('/user', user(myCache, dbClient));
 app.use('/', base(dbClient))
 

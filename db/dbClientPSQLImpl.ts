@@ -1,6 +1,6 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
-import { UserInfo } from '../models';
+import { User } from '../models';
 
 
 class DbClientPSQLImpl implements DbClient {
@@ -18,6 +18,18 @@ class DbClientPSQLImpl implements DbClient {
     this.connection = db;
   }
 
+  async getUsers(): Promise<User[] | null> {
+    return this.connection.any('SELECT * FROM users')
+    .then((data: User[]) => {
+      console.log(data)
+      return data;
+    })
+    .catch((error: any) => {
+      console.log('ERROR:', error);
+      return null;
+    })
+  }
+
   signIn(userId: number) {
     return this.connection.none('INSERT INTO attendance (user_id) VALUES ($1)', [userId])
       .then((data: any) => { return true; })
@@ -27,10 +39,11 @@ class DbClientPSQLImpl implements DbClient {
       });
   }
 
-  async getUser(userEmail: string) {
+  async getUser(userEmail: string): Promise<User | null> {
     return this.connection.one('SELECT * FROM users WHERE email = $1', userEmail)
-      .then((data: any) => {
-        return new UserInfo(data.first_name, data.email, data.id, JSON.parse(data.roles));
+      .then((data: User) => {
+        data.roles = JSON.parse(data.roles as string);
+        return data;
       })
       .catch((error: any) => {
         console.log('ERROR:', error);

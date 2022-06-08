@@ -1,7 +1,7 @@
 <header>
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <a class="navbar-brand" href="/">
-      <%- userInfo?.userName ? `220 | ${userInfo.userName}` : '220' -%>
+      <%- user?.first_name ? `220 | ${user.first_name}` : '220' -%>
     </a>
     <ul class="navbar-nav mr-auto">
       <li class="nav-item">
@@ -16,13 +16,13 @@
       <li class="nav-item">
         <a class="nav-link" href="/user/attendance">Attendance</a>
       </li>
-      <% if (userInfo?.roles.includes('admin')) { %>
+      <% if (user?.roles?.includes('admin')) { %>
       <li class="nav-item">
         <a class="nav-link" href="/admin">Admin</a>
       </li>
       <% } %>
       <li class="nav-item">
-      <% if (userInfo) { %>
+      <% if (user) { %>
         <a class="nav-link" href="/logout">Logout</a>
       <% } else { %>
         <a class="nav-link" href="/login">Login</a>

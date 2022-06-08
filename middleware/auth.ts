@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 
 export const authCheckMiddleware = (req: Request, res: Response, next: NextFunction) => {
-    if (req.session.userInfo) {
+    if (req.session.user) {
         next()
     }
     else {
@@ -11,7 +11,7 @@ export const authCheckMiddleware = (req: Request, res: Response, next: NextFunct
 
 export const rollCheckMiddleware = (roles: string[]) => {
     return function (req: Request, res: Response, next: NextFunction) {
-        if (req.session.userInfo?.roles.some(role => roles.includes(role)   ))
+        if ((<string[]>req.session.user?.roles)?.some(role => roles.includes(role)))
             next()
         else {
             res.redirect('/logout')

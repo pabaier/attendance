@@ -1,6 +1,5 @@
 import express, { Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
-import { UserInfo } from '../models';
 import { DbClient } from '../db/dbClient';
 
 export default function (dbClient: DbClient) {
@@ -12,13 +11,13 @@ export default function (dbClient: DbClient) {
     const client = new OAuth2Client(clientId);
 
     router.get('/', (req: Request, res: Response) => {
-        res.render('index', { title: 'Attendance', userInfo: req.session.userInfo })
+        res.render('index', { title: 'Attendance', user: req.session.user })
 
         // res.send('Express + TypeScript Server');
     });
 
     router.get('/about', (req: Request, res: Response) => {
-        res.render('about', { userInfo: req.session.userInfo })
+        res.render('about', { user: req.session.user })
     });
 
     router.post('/login/verify', async (req: Request, res: Response) => {
@@ -29,13 +28,13 @@ export default function (dbClient: DbClient) {
         const payload = ticket.getPayload() || null;
         if (payload) {
             const email = payload['email'] || ''
-            const userInfo = await dbClient.getUser(email);
-            if (!userInfo) {
+            const user = await dbClient.getUser(email);
+            if (!user) {
                 const message = 'Sorry, user not found. Contact your administrator.'
                 res.redirect(`/logout?message=${message}`)
                 return
             }
-            req.session.userInfo = userInfo;
+            req.session.user = user;
         }
         const redirect: string = req.query.redirect?.toString() || '/'
         res.redirect(redirect)
@@ -43,7 +42,7 @@ export default function (dbClient: DbClient) {
 
     router.get('/login', (req: Request, res: Response) => {
         const message = req.query.message ? req.query.message : ''
-        res.render('login', { clientId, baseURL, redirect: req.query.redirect, userInfo: req.session.userInfo, message: message })
+        res.render('login', { clientId, baseURL, redirect: req.query.redirect, user: req.session.user, message: message })
     });
 
     router.get('/logout', (req: Request, res: Response) => {

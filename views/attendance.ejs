@@ -1,6 +1,6 @@
-<%- include('partials/header', {userInfo}); %>
+<%- include('partials/header', {user}); %>
 <div class="jumbotron">
-    <h1>Attendance <%- userInfo.userName %></h1>
+    <h1>Attendance <%- user.first_name %></h1>
     <input type="number" id="code" name="quantity">
     <h3 id="result"></h3>
 </div>
