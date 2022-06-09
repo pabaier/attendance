@@ -1,7 +1,6 @@
 <div class="jumbotron">
     <h1>Attendance <%- user.first_name %></h1>
     <input type="number" id="code" name="quantity">
-    <h3 id="result"></h3>
 </div>
 
 <script>
@@ -9,17 +8,15 @@
         const code = event.target.value;
         if (code > 9999) {
             $.post( "/user/attendance", {code}, function( data ) {
-                if (data.result) {
-                    $( "#result" ).html("Success!")
-                }
-                else {
-                    $( "#result" ).html("Try Again")
-                    event.target.value = ''
-                }
+                $( "#alert-box" ).html(
+                    `
+                    <div class="alert alert-${data.alert[0].type}" role="alert">
+                        ${data.alert[0].message}
+                    </div>
+                    `
+                )
+                event.target.value = ''
             })
-        }
-        else {
-            $( "#result" ).html("")
         }
     })
 </script>

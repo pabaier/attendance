@@ -8,8 +8,14 @@
 
 <body class="container">
     <%- include('partials/header'); %>
-    <div class="alert alert-primary" role="alert">
-        This is a primary alert—check it out!
+    <div id="alert-box">
+        <% if (locals.alert) {%>
+        <% alert.forEach(a => { %>
+        <div class="alert alert-<%- a.type %>" role="alert">
+            <%- a.message %>
+        </div>
+        <% }) %>
+        <% } %>
     </div>
     <main>
         <%- body %>

@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import { DbClient } from '../db/dbClient';
+import { Alert } from '../models';
 
 export default function (dbClient: DbClient) {
     const router = express.Router();
@@ -41,8 +42,8 @@ export default function (dbClient: DbClient) {
     });
 
     router.get('/login', (req: Request, res: Response) => {
-        const message = req.query.message ? req.query.message : ''
-        res.render('login', { clientId, baseURL, redirect: req.query.redirect, user: req.session.user, message: message })
+        const alert: Alert[] = req.query.message ? [{type: 'danger', message: req.query.message as string}] : [];
+        res.render('login', { clientId, baseURL, redirect: req.query.redirect, user: req.session.user, alert})
     });
 
     router.get('/logout', (req: Request, res: Response) => {
