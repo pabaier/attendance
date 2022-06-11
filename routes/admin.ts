@@ -11,11 +11,11 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     router.use(authCheckMiddleware, rollCheckMiddleware(['admin']))
 
     router.get('/', (req: Request, res: Response) => {
-        res.render('admin', { user: req.session.user })
+        res.render('admin/index', { user: req.session.user })
     });
 
     router.get('/code/', (req: Request, res: Response) => {
-        res.render('code', { user: req.session.user })
+        res.render('admin/code', { user: req.session.user })
     });
 
     router.get('/code/update', (req: Request, res: Response) => {
@@ -32,7 +32,7 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     router.get('/users', async (req: Request, res: Response) => {
         const group = req.query.group ? req.query.group as string : '';
         const users = await dbClient.getUsers(group);
-        res.render('users', { user: req.session.user, users });
+        res.render('admin/users', { user: req.session.user, users });
     });
 
     return router;
