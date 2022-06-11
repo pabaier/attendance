@@ -12,13 +12,13 @@ export default function (dbClient: DbClient) {
     const client = new OAuth2Client(clientId);
 
     router.get('/', (req: Request, res: Response) => {
-        res.render('index', { title: 'Attendance', user: req.session.user })
+        res.render('base/index', { title: 'Attendance', user: req.session.user })
 
         // res.send('Express + TypeScript Server');
     });
 
     router.get('/about', (req: Request, res: Response) => {
-        res.render('about', { user: req.session.user })
+        res.render('base/about', { user: req.session.user })
     });
 
     router.post('/login/verify', async (req: Request, res: Response) => {
@@ -43,7 +43,7 @@ export default function (dbClient: DbClient) {
 
     router.get('/login', (req: Request, res: Response) => {
         const alert: Alert[] = req.query.message ? [{type: 'danger', message: req.query.message as string}] : [];
-        res.render('login', { clientId, baseURL, redirect: req.query.redirect, user: req.session.user, alert})
+        res.render('base/login', { clientId, baseURL, redirect: req.query.redirect, user: req.session.user, alert})
     });
 
     router.get('/logout', (req: Request, res: Response) => {
