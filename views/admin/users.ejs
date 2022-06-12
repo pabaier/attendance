@@ -1,11 +1,14 @@
 <div class="jumbotron">
     <h1>Users</h1>
+    <select class="form-select" id="section-select" aria-label="Default select section">
+        <option selected>Select Section</option>
+        <option value="section1">One</option>
+        <option value="section2">Two</option>
+        <option value="section3">Three</option>
+    </select>
     <h3>Welcome <%- user.first_name %></h3>
-    <% if (users) { %>
-        <% users.forEach( user => { %>
-        <h5> <%- user.first_name %></h5>
-        <% }); %>
-    <% } %>
+
+    <p id="users"></p>
 
     <input type="text" class="form-control" placeholder="Email" aria-label="Email" aria-describedby="basic-addon1">
     <div class="input-group mb-3">
@@ -18,5 +21,31 @@
             <option value="3">Three</option>
         </select>
     </div>
-    <button type="button" class="btn btn-primary form-control">Add</button>
 </div>
+
+<script>
+    var users = <%- users %>;
+    $('#section-select').change(e => {
+        $('#users').empty();
+        var sectionUsers = users.filter(user => {
+            return user.groups.includes(e.target.value)
+        })
+        sectionUsers.forEach(user => {
+            $('#users').append(user.html);
+        })
+    });
+
+    $(document.body).on('click', '.signin', (e) => {
+        console.log(e)
+        
+        $.post(`/admin/user/${e.target.value}/signin`, function( data ) {
+            if (data) {
+                // e.target.classList.remove('btn-primary');
+                e.target.disabled = true;
+            }
+            else
+                console.log('no')
+        })
+    })
+
+</script>

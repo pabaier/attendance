@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import NodeCache from 'node-cache';
 import { DbClient } from '../db/dbClient';
 import { authCheckMiddleware, rollCheckMiddleware } from '../middleware/auth';
+var ejs = require('ejs');
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
     const router = express.Router()
@@ -32,8 +33,23 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     router.get('/users', async (req: Request, res: Response) => {
         const group = req.query.group ? req.query.group as string : '';
         const users = await dbClient.getUsers(group);
-        res.render('admin/users', { user: req.session.user, users });
+        const usersBig = users?.map(user => {
+            var htmlResult = ''
+            ejs.renderFile('./views/admin/partials/user-section.ejs', {user}, function (err: any, html: any) {
+                htmlResult = html;
+            })
+            return {
+                ...user,
+                html: htmlResult,
+            }
+        })
+        res.render('admin/users', { user: req.session.user, users: JSON.stringify(usersBig) });
     });
+
+    router.post('/user/:userId/signin', (req: Request, res: Response) => {
+        const out = dbClient.signIn(parseInt(req.params.userId))
+        res.send(out)
+    })
 
     return router;
 }

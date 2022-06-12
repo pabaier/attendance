@@ -1,0 +1,10 @@
+<div class="row g-3" id="user-<%- user.id %>">
+    <% for (const property in user) { %>
+    <div class="col">
+        <input class="form-control" type="text" placeholder=<%- user[property] %> aria-label="Disabled input example" disabled>
+    </div>
+    <% } %>
+    <div class="col">
+        <button type="button" value=<%- user.id %> id="sign-in-<%- user.id %>" class="btn btn-primary form-control signin">Sign In</button>
+    </div>
+</div>
