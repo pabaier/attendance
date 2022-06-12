@@ -1,6 +1,7 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
 import { User } from '../models';
+import { user } from '../routes';
 
 
 class DbClientPSQLImpl implements DbClient {
@@ -27,8 +28,11 @@ class DbClientPSQLImpl implements DbClient {
     }
     return this.connection.any(query, [grouping])
     .then((data: User[]) => {
-      console.log(data)
-      return data;
+      return data.map((user: User) => {
+        user.roles = user.roles? JSON.parse(user.roles as string) : '';
+        user.groups = user.groups? JSON.parse(user.groups as string) : '';
+        return user;
+      });
     })
     .catch((error: any) => {
       console.log('ERROR:', error);
