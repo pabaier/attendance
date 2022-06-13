@@ -2,7 +2,8 @@ import express, { Request, Response } from 'express';
 import NodeCache from 'node-cache';
 import { DbClient } from '../db/dbClient';
 import { authCheckMiddleware, rollCheckMiddleware } from '../middleware/auth';
-var ejs = require('ejs');
+import { renderFile } from '../views/helper';
+import { User } from '../models';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
     const router = express.Router()
@@ -34,21 +35,45 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         const group = req.query.group ? req.query.group as string : '';
         const users = await dbClient.getUsers(group);
         const usersBig = users?.map(user => {
-            var htmlResult = ''
-            ejs.renderFile('./views/admin/partials/user-section.ejs', {user}, function (err: any, html: any) {
-                htmlResult = html;
-            })
+            var htmlResult = renderFile('./views/admin/partials/user-section.ejs', { user })
             return {
                 ...user,
                 html: htmlResult,
             }
         })
-        res.render('admin/users', { user: req.session.user, users: JSON.stringify(usersBig) });
+        res.render('admin/users', { user: req.session.user, users: JSON.stringify(usersBig), alert: req.session.alert });
     });
 
     router.post('/user/:userId/signin', (req: Request, res: Response) => {
         const out = dbClient.signIn(parseInt(req.params.userId))
         res.send(out)
+    })
+
+    router.post('/users/add', async (req: Request, res: Response) => {
+        if (Object.keys(req.body).length == 0) {
+            if (!req.session.alert)
+                req.session.alert = [{type: 'alert', message: 'success'}]
+            else
+                req.session.alert.push({type: 'alert', message: 'success'})
+
+            res.redirect('/admin/users')
+            return
+        }
+        const rawBody: string = req.body.text;
+        const rawUsers: string[] = rawBody.split('\n');
+        const users: User[] = rawUsers.map((rawUser) => {
+            const line: string[] = rawUser.split(',')
+            return {
+                email: line[0].trim(),
+                first_name: line[1].trim(),
+                last_name: line[2].trim(),
+                roles: line[3].trim().replaceAll('\'', '"'),
+                groups: line[4].trim().replaceAll('\'', '"'),
+            }
+        });
+        await dbClient.addUsers(users);
+
+        res.redirect('/admin/users')
     })
 
     return router;

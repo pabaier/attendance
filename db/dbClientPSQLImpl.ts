@@ -27,17 +27,17 @@ class DbClientPSQLImpl implements DbClient {
       grouping = `%"${group}"%`;
     }
     return this.connection.any(query, [grouping])
-    .then((data: User[]) => {
-      return data.map((user: User) => {
-        user.roles = user.roles? JSON.parse(user.roles as string) : '';
-        user.groups = user.groups? JSON.parse(user.groups as string) : '';
-        return user;
-      });
-    })
-    .catch((error: any) => {
-      console.log('ERROR:', error);
-      return null;
-    })
+      .then((data: User[]) => {
+        return data.map((user: User) => {
+          user.roles = user.roles ? JSON.parse(user.roles as string) : '';
+          user.groups = user.groups ? JSON.parse(user.groups as string) : '';
+          return user;
+        });
+      })
+      .catch((error: any) => {
+        console.log('ERROR:', error);
+        return null;
+      })
   }
 
   signIn(userId: number) {
@@ -52,14 +52,31 @@ class DbClientPSQLImpl implements DbClient {
   async getUser(userEmail: string): Promise<User | null> {
     return this.connection.one('SELECT * FROM users WHERE email = $1', userEmail)
       .then((data: User) => {
-        data.roles = data.roles? JSON.parse(data.roles as string) : '';
-        data.groups = data.groups? JSON.parse(data.groups as string) : '';
+        data.roles = data.roles ? JSON.parse(data.roles as string) : '';
+        data.groups = data.groups ? JSON.parse(data.groups as string) : '';
         return data;
       })
       .catch((error: any) => {
         console.log('ERROR:', error);
         return null;
       });
+  }
+
+  addUsers(users: User[]) {
+    return this.connection.tx((t: any) => {
+      const queries = users.map(u => {
+        return t.none('INSERT INTO users(email, first_name, last_name, roles, groups) VALUES(${email}, ${first_name}, ${last_name}, ${roles}, ${groups})', u);
+      });
+      return t.batch(queries);
+    })
+    .then((data: any) => {
+      console.log(data)
+      return null;
+    })
+    .catch((error: any) => {
+      console.log('ERROR:', error);
+      return null;
+    });
   }
 }
 
