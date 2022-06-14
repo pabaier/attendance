@@ -1,16 +1,23 @@
 <div class="row my-2" id="user-<%- user.id %>">
+    <div class="col-10">
+            <button type="button" value=<%- user.id %> class="btn btn-outline-secondary form-control view">
+            <div class="row">
+                <div class="col-3">
+                    <%- user.first_name %>
+                </div>
+                <div class="col-3">
+                    <%- user.last_name %>
+                </div>
+                <div class="col">
+                    <%- user.email %>
+                </div>
+            </div>
+        </button>
+        </div>
     <div class="col">
-        <input class="form-control" type="text" placeholder=<%- user.first_name %> aria-label="Disabled input example" disabled>
+        <button type="button" value=<%- user.id %> id="sign-in-<%- user.id %>" class="btn btn-primary signin form-control">Sign In</button>
     </div>
     <div class="col">
-        <input class="form-control" type="text" placeholder=<%- user.last_name %> aria-label="Disabled input example" disabled>
-    </div>
-    <div class="col">
-        <input class="form-control" type="text" placeholder=<%- user.email %> aria-label="Disabled input example" disabled>
-    </div>
-    <div class="col">
-        <button type="button" value=<%- user.id %> id="sign-in-<%- user.id %>" class="btn btn-primary signin">View</button>
-        <button type="button" value=<%- user.id %> id="sign-in-<%- user.id %>" class="btn btn-primary signin">Edit</button>
-        <button type="button" value=<%- user.id %> id="sign-in-<%- user.id %>" class="btn btn-primary signin">Sign In</button>
+        <button type="button" value=<%- user.id %> id="sign-in-<%- user.id %>" class="btn btn-primary delete form-control">Delete</button>
     </div>
 </div>

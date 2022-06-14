@@ -76,5 +76,10 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         res.redirect('/admin/users')
     })
 
+    router.get('/user/:userId', async (req: Request, res: Response) => {
+        const user: User | null= await dbClient.getUser(parseInt(req.params.userId))
+        res.render('admin/user', {user: req.session.user, profile: user})
+    })
+
     return router;
 }

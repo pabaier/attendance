@@ -39,19 +39,11 @@
         })
     })
 
-    $('#bulk-add-form').submit( (e) => {
-        console.log(e)
-        // e.preventDefault();
+    $(document.body).on('click', '.view', (e) => {
+        window.location.href=`/admin/user/${e.currentTarget.value}`;
     })
 
-    $('#bulk-add-btn1').click( (e) => {
-        $.post(`/admin/users/add`, {data: $('#bulk-add-area').val()}, function( data ) {
-            if (data) {
-                e.target.disabled = true;
-            }
-            else
-                console.log('no')
-        })
+    $(document.body).on('click', '.delete', (e) => {
+        console.log('delete', e)
     })
-
 </script>

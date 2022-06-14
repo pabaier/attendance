@@ -48,9 +48,9 @@ class DbClientPSQLImpl implements DbClient {
         return false;
       });
   }
-
-  async getUser(userEmail: string): Promise<User | null> {
-    return this.connection.one('SELECT * FROM users WHERE email = $1', userEmail)
+  async getUser(user: string | number): Promise<User | null> {
+    const userOption: string = typeof(user) == 'string' ? 'email' : 'id';
+    return this.connection.one(`SELECT * FROM users WHERE ${userOption} = $1`, user)
       .then((data: User) => {
         data.roles = data.roles ? JSON.parse(data.roles as string) : '';
         data.groups = data.groups ? JSON.parse(data.groups as string) : '';
