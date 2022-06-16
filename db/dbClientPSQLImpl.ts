@@ -70,7 +70,6 @@ class DbClientPSQLImpl implements DbClient {
       return t.batch(queries);
     })
     .then((data: any) => {
-      console.log(data)
       return null;
     })
     .catch((error: any) => {
@@ -78,6 +77,16 @@ class DbClientPSQLImpl implements DbClient {
       return null;
     });
   }
+
+  deleteUser(userId: number) {
+    return this.connection.none('DELETE FROM users WHERE id = $1', userId)
+    .then((data: any) => { return true;})
+    .catch((error: any) => {
+      console.log('ERROR:', error);
+      return false;
+    });
+  };
+
 }
 
 export default new DbClientPSQLImpl();

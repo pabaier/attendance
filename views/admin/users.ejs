@@ -9,7 +9,7 @@
 
     <div class="container" id="users"></div>
     <form id="bulk-add-form" action="/admin/users/add" method="POST">
-        <textarea class="form-control my-2" name="text" id="bulk-add-area" placeholder="Add Users&#10;Email, FirstName, LastName, Roles, Groups" aria-label="Email" aria-describedby="basic-addon1"></textarea>
+        <textarea class="form-control my-2" name="text" id="bulk-add-area" placeholder="Add Users&#10;Email, FirstName, LastName, ['Roles'], ['Groups']" aria-label="Email" aria-describedby="basic-addon1"></textarea>
         <button type="submit" id="bulk-add-btn" class="btn btn-primary form-control my-2">Submit</button>
     </form>
 </div>
@@ -17,13 +17,17 @@
 <script>
     var users = <%- users %>;
     $('#section-select').change(e => {
-        $('#users').empty();
-        $('#users').append(getUserListHTML(users, e.target.value));
+        setUserList(getUserListHTML(users, e.target.value));
     });
 
     function getUserListHTML(users, group) {
         return users.filter(user => { return user.groups.includes(group) })
                     .map(user => user.html)
+    }
+
+    function setUserList(users) {
+        $('#users').empty();
+        $('#users').append(users);
     }
 
     $(document).ready(function() {
@@ -51,6 +55,19 @@
     })
 
     $(document.body).on('click', '.delete', (e) => {
-        console.log('delete', e)
+        $.ajax({
+            url: `/admin/user/${e.target.value}`,
+            type: 'DELETE',
+            success: function(response) {
+                users = users.filter(user => user.id !== parseInt(e.target.value))
+                setUserList(getUserListHTML(users, 'section3'));
+            },
+            error: function(response) {
+                console.log(response);
+            }
+        });
+
+
+
     })
 </script>

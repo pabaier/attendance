@@ -83,5 +83,13 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         res.render('admin/user', {user: req.session.user, profile: user, section: section[0]})
     })
 
+    router.delete('/user/:userId', async (req: Request, res: Response) => {
+        const user: User | null= await dbClient.getUser(parseInt(req.params.userId))
+        const section: string[] = (user?.groups as string[]).filter(x => x.indexOf('section') !== -1)
+        const result: boolean= await dbClient.deleteUser(parseInt(req.params.userId))
+        res.send('ok')
+        // res.render('admin/users', {user: req.session.user, section: section[0]})
+    })
+
     return router;
 }
