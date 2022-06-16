@@ -33,6 +33,7 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
 
     router.get('/users', async (req: Request, res: Response) => {
         const group = req.query.group ? req.query.group as string : '';
+        const section = req.query.section ? req.query.section as string : 'section1';
         const users = await dbClient.getUsers(group);
         const usersBig = users?.map(user => {
             var htmlResult = renderFile('./views/admin/partials/user-section.ejs', { user })
@@ -41,7 +42,7 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
                 html: htmlResult,
             }
         })
-        res.render('admin/users', { user: req.session.user, users: JSON.stringify(usersBig), alert: req.session.alert });
+        res.render('admin/users', { user: req.session.user, users: JSON.stringify(usersBig), alert: req.session.alert, section });
     });
 
     router.post('/user/:userId/signin', (req: Request, res: Response) => {
@@ -78,7 +79,8 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
 
     router.get('/user/:userId', async (req: Request, res: Response) => {
         const user: User | null= await dbClient.getUser(parseInt(req.params.userId))
-        res.render('admin/user', {user: req.session.user, profile: user})
+        const section: string[] = (user?.groups as string[]).filter(x => x.indexOf('section') !== -1)
+        res.render('admin/user', {user: req.session.user, profile: user, section: section[0]})
     })
 
     return router;

@@ -18,13 +18,20 @@
     var users = <%- users %>;
     $('#section-select').change(e => {
         $('#users').empty();
-        var sectionUsers = users.filter(user => {
-            return user.groups.includes(e.target.value)
-        })
-        sectionUsers.forEach(user => {
-            $('#users').append(user.html);
-        })
+        $('#users').append(getUserListHTML(users, e.target.value));
     });
+
+    function getUserListHTML(users, group) {
+        return users.filter(user => { return user.groups.includes(group) })
+                    .map(user => user.html)
+    }
+
+    $(document).ready(function() {
+        var section = "<%- section %>"
+        if (section) {
+            $('#users').append(getUserListHTML(users, section));
+        }
+    })
 
     $(document.body).on('click', '.signin', (e) => {
         console.log(e)
