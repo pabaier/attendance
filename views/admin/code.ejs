@@ -1,12 +1,27 @@
 <div class="jumbotron">
-    <h1>Code <%- user.first_name %></h1>
+    <h1>Code</h1>
     <h1 id="number"></h1>
 </div>
 
 <script type="application/javascript">
-    setInterval(function () {
+    var intervalID = setInterval(function () {
         $.get( "/admin/code/update", function( data ) {
-            $("#number").html( data.code )
+            if (data.code) {
+                $("#number").html( data.code )
+            }
+            else {
+                $("#alert-box").html( 
+                    "<div class='alert alert-info' role='alert'>" + 
+                        "Attendance Closed" +
+                    "</div>"
+                )
+                $("#number").html( "" )
+                stop();
+            }
         })
     }, parseInt('<%= process.env.CODE_REFRESH_RATE %>'))
+
+    function stop() {
+        clearInterval(intervalID);
+    }
 </script>

@@ -21,14 +21,29 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     });
 
     router.get('/code/update', (req: Request, res: Response) => {
-        const value: number = myCache.has('code') ? myCache.take('code') as number : 0;
-        const oldNumber: number = value % 10;
-        var newNumber: number = Math.floor(Math.random() * 9) + 1;
-        while (newNumber == oldNumber) {
-            newNumber = Math.floor(Math.random() * 9) + 1;
+        var minutes: number = 0;
+        if (myCache.has('time')) {
+            minutes  = myCache.take('time') as number;
         }
-        myCache.set('code', (value * 10 + newNumber) % 100000, codeRefreshRate / 1000 + 500);
-        res.json({ code: newNumber })
+        else {
+            minutes = new Date().getMinutes();
+            myCache.set('time', minutes, 59)
+        }
+        
+        if (minutes < 29 || minutes > 35) {
+            res.json({ code: null })
+            return
+        }
+        else {
+            const value: number = myCache.has('code') ? myCache.take('code') as number : 0;
+            const oldNumber: number = value % 10;
+            var newNumber: number = Math.floor(Math.random() * 9) + 1;
+            while (newNumber == oldNumber) {
+                newNumber = Math.floor(Math.random() * 9) + 1;
+            }
+            myCache.set('code', (value * 10 + newNumber) % 100000, codeRefreshRate / 1000 + 0.5);
+            res.json({ code: newNumber })
+        }
     });
 
     router.get('/users', async (req: Request, res: Response) => {
@@ -53,9 +68,9 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     router.post('/users/add', async (req: Request, res: Response) => {
         if (Object.keys(req.body).length == 0) {
             if (!req.session.alert)
-                req.session.alert = [{type: 'alert', message: 'success'}]
+                req.session.alert = [{type: 'success', message: 'success'}]
             else
-                req.session.alert.push({type: 'alert', message: 'success'})
+                req.session.alert.push({type: 'success', message: 'success'})
 
             res.redirect('/admin/users')
             return
