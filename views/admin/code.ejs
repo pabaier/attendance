@@ -1,9 +1,28 @@
 <div class="jumbotron">
+    <h5 id="timer"></h5>
     <h1>Code</h1>
     <h1 id="number"></h1>
 </div>
 
 <script type="application/javascript">
+    var today = new Date();
+    var target = new Date(today);
+    target.setHours(23, 36)
+
+    var timerID = setInterval(function () {
+        var date = new Date()      
+
+        var difference = new Date(target - date);
+
+        if (difference.getMinutes() >= 0 && difference.getMinutes() <= 5) {
+            var seconds = difference.getSeconds() >= 10 ? difference.getSeconds() : `0${difference.getSeconds()}`;
+            $("#timer").html(`${difference.getMinutes()}:${seconds}`)
+        }
+        else {
+            $("#timer").html('')
+        }
+    }, 1000);
+
     var intervalID = setInterval(function () {
         $.get( "/admin/code/update", function( data ) {
             if (data.code) {
@@ -16,12 +35,16 @@
                     "</div>"
                 )
                 $("#number").html( "" )
-                stop();
+                stopCode();
             }
         })
     }, parseInt('<%= process.env.CODE_REFRESH_RATE %>'))
 
-    function stop() {
+    function stopCode() {
         clearInterval(intervalID);
+    }
+
+    function stopTimer() {
+        clearInterval(timerID);
     }
 </script>
