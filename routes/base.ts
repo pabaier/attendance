@@ -2,6 +2,8 @@ import express, { Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import { DbClient } from '../db/dbClient';
 import { Alert } from '../models';
+import {  rollCheckMiddleware } from '../middleware/auth';
+import session from 'express-session';
 
 export default function (dbClient: DbClient) {
     const router = express.Router();
@@ -19,6 +21,17 @@ export default function (dbClient: DbClient) {
 
     router.get('/about', (req: Request, res: Response) => {
         res.render('base/about', { user: req.session.user })
+    });
+
+    router.get('/test', rollCheckMiddleware(['admin']), async (req: Request, res: Response) => {
+        const data = await dbClient.getLatestSignIn(req.session.user?.id as number)
+        if (data) {
+            console.log(data);
+        }
+        else {
+            console.log('nope')
+        }
+        res.render('base/test', { user: req.session.user, test: data })
     });
 
     router.post('/login/verify', async (req: Request, res: Response) => {

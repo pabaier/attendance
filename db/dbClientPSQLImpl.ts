@@ -18,6 +18,15 @@ class DbClientPSQLImpl implements DbClient {
     )
     this.connection = db;
   }
+  getLatestSignIn(userId: number): Promise<number | null> {
+    return this.connection.one("SELECT user_id FROM attendance WHERE user_id = $1 and date_created > current_date", userId)
+    .then((data: number | null) => {
+      return data;
+    })
+    .catch((error: any) => {
+      return null
+    })
+  }
 
   async getUsers(group?: string | null): Promise<User[] | null> {
     var query = 'SELECT * FROM users'
@@ -48,6 +57,7 @@ class DbClientPSQLImpl implements DbClient {
         return false;
       });
   }
+
   async getUser(user: string | number): Promise<User | null> {
     const userOption: string = typeof(user) == 'string' ? 'email' : 'id';
     return this.connection.one(`SELECT * FROM users WHERE ${userOption} = $1`, user)

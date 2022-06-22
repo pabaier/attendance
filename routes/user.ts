@@ -17,12 +17,19 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         res.render('user/attendance', { user: req.session.user })
     });
 
-    router.post('/attendance', (req: Request, res: Response) => {
+    router.post('/attendance', async (req: Request, res: Response) => {
         const result = parseInt(req.body.code) == myCache.get('code') as number
+        const signedIn = await dbClient.getLatestSignIn(req.session.user?.id as number)
         var alert: Alert[] = [];
-        if (result) {
+        if (result && signedIn) {
             dbClient.signIn(req.session.user?.id as number)
             alert.push({type: 'success', message: 'success'})
+        }
+        else if (!result) {
+            alert.push({type: 'danger', message: 'try again'})
+        }
+        else if (!signedIn) {
+            alert.push({type: 'warning', message: 'already signed in today'})
         }
         else {
             alert.push({type: 'danger', message: 'try again'})
