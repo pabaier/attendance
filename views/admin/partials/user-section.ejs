@@ -1,6 +1,5 @@
-<div class="row my-2" id="user-<%- user.id %>">
+<div class="row my-2 user" id="<%- user.id %>">
     <div class="col-10">
-            <button type="button" value=<%- user.id %> class="btn btn-outline-secondary form-control view">
             <div class="row">
                 <div class="col-3">
                     <%- user.first_name %>
@@ -12,7 +11,6 @@
                     <%- user.email %>
                 </div>
             </div>
-        </button>
         </div>
     <div class="col">
         <button type="button" value=<%- user.id %> id="sign-in-<%- user.id %>" class="btn btn-primary signin form-control">Sign In</button>

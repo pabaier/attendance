@@ -7,7 +7,7 @@
         <option value="section3">Three</option>
     </select>
 
-    <div class="container" id="users"></div>
+    <div class="container alternating-table" id="users"></div>
     <form id="bulk-add-form" action="/admin/users/add" method="POST">
         <textarea class="form-control my-2" name="text" id="bulk-add-area" placeholder="Add Users&#10;Email, FirstName, LastName, ['Roles'], ['Groups']" aria-label="Email" aria-describedby="basic-addon1"></textarea>
         <button type="submit" id="bulk-add-btn" class="btn btn-primary form-control my-2">Submit</button>
@@ -15,26 +15,36 @@
 </div>
 
 <script>
-    var users = <%- users %>;
-    $('#section-select').change(e => {
-        setUserList(getUserListHTML(users, e.target.value));
-    });
-
-    function getUserListHTML(users, group) {
-        return users.filter(user => { return user.groups.includes(group) })
-                    .map(user => user.html)
-    }
-
-    function setUserList(users) {
-        $('#users').empty();
-        $('#users').append(users);
-    }
-
     $(document).ready(function() {
-        var section = "<%- section %>"
-        if (section) {
-            $('#users').append(getUserListHTML(users, section));
+        var users = <%- users %>;
+        users.sort((x, y) => {return x.groups > y.groups})
+
+        var usersHTML = users.map(user => {
+            var a = $(user.html)
+            $('#users').append(a);
+            return a
+        });
+
+        $('#section-select').change(e => {
+            getUserListHTML(users, e.target.value);
+        });
+
+        function getUserListHTML(users, group) {
+            usersHTML.forEach((user, index) => {
+                if (!users[index].groups.includes(group)) {
+                    user.hide()
+                }
+                else {
+                    user.show()
+                }
+            })
         }
+
+        $('.user').click(function(e){
+            var userId = $(this).attr('id')
+            window.location.href=`/admin/user/${userId}`;
+            console.log($(this).attr('id'))
+        })
     })
 
     $(document.body).on('click', '.signin', (e) => {
@@ -50,9 +60,6 @@
         })
     })
 
-    $(document.body).on('click', '.view', (e) => {
-        window.location.href=`/admin/user/${e.currentTarget.value}`;
-    })
 
     $(document.body).on('click', '.delete', (e) => {
         $.ajax({
