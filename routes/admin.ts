@@ -48,7 +48,6 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
 
     router.get('/users', async (req: Request, res: Response) => {
         const group = req.query.group ? req.query.group as string : '';
-        const section = req.query.section ? req.query.section as string : 'section1';
         const users = await dbClient.getUsers(group);
         const usersBig = users?.map(user => {
             var htmlResult = renderFile('./views/admin/partials/user-section.ejs', { user })
@@ -57,7 +56,7 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
                 html: htmlResult,
             }
         })
-        res.render('admin/users', { user: req.session.user, users: JSON.stringify(usersBig), alert: req.session.alert, section });
+        res.render('admin/users', { user: req.session.user, users: JSON.stringify(usersBig), alert: req.session.alert });
     });
 
     router.post('/user/:userId/signin', (req: Request, res: Response) => {
@@ -105,6 +104,18 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         res.send('ok')
         // res.render('admin/users', {user: req.session.user, section: section[0]})
     })
+
+    router.get('/courses', async (req: Request, res: Response) => {
+        const courses = await dbClient.getCourses();
+        const coursesBig = courses.map(course => {
+            var htmlResult = renderFile('./views/admin/partials/course-section.ejs', { course })
+            return {
+                ...course,
+                html: htmlResult,
+            }
+        })
+        res.render('admin/courses', { user: req.session.user, courses: JSON.stringify(coursesBig) });
+    });
 
     return router;
 }

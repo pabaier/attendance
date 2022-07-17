@@ -1,6 +1,6 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
-import { User } from '../models';
+import { Course, User } from '../models';
 import { user } from '../routes';
 
 
@@ -29,23 +29,17 @@ class DbClientPSQLImpl implements DbClient {
   }
 
   async getUsers(group?: string | null): Promise<User[] | null> {
-    var query = 'SELECT * FROM users'
-    var grouping = '';
+    var query = 'select u.id, u.email, u.first_name, u.last_name, u.roles, u.groups from user_group ug inner join users u on u.id = ug.user_id'
     if (group) {
-      query = query + ' WHERE groups LIKE $1';
-      grouping = `%"${group}"%`;
+      query = query + ' where ug.group_name = $1';
     }
-    return this.connection.any(query, [grouping])
+    return this.connection.any(query, [group])
       .then((data: User[]) => {
-        return data.map((user: User) => {
-          user.roles = user.roles ? JSON.parse(user.roles as string) : '';
-          user.groups = user.groups ? JSON.parse(user.groups as string) : '';
-          return user;
-        });
+        return data
       })
       .catch((error: any) => {
         console.log('ERROR:', error);
-        return null;
+        return [];
       })
   }
 
@@ -97,6 +91,18 @@ class DbClientPSQLImpl implements DbClient {
     });
   };
 
+  async getCourses(): Promise<Course[]> {
+    var query = 'SELECT * FROM courses'
+
+    return this.connection.any(query)
+      .then((data: Course[]) => {
+        return data
+      })
+      .catch((error: any) => {
+        console.log('ERROR:', error);
+        return [];
+      });
+  }
 }
 
 export default new DbClientPSQLImpl();

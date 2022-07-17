@@ -17,7 +17,9 @@
 <script>
     $(document).ready(function() {
         var users = <%- users %>;
-        users.sort((x, y) => {return x.groups > y.groups})
+        users.sort((x, y) => {
+            return x.groups > y.groups
+        })
 
         var usersHTML = users.map(user => {
             var a = $(user.html)

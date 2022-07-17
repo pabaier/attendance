@@ -1,4 +1,4 @@
-import { User } from "../models";
+import { Course, User } from "../models";
 
 export interface DbClient {
     connection: any;
@@ -8,4 +8,5 @@ export interface DbClient {
     addUsers(users: User[]): Promise<any | null>;
     deleteUser(userId: number): boolean;
     getLatestSignIn(userId: number): Promise<number | null>;
+    getCourses(): Promise<Course[]>
 }
