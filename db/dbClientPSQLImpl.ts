@@ -103,6 +103,19 @@ class DbClientPSQLImpl implements DbClient {
         return [];
       });
   }
+
+  addCourse(course: Course) {
+    return this.connection.none(
+        'INSERT INTO courses(course_number, semester, course_year, start_time, end_time) VALUES(${course_number}, ${semester}, ${course_year}, ${start_time}, ${end_time})', course
+    )
+    .then((data: any) => {
+      return true;
+    })
+    .catch((error: any) => {
+      console.log('ERROR:', error);
+      return false;
+    });
+  }
 }
 
 export default new DbClientPSQLImpl();

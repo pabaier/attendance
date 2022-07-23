@@ -7,73 +7,20 @@
         <option value="section3">2023</option>
     </select>
 
-    <div class="container alternating-table" id="courses"></div>
-    <form id="bulk-add-form" action="/admin/courses/add" method="POST">
-        <textarea class="form-control my-2" name="text" id="bulk-add-area" placeholder="Add Courses&#10;Year, Course Number, Semester, Name" aria-label="Courses" aria-describedby="basic-addon1"></textarea>
-        <button type="submit" id="bulk-add-btn" class="btn btn-primary form-control my-2">Submit</button>
-    </form>
+    <div class="container alternating-table" id="courses">
+        <% courses.forEach(course => { %>
+            <%- course %>
+        <% }) %>
+    </div>
+    <%- addForm %>
 </div>
 
 <script>
     $(document).ready(function() {
-        var courses = <%- courses %>;
-        var coursesHTML = courses.map(course => {
-            var a = $(course.html)
-            $('#courses').append(a);
-            return a
-        });
-
-
-        // $('#section-select').change(e => {
-        //     getUserListHTML(users, e.target.value);
-        // });
-
-        // function getUserListHTML(users, group) {
-        //     usersHTML.forEach((user, index) => {
-        //         if (!users[index].groups.includes(group)) {
-        //             user.hide()
-        //         }
-        //         else {
-        //             user.show()
-        //         }
-        //     })
-        // }
-
         $('.course').click(function(e){
             var course_name = $(this).attr('id')
             window.location.href=`/admin/users?group=${course_name}`;
-            console.log($(this).attr('id'))
         })
     })
 
-    // $(document.body).on('click', '.signin', (e) => {
-    //     console.log(e)
-        
-    //     $.post(`/admin/user/${e.target.value}/signin`, function( data ) {
-    //         if (data) {
-    //             // e.target.classList.remove('btn-primary');
-    //             e.target.disabled = true;
-    //         }
-    //         else
-    //             console.log('no')
-    //     })
-    // })
-
-
-    // $(document.body).on('click', '.delete', (e) => {
-    //     $.ajax({
-    //         url: `/admin/user/${e.target.value}`,
-    //         type: 'DELETE',
-    //         success: function(response) {
-    //             users = users.filter(user => user.id !== parseInt(e.target.value))
-    //             setUserList(getUserListHTML(users, 'section3'));
-    //         },
-    //         error: function(response) {
-    //             console.log(response);
-    //         }
-    //     });
-
-
-
-    // })
 </script>

@@ -3,7 +3,7 @@ import NodeCache from 'node-cache';
 import { DbClient } from '../db/dbClient';
 import { authCheckMiddleware, rollCheckMiddleware } from '../middleware/auth';
 import { renderFile } from '../views/helper';
-import { User } from '../models';
+import { User, Course } from '../models';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
     const router = express.Router()
@@ -108,14 +108,41 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     router.get('/courses', async (req: Request, res: Response) => {
         const courses = await dbClient.getCourses();
         const coursesBig = courses.map(course => {
-            var htmlResult = renderFile('./views/admin/partials/course-section.ejs', { course })
-            return {
-                ...course,
-                html: htmlResult,
-            }
+            return renderFile('./views/admin/partials/course-section.ejs', { course })
         })
-        res.render('admin/courses', { user: req.session.user, courses: JSON.stringify(coursesBig) });
+
+        // {action: form action, fields: [{id: field id, placeholder, }], }
+        const action = "/admin/courses/add";
+        const fieldNames = ['number', 'semester', 'year', 'startTime', 'endTime']
+        const fields = fieldNames.map(name => {
+            return {id: name, placeholder: name}
+        })
+        const addCoursesForm = renderFile('./views/partials/input-form.ejs', {action, fields});
+        res.render('admin/courses', { user: req.session.user, courses: coursesBig, addForm: addCoursesForm });
     });
+
+    router.post('/courses/add', async (req: Request, res: Response) => {
+        if (Object.keys(req.body).length == 0) {
+            if (!req.session.alert)
+                req.session.alert = [{type: 'success', message: 'success'}]
+            else
+                req.session.alert.push({type: 'success', message: 'success'})
+
+            res.redirect('/admin/courses')
+            return
+        }
+        const course: Course = {
+            course_number: parseInt(req.body.number),
+            semester: req.body.semester,
+            course_year: parseInt(req.body.year),
+            start_time: req.body.startTime,
+            end_time: req.body.endTime
+        }
+
+        const r = dbClient.addCourse(course)
+
+        res.redirect('/admin/courses')
+    })
 
     return router;
 }

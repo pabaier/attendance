@@ -1,8 +1,9 @@
 .alternating-table > div:nth-child(even) {
-    background: #C9E4CA;
+    background: #E6E6E6;
   }
 
 .alternating-table > div:hover {
-    background: #87BBA2;
+    /* background: #3f4045; */
+    background: #89C1C5;
     cursor: pointer
 }
