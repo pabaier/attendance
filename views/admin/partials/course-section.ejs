@@ -1,21 +1,42 @@
-<div class="row my-2 course" id="<%=course.course_number%>-<%=course.semester%>-<%=course.course_year%>-<%=course.start_time%>">
-    <div class="col-10">
-            <div class="row">
-                <div class="col-3">
-                    <%- course.course_number %>
-                </div>
-                <div class="col-3">
-                    <%- course.semester %>
-                </div>
-                <div class="col">
-                    <%- course.course_year %>
-                </div>
-                <div class="col-3">
-                    <%- course.start_time %>
-                </div>
+<div class="row my-2">
+    <div class="col-10 course" id="<%=course.course_number%>-<%=course.semester%>-<%=course.course_year%>-<%=course.start_time%>">
+        <div class="row">
+            <div class="col-3">
+                <%- course.course_number %>
+            </div>
+            <div class="col-3">
+                <%- course.semester %>
+            </div>
+            <div class="col">
+                <%- course.course_year %>
+            </div>
+            <div class="col-3">
+                <%- course.start_time %>
             </div>
         </div>
+    </div>
     <div class="col">
         <button type="button" value=<%- course.id %> id="course-<%- course.id %>" class="btn btn-primary delete form-control">Delete</button>
     </div>
 </div>
+
+<script>
+    $(".course").click(function() {
+        courseDiv = $(this).closest('.course')
+        var course_name = courseDiv.prop('id')
+        window.location.href=`/admin/users?group=${course_name}`;
+    })
+
+    $(".delete").click((e) => {
+        $.ajax({
+            url: `/admin/courses/${e.target.value}`,
+            type: 'DELETE',
+            success: function(response) {
+                location.reload();
+            },
+            error: function(response) {
+                console.log(response);
+            }
+        });
+    })
+</script>

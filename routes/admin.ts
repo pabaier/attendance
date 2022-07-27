@@ -144,5 +144,11 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         res.redirect('/admin/courses')
     })
 
+    router.delete('/courses/:courseId', (req: Request, res: Response) => {
+        console.log('delete', req.params.courseId)
+        const result: boolean= dbClient.deleteCourse(parseInt(req.params.courseId))
+        res.send('ok')
+    })
+
     return router;
 }

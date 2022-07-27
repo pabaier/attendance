@@ -14,13 +14,3 @@
     </div>
     <%- addForm %>
 </div>
-
-<script>
-    $(document).ready(function() {
-        $('.course').click(function(e){
-            var course_name = $(this).attr('id')
-            window.location.href=`/admin/users?group=${course_name}`;
-        })
-    })
-
-</script>

@@ -116,6 +116,15 @@ class DbClientPSQLImpl implements DbClient {
       return false;
     });
   }
+
+  deleteCourse(courseId: number) {
+    return this.connection.none('DELETE FROM courses WHERE id = $1', courseId)
+    .then((data: any) => { return true;})
+    .catch((error: any) => {
+      console.log('ERROR:', error);
+      return false;
+    });
+  };
 }
 
 export default new DbClientPSQLImpl();

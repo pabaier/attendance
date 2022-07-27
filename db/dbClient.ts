@@ -10,4 +10,5 @@ export interface DbClient {
     getLatestSignIn(userId: number): Promise<number | null>;
     getCourses(): Promise<Course[]>;
     addCourse(course: Course): boolean;
+    deleteCourse(courseId: number): boolean;
 }
