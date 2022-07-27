@@ -144,8 +144,20 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         res.redirect('/admin/courses')
     })
 
+    router.get('/courses/:group/users', async (req: Request, res: Response) => {
+        const groupName = req.params.group
+        const users = await dbClient.getUsers(groupName);
+        const usersBig = users?.map(user => {
+            var htmlResult = renderFile('./views/admin/partials/user-section.ejs', { user })
+            return {
+                ...user,
+                html: htmlResult,
+            }
+        })
+        res.render('admin/course', { user: req.session.user, course: groupName, users: JSON.stringify(usersBig), alert: req.session.alert });
+    })
+
     router.delete('/courses/:courseId', (req: Request, res: Response) => {
-        console.log('delete', req.params.courseId)
         const result: boolean= dbClient.deleteCourse(parseInt(req.params.courseId))
         res.send('ok')
     })

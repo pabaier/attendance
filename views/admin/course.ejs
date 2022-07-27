@@ -1,0 +1,72 @@
+<div class="jumbotron">
+    <h1>Course <%=course%></h1>
+    <div class="container alternating-table" id="users"></div>
+    <form id="bulk-add-form" action="/admin/users/add" method="POST">
+        <textarea class="form-control my-2" name="text" id="bulk-add-area" placeholder="Add Users&#10;Email, FirstName, LastName, ['Roles'], ['Groups']" aria-label="Email" aria-describedby="basic-addon1"></textarea>
+        <button type="submit" id="bulk-add-btn" class="btn btn-primary form-control my-2">Submit</button>
+    </form>
+</div>
+
+<script>
+    $(document).ready(function() {
+        var users = <%- users %>;
+        users.sort((x, y) => {
+            return x.groups > y.groups
+        })
+
+        var usersHTML = users.map(user => {
+            var a = $(user.html)
+            $('#users').append(a);
+            return a
+        });
+
+        $('#section-select').change(e => {
+            getUserListHTML(users, e.target.value);
+        });
+
+        function getUserListHTML(users, group) {
+            usersHTML.forEach((user, index) => {
+                if (!users[index].groups.includes(group)) {
+                    user.hide()
+                }
+                else {
+                    user.show()
+                }
+            })
+        }
+
+        $('.user').click(function(e){
+            var userId = $(this).attr('id')
+            window.location.href=`/admin/user/${userId}`;
+            console.log($(this).attr('id'))
+        })
+    })
+
+    $(document.body).on('click', '.signin', (e) => {
+        console.log(e)
+        
+        $.post(`/admin/user/${e.target.value}/signin`, function( data ) {
+            if (data) {
+                // e.target.classList.remove('btn-primary');
+                e.target.disabled = true;
+            }
+            else
+                console.log('no')
+        })
+    })
+
+
+    $(document.body).on('click', '.delete', (e) => {
+        $.ajax({
+            url: `/admin/user/${e.target.value}`,
+            type: 'DELETE',
+            success: function(response) {
+                users = users.filter(user => user.id !== parseInt(e.target.value))
+                setUserList(getUserListHTML(users, 'section3'));
+            },
+            error: function(response) {
+                console.log(response);
+            }
+        });
+    })
+</script>
