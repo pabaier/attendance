@@ -24,7 +24,7 @@
     $(".course").click(function() {
         courseDiv = $(this).closest('.course')
         var course_name = courseDiv.prop('id')
-        window.location.href=`/admin/courses/${course_name}/users`;
+        window.location.href=`/admin/courses/${course_name}`;
     })
 
     $(".delete").click((e) => {

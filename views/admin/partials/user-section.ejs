@@ -1,5 +1,8 @@
-<div class="row my-2 user" id="<%- user.id %>">
-    <div class="col-10">
+<div class="row my-2">
+    <div class="col">
+        <input class="form-check-input userc" type="checkbox" value="<%- user.id %>">
+    </div>
+    <div class="col-9 user" id="<%- user.id %>">
             <div class="row">
                 <div class="col-3">
                     <%- user.first_name %>
@@ -19,3 +22,11 @@
         <button type="button" value=<%- user.id %> id="sign-in-<%- user.id %>" class="btn btn-primary delete form-control">Delete</button>
     </div>
 </div>
+
+<script>
+    $('.user').click(function(e){
+        var userId = $(this).attr('id')
+        window.location.href=`/admin/user/${userId}`;
+        console.log($(this).attr('id'))
+    })
+</script>

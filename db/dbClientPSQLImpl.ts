@@ -126,6 +126,22 @@ class DbClientPSQLImpl implements DbClient {
       return false;
     });
   };
+
+  async addUsersToGroup(userIds: number[], group: string): Promise<boolean> {
+    return this.connection.tx((t: any) => {
+      const queries = userIds.map(uId => {
+        return t.none('INSERT INTO user_group(user_id, group_name) VALUES($1, $2)', [uId, group]);
+      });
+      return t.batch(queries);
+    })
+    .then((data: any) => {
+      return true;
+    })
+    .catch((error: any) => {
+      console.log('ERROR:', error);
+      return false;
+    });
+  }
 }
 
 export default new DbClientPSQLImpl();

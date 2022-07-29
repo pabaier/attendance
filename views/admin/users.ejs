@@ -7,46 +7,37 @@
         <option value="section3">Three</option>
     </select>
 
-    <div class="container alternating-table" id="users"></div>
+    <div class="container alternating-table users" id="users">
+        <% users.forEach(user => { %>
+            <%- user %>
+        <% }) %>
+    </div>
+    <select class="form-select my-2" id="add-class-select" aria-label="Default select section">
+        <option selected>Select Course</option>
+        <% courses.forEach(course => { %>
+            <option value="<%=course%>"><%=course%></option>
+        <% }) %>
+    </select>
+    <button type="submit" id="add-class-btn" class="btn btn-primary form-control my-2">Add Users To Course</button>
     <form id="bulk-add-form" action="/admin/users/add" method="POST">
         <textarea class="form-control my-2" name="text" id="bulk-add-area" placeholder="Add Users&#10;Email, FirstName, LastName, ['Roles'], ['Groups']" aria-label="Email" aria-describedby="basic-addon1"></textarea>
-        <button type="submit" id="bulk-add-btn" class="btn btn-primary form-control my-2">Submit</button>
+        <button type="submit" id="bulk-add-btn" class="btn btn-primary form-control my-2">Add New Users</button>
     </form>
 </div>
 
 <script>
-    $(document).ready(function() {
-        var users = <%- users %>;
-        users.sort((x, y) => {
-            return x.groups > y.groups
+    $('#add-class-btn').click(function() {
+        var course = $('#add-class-select').find(":selected").text()
+        var userIds = []
+        $('.userc:checkbox:checked').each(function() {userIds.push(this.value)})
+        $.post(`/admin/courses/${course}/users`, { userIds }, function( data ) {
+            if (data) {
+                window.location.href=`/admin/courses/${course}`;
+            } else {
+                console.log('nope')
+            }
         })
 
-        var usersHTML = users.map(user => {
-            var a = $(user.html)
-            $('#users').append(a);
-            return a
-        });
-
-        $('#section-select').change(e => {
-            getUserListHTML(users, e.target.value);
-        });
-
-        function getUserListHTML(users, group) {
-            usersHTML.forEach((user, index) => {
-                if (!users[index].groups.includes(group)) {
-                    user.hide()
-                }
-                else {
-                    user.show()
-                }
-            })
-        }
-
-        $('.user').click(function(e){
-            var userId = $(this).attr('id')
-            window.location.href=`/admin/user/${userId}`;
-            console.log($(this).attr('id'))
-        })
     })
 
     $(document.body).on('click', '.signin', (e) => {

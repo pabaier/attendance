@@ -4,6 +4,7 @@ import { DbClient } from '../db/dbClient';
 import { authCheckMiddleware, rollCheckMiddleware } from '../middleware/auth';
 import { renderFile } from '../views/helper';
 import { User, Course } from '../models';
+import { getCourseName } from './helpers';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
     const router = express.Router()
@@ -49,14 +50,12 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     router.get('/users', async (req: Request, res: Response) => {
         const group = req.query.group ? req.query.group as string : '';
         const users = await dbClient.getUsers(group);
-        const usersBig = users?.map(user => {
-            var htmlResult = renderFile('./views/admin/partials/user-section.ejs', { user })
-            return {
-                ...user,
-                html: htmlResult,
-            }
+        const usersSections = users?.map(user => {
+            return renderFile('./views/admin/partials/user-section.ejs', { user })
         })
-        res.render('admin/users', { user: req.session.user, users: JSON.stringify(usersBig), alert: req.session.alert });
+        const courses = await dbClient.getCourses();
+        const courseNames = courses.map(course => getCourseName(course))
+        res.render('admin/users', { user: req.session.user, users: usersSections, courses: courseNames, alert: req.session.alert });
     });
 
     router.post('/user/:userId/signin', (req: Request, res: Response) => {
@@ -144,17 +143,23 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         res.redirect('/admin/courses')
     })
 
-    router.get('/courses/:group/users', async (req: Request, res: Response) => {
+    router.get('/courses/:group', async (req: Request, res: Response) => {
         const groupName = req.params.group
         const users = await dbClient.getUsers(groupName);
-        const usersBig = users?.map(user => {
-            var htmlResult = renderFile('./views/admin/partials/user-section.ejs', { user })
-            return {
-                ...user,
-                html: htmlResult,
-            }
+        const usersSections = users?.map(user => {
+            return renderFile('./views/admin/partials/user-section.ejs', { user })
         })
-        res.render('admin/course', { user: req.session.user, course: groupName, users: JSON.stringify(usersBig), alert: req.session.alert });
+        res.render('admin/course', { user: req.session.user, course: groupName, users: usersSections, alert: req.session.alert });
+    })
+
+    router.post('/courses/:group/users', async (req: Request, res: Response) => {
+        const groupName = req.params.group;
+        const userIds = req.body.userIds;
+        const outcome = await dbClient.addUsersToGroup(userIds, groupName);
+        if (outcome)
+            return res.send('ok')
+        else
+            return res.send('fail') // this should be a 500
     })
 
     router.delete('/courses/:courseId', (req: Request, res: Response) => {
