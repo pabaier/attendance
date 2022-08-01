@@ -1,23 +1,23 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
-import { Course, User } from '../models';
-import { user } from '../routes';
-
+import { Course, User, UserGroups } from '../models';
 
 class DbClientPSQLImpl implements DbClient {
   connection: any;
+  pg: pgp.IMain;
 
   constructor() {
     const baseURL = process.env.BASEURL;
     const databaseURL: string = process.env.DATABASE_URL as string;
-    const db = pgp()(
+    this.pg = pgp()
+    this.connection = this.pg(
       {
         connectionString: databaseURL,
         ssl: baseURL?.includes('localhost') ? false : { rejectUnauthorized: false }
       }
     )
-    this.connection = db;
   }
+
   getLatestSignIn(userId: number): Promise<number | null> {
     return this.connection.one("SELECT user_id FROM attendance WHERE user_id = $1 and date_created > current_date", userId)
     .then((data: number | null) => {
@@ -67,20 +67,18 @@ class DbClientPSQLImpl implements DbClient {
       });
   }
 
-  addUsers(users: User[]) {
-    return this.connection.tx((t: any) => {
-      const queries = users.map(u => {
-        return t.none('INSERT INTO users(email, first_name, last_name, roles, groups) VALUES(${email}, ${first_name}, ${last_name}, ${roles}, ${groups})', u);
-      });
-      return t.batch(queries);
-    })
-    .then((data: any) => {
-      return null;
-    })
-    .catch((error: any) => {
-      console.log('ERROR:', error);
-      return null;
-    });
+  async addUsers(users: User[]): Promise<User[]> {
+    const cs = new this.pg.helpers.ColumnSet(['email', 'first_name', 'last_name', 'roles', 'groups'], {table: 'users'});
+    const values = users.map(u => { return {
+      email: u.email, 
+      first_name: u.first_name, 
+      last_name: u.last_name, 
+      roles: u.roles, 
+      groups: u.groups
+    }})
+    const query = this.pg.helpers.insert(values, cs) + ' RETURNING id, email, first_name, last_name, roles, groups';
+    const res: User[] = await this.connection.many(query);
+    return res;
   }
 
   deleteUser(userId: number) {
@@ -127,20 +125,22 @@ class DbClientPSQLImpl implements DbClient {
     });
   };
 
-  async addUsersToGroup(userIds: number[], group: string): Promise<boolean> {
-    return this.connection.tx((t: any) => {
-      const queries = userIds.map(uId => {
-        return t.none('INSERT INTO user_group(user_id, group_name) VALUES($1, $2)', [uId, group]);
-      });
-      return t.batch(queries);
+  async addUsersToGroups(userGroups: UserGroups[]): Promise<{}[]> {
+    const cs = new this.pg.helpers.ColumnSet(['user_id', 'group_name'], {table: 'user_group'});
+    var values: {}[] = []
+    userGroups.forEach(user => {
+      const uId = user.id
+      user.groups.forEach(group => {
+        values.push({user_id: uId, group_name: group})
+      })
     })
-    .then((data: any) => {
-      return true;
-    })
-    .catch((error: any) => {
-      console.log('ERROR:', error);
-      return false;
-    });
+    if (values.length) {
+      const query = this.pg.helpers.insert(values, cs) + ' RETURNING user_id, group_name';
+      const res = await this.connection.many(query);
+      return res;
+    } else {
+      return []
+    }
   }
 }
 

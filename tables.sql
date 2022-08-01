@@ -31,7 +31,7 @@ insert into courses (course_number, semester, course_year, start_time, end_time)
 values (220, 'Fall', 2022, '9:30', '10:30')
 
 CREATE TABLE user_group (
-	user_id integer REFERENCES users (id),
+	user_id integer REFERENCES users (id) ON DELETE CASCADE,
 	group_name VARCHAR (50),
 	UNIQUE(user_id, group_name)
 );

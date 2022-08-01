@@ -3,7 +3,7 @@ import NodeCache from 'node-cache';
 import { DbClient } from '../db/dbClient';
 import { authCheckMiddleware, rollCheckMiddleware } from '../middleware/auth';
 import { renderFile } from '../views/helper';
-import { User, Course } from '../models';
+import { User, Course, UserGroups } from '../models';
 import { getCourseName } from './helpers';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
@@ -81,24 +81,31 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
                 email: line[0].trim(),
                 first_name: line[1].trim(),
                 last_name: line[2].trim(),
-                roles: line[3].trim().replaceAll('\'', '"'),
-                groups: line[4].trim().replaceAll('\'', '"'),
+                roles: line[3].trim(),
+                groups: line[4].trim(),
             }
         });
-        await dbClient.addUsers(users);
+        // add users to db
+        const newUsers: User[] = await dbClient.addUsers(users);
+
+        // add user groups to db
+        const userGroups: UserGroups[] = newUsers
+        .map(user => {
+            const groups: string[] = JSON.parse(user.groups);
+            return {id: user.id as number, groups}
+        })
+        .filter(userGroup => userGroup.groups.length)
+        await dbClient.addUsersToGroups(userGroups);
 
         res.redirect('/admin/users')
     })
 
     router.get('/user/:userId', async (req: Request, res: Response) => {
         const user: User | null= await dbClient.getUser(parseInt(req.params.userId))
-        const section: string[] = (user?.groups as string[]).filter(x => x.indexOf('section') !== -1)
-        res.render('admin/user', {user: req.session.user, profile: user, section: section[0]})
+        res.render('admin/user', {user: req.session.user, profile: user})
     })
 
     router.delete('/user/:userId', async (req: Request, res: Response) => {
-        const user: User | null= await dbClient.getUser(parseInt(req.params.userId))
-        const section: string[] = (user?.groups as string[]).filter(x => x.indexOf('section') !== -1)
         const result: boolean= await dbClient.deleteUser(parseInt(req.params.userId))
         res.send('ok')
         // res.render('admin/users', {user: req.session.user, section: section[0]})
@@ -153,9 +160,12 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     })
 
     router.post('/courses/:group/users', async (req: Request, res: Response) => {
-        const groupName = req.params.group;
-        const userIds = req.body.userIds;
-        const outcome = await dbClient.addUsersToGroup(userIds, groupName);
+        const groupName: string = req.params.group;
+        const userIds: number[] = req.body.userIds;
+        const userGroups: UserGroups[] = userIds.map(uId => {
+            return {id: uId, groups: [groupName]}
+        })
+        const outcome = await dbClient.addUsersToGroups(userGroups);
         if (outcome)
             return res.send('ok')
         else
