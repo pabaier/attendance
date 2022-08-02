@@ -45,31 +45,4 @@
         if (course == 'Select Course') return;
         window.location.href=`/admin/courses/${course}`;
     })
-
-    $(document.body).on('click', '.signin', (e) => {
-        console.log(e)
-        
-        $.post(`/admin/user/${e.target.value}/signin`, function( data ) {
-            if (data) {
-                // e.target.classList.remove('btn-primary');
-                e.target.disabled = true;
-            }
-            else
-                console.log('no')
-        })
-    })
-
-
-    $(document.body).on('click', '.delete', (e) => {
-        $.ajax({
-            url: `/admin/user/${e.target.value}`,
-            type: 'DELETE',
-            success: function(response) {
-                window.location.reload();
-            },
-            error: function(response) {
-                console.log(response);
-            }
-        });
-    })
 </script>

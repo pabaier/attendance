@@ -24,7 +24,7 @@
           </li>
           <% if (user?.roles?.includes('admin')) { %>
             <li class="nav-item">
-              <a class="nav-link" href="/admin">Admin</a>
+              <a class="nav-link" href="/admin/courses">Admin</a>
             </li>
             <% } %>
               <li class="nav-item">
@@ -38,4 +38,28 @@
       </div>
     </div>
   </nav>
+  <nav style="--bs-breadcrumb-divider: '|';" aria-label="breadcrumb">
+    <div class="container-fluid admin-breadcrumb" hidden>
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/admin/code">Code</a></li>
+        <li class="breadcrumb-item"><a href="/admin/users">Users</a></li>
+        <li class="breadcrumb-item"><a href="/admin/courses">Courses</a></li>
+      </ol>
+    </div>
+  </nav>
 </header>
+
+<script>
+  $(document).ready(() => {
+    const path = window.location.pathname;
+    console.log('path', path)
+    const top = path.split('/')[1];
+    console.log('top', top)
+    switch(top) {
+      case 'admin':
+        $('.admin-breadcrumb').removeAttr('hidden');
+        console.log('admin')
+        break;
+    }
+  })
+</script>
