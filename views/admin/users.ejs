@@ -1,10 +1,10 @@
 <div class="jumbotron">
     <h1>Users</h1>
-    <select class="form-select my-2" id="section-select" aria-label="Default select section">
-        <option selected>Select Section</option>
-        <option value="section1">One</option>
-        <option value="section2">Two</option>
-        <option value="section3">Three</option>
+    <select class="form-select my-2" id="filter-class-select" aria-label="Default select section">
+        <option selected>Select Course</option>
+        <% courses.forEach(course => { %>
+            <option value="<%=course%>"><%=course%></option>
+        <% }) %>
     </select>
 
     <div class="container alternating-table users" id="users">
@@ -38,6 +38,12 @@
             }
         })
 
+    })
+
+    $('#filter-class-select').change(function(e) {
+        const course = e.target.value;
+        if (course == 'Select Course') return;
+        window.location.href=`/admin/courses/${course}`;
     })
 
     $(document.body).on('click', '.signin', (e) => {
