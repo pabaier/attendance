@@ -12,18 +12,19 @@
 </div>
 
 <script>
-    $(document.body).on('click', '.signin', (e) => {
-        console.log(e)
-        
+    const signIn = (e) => {
         $.post(`/admin/user/${e.target.value}/signin`, function( data ) {
             if (data) {
-                // e.target.classList.remove('btn-primary');
                 e.target.disabled = true;
             }
             else
                 console.log('no')
         })
-    })
+    }
+
+    const rowClick = (e, userId) => {
+        window.location.href=`/admin/user/${userId}`;
+    }
 
     const remove = (e) => {
         $.ajax({

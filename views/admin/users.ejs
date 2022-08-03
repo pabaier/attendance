@@ -46,6 +46,20 @@
         window.location.href=`/admin/courses/${course}`;
     })
 
+    const signIn = (e) => {
+        $.post(`/admin/user/${e.target.value}/signin`, function( data ) {
+            if (data) {
+                e.target.disabled = true;
+            }
+            else
+                console.log('no')
+        })
+    }
+
+    const rowClick = (e, userId) => {
+        window.location.href=`/admin/user/${userId}`;
+    }
+
     const remove = (e) => {
         $.ajax({
             url: `/admin/user/${e.target.value}`,

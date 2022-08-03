@@ -1,8 +1,9 @@
+<!-- requires user, type [Delete/Remove], external func rowClick(event, userId), external func signIn(event), external func remove(event) -->
 <div class="row my-2">
     <div class="col">
         <input class="form-check-input userc" type="checkbox" value="<%- user.id %>">
     </div>
-    <div class="col-9 user" id="<%- user.id %>">
+    <div class="col-9 user" onclick="rowClick(event, <%- user.id %>)">
             <div class="row">
                 <div class="col-3">
                     <%- user.first_name %>
@@ -16,28 +17,9 @@
             </div>
         </div>
     <div class="col">
-        <button type="button" value=<%- user.id %> id="sign-in-<%- user.id %>" class="btn btn-primary signin form-control">Sign In</button>
+        <button type="button" value=<%- user.id %> onclick="signIn(event)" id="sign-in-<%- user.id %>" class="btn btn-primary signin form-control">Sign In</button>
     </div>
     <div class="col">
         <button type="button" value=<%- user.id %> onclick="remove(event)" id="<%=type%>-<%- user.id %>" class="btn btn-primary form-control"><%=type%></button>
     </div>
 </div>
-
-<script>
-    $('.user').click(function(e){
-        var userId = $(this).attr('id')
-        window.location.href=`/admin/user/${userId}`;
-        console.log($(this).attr('id'))
-    })
-
-    $('.signin').click((e) => {
-        $.post(`/admin/user/${e.target.value}/signin`, function( data ) {
-            if (data) {
-                // e.target.classList.remove('btn-primary');
-                e.target.disabled = true;
-            }
-            else
-                console.log('no')
-        })
-    })
-</script>
