@@ -14,3 +14,22 @@
     </div>
     <%- addForm %>
 </div>
+
+<script>
+    const viewCourse = (e, courseName) =>  {
+        window.location.href=`/admin/courses/${courseName}`;
+    }
+
+    const deleteCourse = (e) => {
+        $.ajax({
+            url: `/admin/courses/${e.target.value}`,
+            type: 'DELETE',
+            success: function(response) {
+                location.reload();
+            },
+            error: function(response) {
+                console.log(response);
+            }
+        });
+    }
+</script>

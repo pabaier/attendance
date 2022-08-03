@@ -1,5 +1,6 @@
+<!-- requires course, external func viewCourse(event, course group), external func deleteCourse(event) -->
 <div class="row my-2">
-    <div class="col-10 course" id="<%=course.course_number%>-<%=course.semester%>-<%=course.course_year%>-<%=course.start_time%>">
+    <div class="col-10 course" onclick="viewCourse(event, '<%=course.course_number%>-<%=course.semester%>-<%=course.course_year%>-<%=course.start_time%>')" id="<%=course.course_number%>-<%=course.semester%>-<%=course.course_year%>-<%=course.start_time%>">
         <div class="row">
             <div class="col-3">
                 <%- course.course_number %>
@@ -16,27 +17,6 @@
         </div>
     </div>
     <div class="col">
-        <button type="button" value=<%- course.id %> id="course-<%- course.id %>" class="btn btn-primary delete form-control">Delete</button>
+        <button type="button" value=<%- course.id %> onclick="deleteCourse(event)" id="course-<%- course.id %>" class="btn btn-primary delete form-control">Delete</button>
     </div>
 </div>
-
-<script>
-    $(".course").click(function() {
-        courseDiv = $(this).closest('.course')
-        var course_name = courseDiv.prop('id')
-        window.location.href=`/admin/courses/${course_name}`;
-    })
-
-    $(".delete").click((e) => {
-        $.ajax({
-            url: `/admin/courses/${e.target.value}`,
-            type: 'DELETE',
-            success: function(response) {
-                location.reload();
-            },
-            error: function(response) {
-                console.log(response);
-            }
-        });
-    })
-</script>
