@@ -19,7 +19,7 @@
         <button type="button" value=<%- user.id %> id="sign-in-<%- user.id %>" class="btn btn-primary signin form-control">Sign In</button>
     </div>
     <div class="col">
-        <button type="button" value=<%- user.id %> id="sign-in-<%- user.id %>" class="btn btn-primary delete form-control">Delete</button>
+        <button type="button" value=<%- user.id %> onclick="remove(event)" id="<%=type%>-<%- user.id %>" class="btn btn-primary form-control"><%=type%></button>
     </div>
 </div>
 
@@ -39,18 +39,5 @@
             else
                 console.log('no')
         })
-    })
-
-    $('.delete').click((e) => {
-        $.ajax({
-            url: `/admin/user/${e.target.value}`,
-            type: 'DELETE',
-            success: function(response) {
-                window.location.reload();
-            },
-            error: function(response) {
-                console.log(response);
-            }
-        });
     })
 </script>

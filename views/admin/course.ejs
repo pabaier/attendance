@@ -25,18 +25,16 @@
         })
     })
 
-
-    $(document.body).on('click', '.delete', (e) => {
+    const remove = (e) => {
         $.ajax({
-            url: `/admin/user/${e.target.value}`,
+            url: `/admin/courses/<%=course%>/${e.target.value}`,
             type: 'DELETE',
             success: function(response) {
-                users = users.filter(user => user.id !== parseInt(e.target.value))
-                setUserList(getUserListHTML(users, 'section3'));
+                window.location.reload();
             },
             error: function(response) {
                 console.log(response);
             }
         });
-    })
+    }
 </script>

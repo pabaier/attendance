@@ -12,4 +12,5 @@ export interface DbClient {
     addCourse(course: Course): boolean;
     deleteCourse(courseId: number): boolean;
     addUsersToGroups(userGroups: UserGroups[]): Promise<{}[]>;
+    deleteUserFromGroup(groupName: string, userId: number): boolean;
 }

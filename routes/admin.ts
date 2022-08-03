@@ -51,7 +51,7 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         const group = req.query.group ? req.query.group as string : '';
         const users = await dbClient.getUsers(group);
         const usersSections = users?.map(user => {
-            return renderFile('./views/admin/partials/user-section.ejs', { user })
+            return renderFile('./views/admin/partials/user-section.ejs', { user, type: 'Delete' })
         })
         const courses = await dbClient.getCourses();
         const courseNames = courses.map(course => getCourseName(course))
@@ -154,7 +154,7 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         const groupName = req.params.group
         const users = await dbClient.getUsers(groupName);
         const usersSections = users?.map(user => {
-            return renderFile('./views/admin/partials/user-section.ejs', { user })
+            return renderFile('./views/admin/partials/user-section.ejs', { user, type: 'Remove' })
         })
         res.render('admin/course', { user: req.session.user, course: groupName, users: usersSections, alert: req.session.alert });
     })
@@ -174,6 +174,11 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
 
     router.delete('/courses/:courseId', (req: Request, res: Response) => {
         const result: boolean= dbClient.deleteCourse(parseInt(req.params.courseId))
+        res.send('ok')
+    })
+
+    router.delete('/courses/:groupName/:userId', (req: Request, res: Response) => {
+        const result: boolean= dbClient.deleteUserFromGroup(req.params.groupName, parseInt(req.params.userId))
         res.send('ok')
     })
 

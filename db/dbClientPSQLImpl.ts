@@ -18,6 +18,16 @@ class DbClientPSQLImpl implements DbClient {
     )
   }
 
+  deleteUserFromGroup(groupName: string, userId: number): boolean {
+    return this.connection.none('DELETE FROM user_group WHERE user_id = $1 AND group_name = $2', [userId, groupName])
+    .then((data: any) => { return true;})
+    .catch((error: any) => {
+      console.log('ERROR:', error);
+      return false;
+    });
+    throw new Error('Method not implemented.');
+  }
+
   getLatestSignIn(userId: number): Promise<number | null> {
     return this.connection.one("SELECT user_id FROM attendance WHERE user_id = $1 and date_created > current_date", userId)
     .then((data: number | null) => {
