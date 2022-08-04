@@ -67,8 +67,7 @@ class DbClientPSQLImpl implements DbClient {
     const userOption: string = typeof(user) == 'string' ? 'email' : 'id';
     return this.connection.one(`SELECT * FROM users WHERE ${userOption} = $1`, user)
       .then((data: User) => {
-        data.roles = data.roles ? JSON.parse(data.roles as string) : '';
-        data.groups = data.groups ? JSON.parse(data.groups as string) : '';
+        data.roles = data.roles ? (data.roles as string).split(',') : '';
         return data;
       })
       .catch((error: any) => {
@@ -78,15 +77,14 @@ class DbClientPSQLImpl implements DbClient {
   }
 
   async addUsers(users: User[]): Promise<User[]> {
-    const cs = new this.pg.helpers.ColumnSet(['email', 'first_name', 'last_name', 'roles', 'groups'], {table: 'users'});
+    const cs = new this.pg.helpers.ColumnSet(['email', 'first_name', 'last_name', 'roles'], {table: 'users'});
     const values = users.map(u => { return {
       email: u.email, 
       first_name: u.first_name, 
       last_name: u.last_name, 
       roles: u.roles, 
-      groups: u.groups
     }})
-    const query = this.pg.helpers.insert(values, cs) + ' RETURNING id, email, first_name, last_name, roles, groups';
+    const query = this.pg.helpers.insert(values, cs) + ' RETURNING id, email, first_name, last_name, roles';
     const res: User[] = await this.connection.many(query);
     return res;
   }

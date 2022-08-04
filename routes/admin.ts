@@ -55,7 +55,17 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         })
         const courses = await dbClient.getCourses();
         const courseNames = courses.map(course => getCourseName(course))
-        res.render('admin/users', { user: req.session.user, users: usersSections, courses: courseNames, alert: req.session.alert });
+
+        // {action: form action, fields: [{id: field id, placeholder, }], }
+        const action = "/admin/users/add";
+        const fieldNames = ['email', 'firstName', 'lastName', 'roles', 'groups']
+        const fields = fieldNames.map(name => {
+            return {id: name, placeholder: name}
+        })
+        const addUserForm = renderFile('./views/partials/input-form.ejs', {action, fields});
+
+
+        res.render('admin/users', { user: req.session.user, users: usersSections, courses: courseNames, addForm: addUserForm, alert: req.session.alert });
     });
 
     router.post('/user/:userId/signin', (req: Request, res: Response) => {
@@ -73,28 +83,52 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
             res.redirect('/admin/users')
             return
         }
-        const rawBody: string = req.body.text;
-        const rawUsers: string[] = rawBody.split('\n');
-        const users: User[] = rawUsers.map((rawUser) => {
-            const line: string[] = rawUser.split(',')
-            return {
-                email: line[0].trim(),
-                first_name: line[1].trim(),
-                last_name: line[2].trim(),
-                roles: line[3].trim(),
-                groups: line[4].trim(),
-            }
-        });
+        // bulk request has text field
+        var users: User[];
+        if (req.body.text) {
+            const rawBody: string = req.body.text;
+            const rawUsers: string[] = rawBody.split('\n');
+            users = rawUsers.map((rawUser) => {
+                const line: string[] = rawUser.split('|')
+                return {
+                    email: line[0].trim(),
+                    first_name: line[1].trim(),
+                    last_name: line[2].trim(),
+                    roles: line[3].trim(),
+                    groups: line[4].trim(),
+                }
+            });
+        } else {
+            users = [
+                {
+                    email: req.body.email.trim(),
+                    first_name: req.body.firstName.trim(),
+                    last_name: req.body.lastName.trim(),
+                    roles: req.body.roles.trim(),
+                    groups: req.body.groups.trim()
+                }
+            ];
+        }
+
+        // users.roles and users.groups should now be a string of comma separated values ex: "group1,group2,group3"
+        // create object of {userEmail: groups list}
+        const emailGroups: {[key: string]: string[] } = {}
+        users.filter(user => user.groups).forEach(user => {
+            const groups: string[] = (user.groups as string).replaceAll(' ', '').split(',');
+            emailGroups[user.email] = groups
+        })
+
         // add users to db
         const newUsers: User[] = await dbClient.addUsers(users);
 
-        // add user groups to db
+        // map new user ids to groups by email address
         const userGroups: UserGroups[] = newUsers
         .map(user => {
-            const groups: string[] = JSON.parse(user.groups);
+            const groups: string[] = emailGroups[user.email];
             return {id: user.id as number, groups}
         })
-        .filter(userGroup => userGroup.groups.length)
+
+        // add user groups to db
         await dbClient.addUsersToGroups(userGroups);
 
         res.redirect('/admin/users')
