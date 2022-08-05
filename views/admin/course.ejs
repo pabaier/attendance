@@ -1,5 +1,6 @@
+<!-- requires courseName, courseId, users -->
 <div class="jumbotron">
-    <h1>Course <%=course%></h1>
+    <h1>Course <%=courseName%></h1>
     <div class="container alternating-table" id="users">
         <% users.forEach(user => { %>
             <%- user %>
@@ -28,7 +29,7 @@
 
     const remove = (e) => {
         $.ajax({
-            url: `/admin/courses/<%=course%>/${e.target.value}`,
+            url: `/admin/courses/<%=courseId%>/${e.target.value}`,
             type: 'DELETE',
             success: function(response) {
                 window.location.reload();

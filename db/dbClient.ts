@@ -9,6 +9,7 @@ export interface DbClient {
     deleteUser(userId: number): boolean;
     getLatestSignIn(userId: number): Promise<number | null>;
     getCourses(): Promise<Course[]>;
+    getCourse(courseId: number): Promise<Course>;
     addCourse(course: Course): boolean;
     deleteCourse(courseId: number): boolean;
     addUsersToGroups(userGroups: UserGroups[]): Promise<{}[]>;

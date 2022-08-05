@@ -25,7 +25,6 @@ class DbClientPSQLImpl implements DbClient {
       console.log('ERROR:', error);
       return false;
     });
-    throw new Error('Method not implemented.');
   }
 
   getLatestSignIn(userId: number): Promise<number | null> {
@@ -108,6 +107,17 @@ class DbClientPSQLImpl implements DbClient {
       .catch((error: any) => {
         console.log('ERROR:', error);
         return [];
+      });
+  }
+
+  async getCourse(courseId: number): Promise<Course> {
+
+    return this.connection.one(`SELECT * FROM courses WHERE id = $1`, courseId)
+      .then((data: Course) => {
+        return data;
+      })
+      .catch((error: any) => {
+        console.log('ERROR:', error);
       });
   }
 

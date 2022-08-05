@@ -1,6 +1,6 @@
 <!-- requires course, external func viewCourse(event, course group), external func deleteCourse(event) -->
 <div class="row my-2">
-    <div class="col-10 course" onclick="viewCourse(event, '<%=course.course_number%>-<%=course.semester%>-<%=course.course_year%>-<%=course.start_time%>')" id="<%=course.course_number%>-<%=course.semester%>-<%=course.course_year%>-<%=course.start_time%>">
+    <div class="col-10 course" onclick="viewCourse(event, '<%=course.id%>')">
         <div class="row">
             <div class="col-3">
                 <%- course.course_number %>

@@ -4,7 +4,7 @@ import { DbClient } from '../db/dbClient';
 import { authCheckMiddleware, rollCheckMiddleware } from '../middleware/auth';
 import { renderFile } from '../views/helper';
 import { User, Course, UserGroups } from '../models';
-import { getCourseName } from './helpers';
+import { makeCourseName } from './helpers';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
     const router = express.Router()
@@ -54,7 +54,7 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
             return renderFile('./views/admin/partials/user-section.ejs', { user, type: 'Delete' })
         })
         const courses = await dbClient.getCourses();
-        const courseNames = courses.map(course => getCourseName(course))
+        const courseIdName = courses.map(course => {return {id: course.id, name: makeCourseName(course)}})
 
         // {action: form action, fields: [{id: field id, placeholder, }], }
         const action = "/admin/users/add";
@@ -65,7 +65,7 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         const addUserForm = renderFile('./views/partials/input-form.ejs', {action, fields});
 
 
-        res.render('admin/users', { user: req.session.user, users: usersSections, courses: courseNames, addForm: addUserForm, alert: req.session.alert });
+        res.render('admin/users', { user: req.session.user, users: usersSections, courses: courseIdName, addForm: addUserForm, alert: req.session.alert });
     });
 
     router.post('/user/:userId/signin', (req: Request, res: Response) => {
@@ -184,20 +184,22 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         res.redirect('/admin/courses')
     })
 
-    router.get('/courses/:group', async (req: Request, res: Response) => {
-        const groupName = req.params.group
+    router.get('/courses/:courseId', async (req: Request, res: Response) => {
+        const courseId = parseInt(req.params.courseId)
+        const course = await dbClient.getCourse(courseId);
+        const groupName = `course-${courseId}`
         const users = await dbClient.getUsers(groupName);
         const usersSections = users?.map(user => {
             return renderFile('./views/admin/partials/user-section.ejs', { user, type: 'Remove' })
         })
-        res.render('admin/course', { user: req.session.user, course: groupName, users: usersSections, alert: req.session.alert });
+        res.render('admin/course', { user: req.session.user, courseId, courseName: makeCourseName(course), users: usersSections, alert: req.session.alert });
     })
 
-    router.post('/courses/:group/users', async (req: Request, res: Response) => {
-        const groupName: string = req.params.group;
+    router.post('/courses/:courseId/users', async (req: Request, res: Response) => {
+        const courseId: number = parseInt(req.params.courseId);
         const userIds: number[] = req.body.userIds;
         const userGroups: UserGroups[] = userIds.map(uId => {
-            return {id: uId, groups: [groupName]}
+            return {id: uId, groups: [`course-${courseId}`]}
         })
         const outcome = await dbClient.addUsersToGroups(userGroups);
         if (outcome)
@@ -211,8 +213,9 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         res.send('ok')
     })
 
-    router.delete('/courses/:groupName/:userId', (req: Request, res: Response) => {
-        const result: boolean= dbClient.deleteUserFromGroup(req.params.groupName, parseInt(req.params.userId))
+    router.delete('/courses/:courseId/:userId', (req: Request, res: Response) => {
+        const groupName = `course-${req.params.courseId}`;
+        const result: boolean= dbClient.deleteUserFromGroup(groupName, parseInt(req.params.userId))
         res.send('ok')
     })
 

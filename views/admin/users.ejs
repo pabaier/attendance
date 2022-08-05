@@ -1,9 +1,10 @@
+<!-- requires courses ({id, name}), users, addForm -->
 <div class="jumbotron">
     <h1>Users</h1>
     <select class="form-select my-2" id="filter-class-select" aria-label="Default select section">
         <option selected>Select Course</option>
         <% courses.forEach(course => { %>
-            <option value="<%=course%>"><%=course%></option>
+            <option value="<%=course.id%>"><%=course.name%></option>
         <% }) %>
     </select>
 
@@ -15,7 +16,7 @@
     <select class="form-select my-2" id="add-class-select" aria-label="Default select section">
         <option selected>Select Course</option>
         <% courses.forEach(course => { %>
-            <option value="<%=course%>"><%=course%></option>
+            <option value="<%=course.id%>"><%=course.name%></option>
         <% }) %>
     </select>
     <button type="submit" id="add-class-btn" class="btn btn-primary form-control my-2">Add Users To Course</button>
@@ -30,17 +31,16 @@
 
 <script>
     $('#add-class-btn').click(function() {
-        var course = $('#add-class-select').find(":selected").text()
+        var courseId = $('#add-class-select').val()
         var userIds = []
         $('.userc:checkbox:checked').each(function() {userIds.push(this.value)})
-        $.post(`/admin/courses/${course}/users`, { userIds }, function( data ) {
+        $.post(`/admin/courses/${courseId}/users`, { userIds }, function( data ) {
             if (data) {
-                window.location.href=`/admin/courses/${course}`;
+                window.location.href=`/admin/courses/${courseId}`;
             } else {
                 console.log('nope')
             }
         })
-
     })
 
     $('#filter-class-select').change(function(e) {
