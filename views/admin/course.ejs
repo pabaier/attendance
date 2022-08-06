@@ -14,7 +14,7 @@
 
 <script>
     const signIn = (e) => {
-        $.post(`/admin/user/${e.target.value}/signin`, function( data ) {
+        $.post(`/admin/users/${e.target.value}/signin`, function( data ) {
             if (data) {
                 e.target.disabled = true;
             }
@@ -24,7 +24,7 @@
     }
 
     const rowClick = (e, userId) => {
-        window.location.href=`/admin/user/${userId}`;
+        window.location.href=`/admin/users/${userId}`;
     }
 
     const remove = (e) => {
