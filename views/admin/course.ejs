@@ -1,6 +1,15 @@
 <!-- requires courseName, courseId, users -->
 <div class="jumbotron">
-    <h1>Course <%=courseName%></h1>
+    <h1><%=courseName%></h1>
+
+    <div class="container text-center" id='calendar-container'>
+        <div class="row justify-content-lg-center">
+            <div class="col col-lg-7">
+                <%-calendar%>
+              </div>
+        </div>
+    </div>
+    
     <div class="container alternating-table" id="users">
         <% users.forEach(user => { %>
             <%- user %>

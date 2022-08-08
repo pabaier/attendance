@@ -1,9 +1,10 @@
 import express, { Request, Response } from 'express';
 import NodeCache from 'node-cache';
-import { DbClient } from '../db/dbClient';
-import { authCheckMiddleware, rollCheckMiddleware } from '../middleware/auth';
-import courses from './admin/courses';
-import users from './admin/users';
+import { DbClient } from '../../db/dbClient';
+import { authCheckMiddleware, rollCheckMiddleware } from '../../middleware/auth';
+import courses from './courses';
+import users from './users';
+import dates from './dates';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
     const router = express.Router()
@@ -11,7 +12,9 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     const codeRefreshRate: number = parseInt(process.env.CODE_REFRESH_RATE || '2');
 
     router.use(authCheckMiddleware, rollCheckMiddleware(['admin']))
-    
+
+    router.use('/dates', dates(dbClient));
+
     router.use('/courses', courses(dbClient));
 
     router.use('/users', users(dbClient));

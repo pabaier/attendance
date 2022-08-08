@@ -5,7 +5,7 @@ import { User, UserGroups } from '../../models';
 import { makeCourseName } from '../helpers';
 
 export default function (dbClient: DbClient) {
-    const router = express.Router({mergeParams: true})
+    const router = express.Router()
 
     router.get('/', async (req: Request, res: Response) => {
         const group = req.query.group ? req.query.group as string : '';

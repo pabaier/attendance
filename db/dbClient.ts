@@ -1,4 +1,4 @@
-import { Course, User, UserGroups } from "../models";
+import { Course, CourseDate, User, UserGroups } from "../models";
 
 export interface DbClient {
     connection: any;
@@ -14,4 +14,6 @@ export interface DbClient {
     deleteCourse(courseId: number): boolean;
     addUsersToGroups(userGroups: UserGroups[]): Promise<{}[]>;
     deleteUserFromGroup(groupName: string, userId: number): boolean;
+    getCourseDates(courseId: number): Promise<CourseDate[]>
+    setCourseDates(courseDates: CourseDate[]): Promise<void>
 }

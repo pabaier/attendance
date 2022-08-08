@@ -1,11 +1,12 @@
 import express, { Request, Response } from 'express';
 import { DbClient } from '../../db/dbClient';
 import { renderFile } from '../../views/helper';
-import { Course, UserGroups } from '../../models';
+import { Course, CourseDate, UserGroups, CalendarEvent } from '../../models';
 import { makeCourseName } from '../helpers';
+import dbClientPSQLImpl from '../../db/dbClientPSQLImpl';
 
 export default function (dbClient: DbClient) {
-    const router = express.Router({mergeParams: true})
+    const router = express.Router()
 
     router.get('/', async (req: Request, res: Response) => {
         const courses = await dbClient.getCourses();
@@ -54,7 +55,15 @@ export default function (dbClient: DbClient) {
         const usersSections = users?.map(user => {
             return renderFile('./views/admin/partials/user-section.ejs', { user, type: 'Remove' })
         })
-        const calendar = renderFile('./views/partials/calendar.ejs', {});
+        const dates: CourseDate[] = await dbClientPSQLImpl.getCourseDates(courseId);
+        const courseDateEvents = dates.map((date: CourseDate) => {
+            const event: CalendarEvent = {
+                title: 'Class',
+                start: date.meeting.toISOString().split('T')[0]
+            }
+            return event
+        })
+        const calendar = renderFile('./views/partials/calendar.ejs', {events: courseDateEvents});
         res.render('admin/course', { user: req.session.user, courseId, courseName: makeCourseName(course), users: usersSections, calendar, alert: req.session.alert });
     })
 

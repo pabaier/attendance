@@ -1,6 +1,6 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
-import { Course, User, UserGroups } from '../models';
+import { Course, CourseDate, User, UserGroups } from '../models';
 
 class DbClientPSQLImpl implements DbClient {
   connection: any;
@@ -159,6 +159,23 @@ class DbClientPSQLImpl implements DbClient {
     } else {
       return []
     }
+  }
+
+  async getCourseDates(courseId: number): Promise<CourseDate[]> {
+
+    return this.connection.any(`SELECT * FROM course_dates WHERE course_id = $1`, courseId)
+      .then((data: CourseDate[]) => {
+        return data;
+      })
+      .catch((error: any) => {
+        console.log('ERROR:', error);
+      });
+  }
+
+  async setCourseDates(courses: CourseDate[]): Promise<void> {
+    const cs = new this.pg.helpers.ColumnSet(['course_id', 'meeting'], {table: 'course_dates'});
+    const query = this.pg.helpers.insert(courses, cs) + ' RETURNING course_id, meeting';
+    await this.connection.many(query);
   }
 }
 

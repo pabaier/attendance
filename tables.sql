@@ -36,3 +36,17 @@ CREATE TABLE user_group (
 );
 CREATE INDEX user_group_user_id_idx ON user_group (user_id);
 CREATE INDEX user_group_group_name_idx ON user_group (group_name);
+
+CREATE TABLE course_dates (
+	course_id integer REFERENCES courses (id) ON DELETE CASCADE,
+	meeting timestamptz NOT NULL
+);
+CREATE INDEX course_dates_course_id_idx ON course_dates (course_id);
+
+CREATE TABLE assignments (
+	id SERIAL PRIMARY KEY,
+	title VARCHAR (50),
+	start_time timestamptz,
+	end_time timestamptz,
+	url_link TEXT
+);

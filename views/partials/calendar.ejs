@@ -1,0 +1,27 @@
+<div id='calendar'></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var events = <%-JSON.stringify(events)%>
+        var calendarEl = document.getElementById('calendar');
+        console.log(events)
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            headerToolbar: {
+                left: 'dayGridMonth,timeGridWeek,timeGridDay',
+                center: 'title',
+                right: 'today,prev,next'
+            },
+            initialView: 'dayGridMonth',
+            // themeSystem: 'bootstrap5',
+            events,
+            eventClick: function(info) {
+                info.jsEvent.preventDefault(); // don't let the browser navigate
+
+                if (info.event.url) {
+                    window.open(info.event.url);
+                }
+            }
+        });
+        calendar.render();
+    });
+</script>
