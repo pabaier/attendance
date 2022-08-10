@@ -19,6 +19,20 @@ class DbClientPSQLImpl implements DbClient {
     )
   }
 
+  async addAssignmentToCourse(assignmentCourse: {assignment_id: number, course_id: number}[]): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['assignment_id', 'course_id'], {table: 'course_assignments'});
+    const query = this.pg.helpers.insert(assignmentCourse, cs);
+    await this.connection.any(query);
+    return true;
+  }
+
+  async addAssignments(assignments: Assignment[]): Promise<{id: number}[]> {
+    const cs = new this.pg.helpers.ColumnSet(['title', 'start_time', 'end_time', 'url_link'], {table: 'assignments'});
+    const query = this.pg.helpers.insert(assignments, cs) + ' RETURNING id';
+    const res: {id: number}[] = await this.connection.many(query);
+    return res;
+  }
+
   updateAssignment(assignment: Assignment): Promise<boolean> {
     const a = assignment
     var query = `

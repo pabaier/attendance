@@ -19,4 +19,6 @@ export interface DbClient {
     // getAssignments(courseId: number): Promise<(Course & Assignment)[]>
     getAssignments(courseId: number): Promise<Assignment[]>
     updateAssignment(assignment: Assignment): Promise<boolean>
+    addAssignments(assignments: Assignment[]): Promise<{id: number}[]>
+    addAssignmentToCourse(assignmentCourse: {assignment_id: number, course_id: number}[]): Promise<boolean>
 }
