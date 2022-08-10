@@ -1,7 +1,6 @@
 import express, { Request, Response } from 'express';
 import { DbClient } from '../../db/dbClient';
-import { renderFile } from '../../views/helper';
-import { CourseDate, User, UserGroups } from '../../models';
+import { CourseDate } from '../../models';
 import { makeCourseName } from '../helpers';
 import dbClientPSQLImpl from '../../db/dbClientPSQLImpl';
 

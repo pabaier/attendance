@@ -1,4 +1,4 @@
-<!-- requires courseName, courseId, users -->
+<!-- requires courseName, courseId, users, assignments -->
 <div class="jumbotron">
     <h1><%=courseName%></h1>
 
@@ -9,19 +9,60 @@
               </div>
         </div>
     </div>
-    
-    <div class="container alternating-table" id="users">
-        <% users.forEach(user => { %>
-            <%- user %>
-        <% }) %>
+
+    <a class="btn btn-primary" data-bs-toggle="collapse" href="#users-collapse" role="button" aria-expanded="false" aria-controls="collapseExample">
+        Users
+    </a>
+    <a class="btn btn-primary" data-bs-toggle="collapse" href="#assignments-collapse" role="button" aria-expanded="false" aria-controls="collapseExample">
+        Assignments
+    </a>
+    <div class="collapse" id="users-collapse">
+        <div class="container alternating-table" id="users">
+            <% users.forEach(user => { %>
+                <%- user %>
+            <% }) %>
+        </div>
+        <h5>Add User(s)</h5>
+        <form id="bulk-add-form" action="/admin/users/add" method="POST">
+            <textarea class="form-control my-2" name="text" id="bulk-add-area" placeholder="Add Users&#10;Email|FirstName|LastName|Role1,Role2|Group1,Group2" aria-label="Email" aria-describedby="basic-addon1"></textarea>
+            <button type="submit" id="bulk-add-btn" class="btn btn-primary form-control my-2">Submit</button>
+        </form>
     </div>
-    <form id="bulk-add-form" action="/admin/users/add" method="POST">
-        <textarea class="form-control my-2" name="text" id="bulk-add-area" placeholder="Add Users&#10;Email|FirstName|LastName|Role1,Role2|Group1,Group2" aria-label="Email" aria-describedby="basic-addon1"></textarea>
-        <button type="submit" id="bulk-add-btn" class="btn btn-primary form-control my-2">Submit</button>
-    </form>
+    <div class="collapse" id="assignments-collapse">
+        <%-assignments%>
+    </div>
 </div>
 
 <script>
+    const editField = (e) => {
+        e.target.readOnly = false;
+        // e.target.removeAttribute('readonly')
+    }
+
+    const doneEditField = (e) => {
+        e.target.readOnly = true;
+    }
+
+    const saveChanges = (e, id) => {
+        const title = $(`#assignment-title-${id}`).val();
+        const start = $(`#assignment-start-${id}`).val();
+        const end = $(`#assignment-end-${id}`).val();
+        const url = $(`#assignment-url-${id}`).val();
+        $.ajax({
+            url: `/admin/courses/${id}/assignments`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({ title, start, end, url }),
+            success: function( data ) {
+            if (data) {
+                console.log('ok')
+                // window.location.reload();
+            } else {
+                console.log('nope')
+            }}
+        })
+    }
+
     const signIn = (e) => {
         $.post(`/admin/users/${e.target.value}/signin`, function( data ) {
             if (data) {

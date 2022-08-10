@@ -5,6 +5,7 @@ import { authCheckMiddleware, rollCheckMiddleware } from '../../middleware/auth'
 import courses from './courses';
 import users from './users';
 import dates from './dates';
+import assignments from './assignments';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
     const router = express.Router()
@@ -18,6 +19,15 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     router.use('/courses', courses(dbClient));
 
     router.use('/users', users(dbClient));
+
+    router.get('/assignments', (req: Request, res: Response) => {
+        res.render('admin/assignments.ejs', { user: req.session.user });
+    });
+
+    router.post('/assignments', (req: Request, res: Response) => {
+        console.log('post')
+        res.render('admin/assignments.ejs', { user: req.session.user });
+    });
 
     router.get('/', (req: Request, res: Response) => {
         res.render('admin/index', { user: req.session.user })

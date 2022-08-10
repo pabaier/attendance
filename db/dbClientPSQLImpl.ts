@@ -1,6 +1,7 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
-import { Course, CourseDate, User, UserGroups } from '../models';
+import { Assignment, Course, CourseDate, User, UserGroups } from '../models';
+import { X509Certificate } from 'crypto';
 
 class DbClientPSQLImpl implements DbClient {
   connection: any;
@@ -17,6 +18,40 @@ class DbClientPSQLImpl implements DbClient {
       }
     )
   }
+
+  updateAssignment(assignment: Assignment): Promise<boolean> {
+    const a = assignment
+    var query = `
+      UPDATE assignments
+      SET title = $1, start_time = $2, end_time = $3, url_link = $4
+      WHERE id = $5;
+    `
+    return this.connection.none(query, [a.title, a.start_time, a.end_time, a.url_link, a.id])
+    .then((data: any) => {
+      return true;
+    })
+    .catch((error: any) => {
+      return false;
+    })
+  }
+
+  // (Course & Assignment)[]
+  async getAssignments(courseId: number): Promise<Assignment[]> {
+    var query = `
+      select a.id, a.title, a.start_time, a.end_time, a.url_link
+      from public.assignments a
+      inner join public.course_assignments ca 
+      on a.id = ca.assignment_id
+      where ca.course_id = $1`;
+    
+    return this.connection.any(query, [courseId])
+      .then((data: Assignment[]) => {
+        return data
+      })
+      .catch((error: any) => {
+        console.log('ERROR:', error);
+        return [];
+      })  }
 
   deleteUserFromGroup(groupName: string, userId: number): boolean {
     return this.connection.none('DELETE FROM user_group WHERE user_id = $1 AND group_name = $2', [userId, groupName])

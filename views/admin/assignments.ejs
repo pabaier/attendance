@@ -1,19 +1,11 @@
-<!-- requires courses, addForm -->
 <div class="jumbotron">
-    <h1>Courses</h1>
+    <h1>Assignments</h1>
     <select class="form-select my-2" id="year-select" aria-label="Default select section">
         <option selected>Select Year</option>
         <option value="section1">2021</option>
         <option value="section2">2022</option>
         <option value="section3">2023</option>
     </select>
-
-    <div class="container alternating-table" id="courses">
-        <% courses.forEach(course => { %>
-            <%- course %>
-        <% }) %>
-    </div>
-    <%- addForm %>
 </div>
 
 <script>

@@ -50,3 +50,9 @@ CREATE TABLE assignments (
 	end_time timestamptz,
 	url_link TEXT
 );
+
+CREATE TABLE course_assignments (
+	course_id integer REFERENCES courses (id) ON DELETE CASCADE,
+	assignment_id integer REFERENCES assignments (id) ON DELETE CASCADE
+);
+CREATE INDEX course_assignments_course_id_idx ON course_assignments (course_id);

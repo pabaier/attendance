@@ -1,0 +1,20 @@
+<!-- requires assignment -->
+<div class="row" id==<%- assignment.id %> onfocusout="saveChanges(event, <%- assignment.id %>)">
+    <div class="col-2">
+        <input class="form-control assignment-input" type="text" id="assignment-title-<%- assignment.id %>" readonly onfocus='editField(event)' onfocusout='doneEditField(event)' value="<%- assignment.title %>">
+    </div>
+    <div class="col-3">
+        <input class="form-control" type="datetime-local" id="assignment-start-<%- assignment.id %>"
+       name="meeting-time" value=<%- assignment.start_time %>>
+    </div>
+    <div class="col-3">
+        <input class="form-control" type="datetime-local" id="assignment-end-<%- assignment.id %>"
+       name="meeting-time" value=<%- assignment.end_time %>>
+    </div>
+    <div class="col-2">
+        <input class="form-control assignment-input" type="text" id="assignment-url-<%- assignment.id %>" readonly onfocus='editField(event)' onfocusout='doneEditField(event)' value="<%- assignment.url_link %>">
+    </div>
+    <div class="col-2">
+        <button type="button" value=<%- assignment.id %> onclick="deleteCourse(event)" id="course-<%- assignment.id %>" class="btn btn-primary delete form-control">Delete</button>
+    </div>
+</div>

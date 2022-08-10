@@ -1,8 +1,8 @@
 import express, { Request, Response } from 'express';
 import { DbClient } from '../../db/dbClient';
 import { renderFile } from '../../views/helper';
-import { Course, CourseDate, UserGroups, CalendarEvent } from '../../models';
-import { makeCourseName } from '../helpers';
+import { Course, CourseDate, UserGroups, CalendarEvent, Assignment } from '../../models';
+import { makeCourseName, makeUTCDateString } from '../helpers';
 import dbClientPSQLImpl from '../../db/dbClientPSQLImpl';
 
 export default function (dbClient: DbClient) {
@@ -64,7 +64,21 @@ export default function (dbClient: DbClient) {
             return event
         })
         const calendar = renderFile('./views/partials/calendar.ejs', {events: courseDateEvents});
-        res.render('admin/course', { user: req.session.user, courseId, courseName: makeCourseName(course), users: usersSections, calendar, alert: req.session.alert });
+
+        const assignmentsList = await dbClientPSQLImpl.getAssignments(parseInt(req.params.courseId));
+        const assignmentItems = assignmentsList.map(assignment => {
+            const startTime = makeUTCDateString(assignment.start_time);
+            const endTime = makeUTCDateString(assignment.end_time);
+            var assignmentAdjustedDates = {
+                ...assignment,
+                start_time: startTime,
+                end_time: endTime
+            }
+            return renderFile('./views/admin/partials/assignment-item.ejs', {assignment: assignmentAdjustedDates})
+        })
+        const assignments = renderFile('./views/admin/partials/assignment-list.ejs', {assignmentItems})
+
+        res.render('admin/course', { user: req.session.user, courseId, courseName: makeCourseName(course), users: usersSections, calendar, assignments, alert: req.session.alert });
     })
 
     router.post('/:courseId/users', async (req: Request, res: Response) => {
@@ -79,6 +93,30 @@ export default function (dbClient: DbClient) {
         else
             return res.send('fail') // this should be a 500
     })
+
+    router.put('/:courseId/assignments', async (req: Request, res: Response) => {
+        const assignment: Assignment = {
+            id: parseInt(req.params.courseId),
+            title: req.body.title,
+            start_time: new Date(req.body.start),
+            end_time: new Date(req.body.end),
+            url_link: req.body.url,
+        }
+        const outcome = await dbClient.updateAssignment(assignment)
+        if (outcome)
+            return res.send('ok')
+        else
+            return res.send('fail') // this should be a 500
+    })
+
+    router.get('/:courseId/assignments', async (req: Request, res: Response) => {
+        const assignments = await dbClientPSQLImpl.getAssignments(parseInt(req.params.courseId));
+        const assignmentItems = assignments.map(assignment => {
+            renderFile('./views/admin/partials/assignment-item.ejs', {assignment})
+        })
+        const assignmentList = renderFile('./views/admin/partials/assignment-list.ejs', {assignmentItems})
+        res.render('admin/assignments', { user: req.session.user });
+    });
 
     router.delete('/:courseId', (req: Request, res: Response) => {
         const result: boolean= dbClient.deleteCourse(parseInt(req.params.courseId))
