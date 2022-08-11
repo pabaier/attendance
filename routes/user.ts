@@ -9,10 +9,6 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
 
     router.use(authCheckMiddleware);
 
-    router.get('/dashboard', (req: Request, res: Response) => {
-        res.render('user/dashboard', { user: req.session.user })
-    });
-
     router.get('/attendance', (req: Request, res: Response) => {
         res.render('user/attendance', { user: req.session.user })
     });

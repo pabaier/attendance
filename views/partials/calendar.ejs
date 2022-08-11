@@ -1,10 +1,10 @@
+<!-- requires events: CalendarEvent -->
 <div id='calendar'></div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         var events = <%-JSON.stringify(events)%>
         var calendarEl = document.getElementById('calendar');
-        console.log(events)
         var calendar = new FullCalendar.Calendar(calendarEl, {
             headerToolbar: {
                 left: 'dayGridMonth,timeGridWeek,timeGridDay',

@@ -15,8 +15,6 @@
     $('#submit').click(e => {
         var courses = $('select#courses').val()
         var dates = $("#bulk-add-area").val().trim().split('\n')
-        console.log(courses);
-        console.log(dates);
         $.post(`/admin/dates`, { courses, dates }, function( data ) {
             if (data) {
                 console.log('ok')

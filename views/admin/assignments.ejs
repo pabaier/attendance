@@ -16,8 +16,6 @@
     $('#submit').click(e => {
         var courses = $('select#courses').val()
         var assignments = $("#bulk-add-area").val().trim().split('\n')
-        console.log(assignments);
-        console.log(courses);
         $.post(`/admin/assignments`, { courses, assignments }, function( data ) {
             if (data) {
                 console.log('ok')

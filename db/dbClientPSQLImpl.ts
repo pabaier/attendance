@@ -19,6 +19,18 @@ class DbClientPSQLImpl implements DbClient {
     )
   }
 
+  async getGroups(userId: number): Promise<{group_name: string}[]> {
+    const query = 'SELECT group_name FROM user_group where user_id  = $1'
+    return this.connection.any(query, [userId])
+      .then((data: {group_name: string}[]) => {
+        return data
+      })
+      .catch((error: any) => {
+        console.log('ERROR:', error);
+        return [];
+      })
+  }
+
   async addAssignmentToCourse(assignmentCourse: {assignment_id: number, course_id: number}[]): Promise<boolean> {
     const cs = new this.pg.helpers.ColumnSet(['assignment_id', 'course_id'], {table: 'course_assignments'});
     const query = this.pg.helpers.insert(assignmentCourse, cs);
@@ -53,10 +65,11 @@ class DbClientPSQLImpl implements DbClient {
   async getAssignments(courseId: number): Promise<Assignment[]> {
     var query = `
       select a.id, a.title, a.start_time, a.end_time, a.url_link
-      from public.assignments a
-      inner join public.course_assignments ca 
+      from assignments a
+      inner join course_assignments ca 
       on a.id = ca.assignment_id
-      where ca.course_id = $1`;
+      where ca.course_id = $1
+      ORDER BY a.start_time`;
     
     return this.connection.any(query, [courseId])
       .then((data: Assignment[]) => {

@@ -1,9 +1,12 @@
 import express, { Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import { DbClient } from '../db/dbClient';
-import { Alert } from '../models';
-import {  rollCheckMiddleware } from '../middleware/auth';
+import { Alert, Assignment, CalendarEvent, Course, CourseDate, User } from '../models';
+import {  authCheckMiddleware, rollCheckMiddleware } from '../middleware/auth';
 import session from 'express-session';
+import internal from 'stream';
+import { renderFile } from '../views/helper';
+import { calendarEventColors } from './helpers';
 
 export default function (dbClient: DbClient) {
     const router = express.Router();
@@ -13,25 +16,68 @@ export default function (dbClient: DbClient) {
     // GOOGLE AUTH
     const client = new OAuth2Client(clientId);
 
-    router.get('/', (req: Request, res: Response) => {
-        res.render('base/index', { title: 'Attendance', user: req.session.user })
+    router.get('/', authCheckMiddleware, async (req: Request, res: Response) => {
+        console.log(req.session.user)
+        
+        // get courseIds
+        const groups = await dbClient.getGroups(req.session.user?.id as number);
+        const courseIds = groups.reduce((acc: number[], currentGroup) => {
+            const groupParts = currentGroup.group_name.split('-')
+            if (groupParts[0] == 'course') acc.push(parseInt(groupParts[1]))
+            return acc
+        }, [])
+        
+        var calendarEvents: CalendarEvent[] = []
+        
+        // get dates
+        const courseDates: {[courseId: number] : Date[]} = {}
+        const courseAssignments: {[courseId: number] : Assignment[]} = {}
+        const courseNames: {[courseId: number] : number} = {}
 
-        // res.send('Express + TypeScript Server');
-    });
-
-    router.get('/about', (req: Request, res: Response) => {
-        res.render('base/about', { user: req.session.user })
-    });
-
-    router.get('/test', rollCheckMiddleware(['admin']), async (req: Request, res: Response) => {
-        const data = await dbClient.getLatestSignIn(req.session.user?.id as number)
-        if (data) {
-            console.log(data);
+        for (const id of courseIds) {
+            courseDates[id] = (await dbClient.getCourseDates(id)).map(courseDate => courseDate.meeting);
+            courseAssignments[id] = (await dbClient.getAssignments(id));
+            courseNames[id] = (await dbClient.getCourse(id)).course_number;
         }
-        else {
-            console.log('nope')
+        // get course
+
+        // build calendar events
+        courseIds.reduce((acc, id, index) => {
+            courseDates[id].forEach(courseDate => {
+                acc.push(
+                    {
+                        title: courseNames[id].toString(),
+                        start: courseDate.toISOString().split('T')[0],
+                        color: calendarEventColors[index].meeting
+                    }
+                )
+            })
+            return acc
+        }, calendarEvents)
+
+        // get assignments
+        for (const id of courseIds) {
         }
-        res.render('base/test', { user: req.session.user, test: data })
+
+        // build calendar events
+        courseIds.reduce((acc, id, index) => {
+            courseAssignments[id].forEach((courseAssignment, i) => {
+                acc.push(
+                    {
+                        title: courseAssignment.title,
+                        start: courseAssignment.start_time.toISOString(),
+                        end: courseAssignment.end_time.toISOString(),
+                        color: calendarEventColors[index].assignment[i%2],
+                        url: courseAssignment.url_link
+                    }
+                )
+            })
+            return acc
+        }, calendarEvents)
+
+        const calendar = renderFile('./views/partials/calendar.ejs', {events: calendarEvents});
+
+        res.render('base/index', { title: 'Attendance', user: req.session.user, calendar })
     });
 
     router.post('/login/verify', async (req: Request, res: Response) => {
