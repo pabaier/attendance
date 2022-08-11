@@ -17,8 +17,6 @@ export default function (dbClient: DbClient) {
     const client = new OAuth2Client(clientId);
 
     router.get('/', authCheckMiddleware, async (req: Request, res: Response) => {
-        console.log(req.session.user)
-        
         // get courseIds
         const groups = await dbClient.getGroups(req.session.user?.id as number);
         const courseIds = groups.reduce((acc: number[], currentGroup) => {
@@ -32,7 +30,7 @@ export default function (dbClient: DbClient) {
         // get dates
         const courseDates: {[courseId: number] : Date[]} = {}
         const courseAssignments: {[courseId: number] : Assignment[]} = {}
-        const courseNames: {[courseId: number] : number} = {}
+        const courseNames: {[courseId: number] : string} = {}
 
         for (const id of courseIds) {
             courseDates[id] = (await dbClient.getCourseDates(id)).map(courseDate => courseDate.meeting);

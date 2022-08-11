@@ -17,7 +17,8 @@ CREATE INDEX attendance_date_created_idx ON attendance (date_created);
 
 CREATE TABLE courses (
 	id SERIAL PRIMARY KEY,
-	course_number INTEGER,
+	course_name VARCHAR (50),
+	course_number VARCHAR(6),
 	semester VARCHAR (6),
 	course_year INTEGER,
 	start_time VARCHAR (5) NOT NULL,

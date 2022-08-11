@@ -35,7 +35,7 @@ export default function (dbClient: DbClient) {
             return
         }
         const course: Course = {
-            course_number: parseInt(req.body.number),
+            course_number: req.body.number,
             semester: req.body.semester,
             course_year: parseInt(req.body.year),
             start_time: req.body.startTime,
