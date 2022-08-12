@@ -4,9 +4,8 @@ import { DbClient } from '../db/dbClient';
 import { Alert, Assignment, CalendarEvent, Course, CourseDate, User } from '../models';
 import {  authCheckMiddleware, rollCheckMiddleware } from '../middleware/auth';
 import session from 'express-session';
-import internal from 'stream';
 import { renderFile } from '../views/helper';
-import { calendarEventColors } from './helpers';
+import { calendarEventColors, getUserCourseIds } from './helpers';
 
 export default function (dbClient: DbClient) {
     const router = express.Router();
@@ -17,19 +16,14 @@ export default function (dbClient: DbClient) {
     const client = new OAuth2Client(clientId);
 
     router.get('/test', async (req: Request, res: Response) => {
-        var a = await dbClient.getCourseDates(1)
+        var a = await dbClient.getGroups(2)
         console.log(a);
     })
 
     router.get('/', authCheckMiddleware, async (req: Request, res: Response) => {
         // get courseIds
-        const groups = await dbClient.getGroups(req.session.user?.id as number);
-        const courseIds = groups.reduce((acc: number[], currentGroup) => {
-            const groupParts = currentGroup.group_name.split('-')
-            if (groupParts[0] == 'course') acc.push(parseInt(groupParts[1]))
-            return acc
-        }, [])
-        
+        const groups: string[] = await dbClient.getGroups(req.session.user?.id as number);
+        const courseIds: number[] = getUserCourseIds(groups);
         var calendarEvents: CalendarEvent[] = []
         
         // get dates

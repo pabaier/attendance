@@ -34,3 +34,11 @@ export const calendarEventColors = [{
         assignment: ['#e7727d', '#ee9aa2']
     }
 ]
+
+export const getUserCourseIds = (userGroups: string[]): number[] => {
+    return userGroups.reduce((acc: number[], currentGroup) => {
+        const groupParts = currentGroup.split('-')
+        if (groupParts[0] == 'course') acc.push(parseInt(groupParts[1]))
+        return acc
+    }, [])
+}

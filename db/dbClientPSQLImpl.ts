@@ -1,7 +1,6 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
 import { Assignment, Course, CourseDate, User, UserGroups } from '../models';
-import { X509Certificate } from 'crypto';
 
 class DbClientPSQLImpl implements DbClient {
   connection: any;
@@ -19,16 +18,18 @@ class DbClientPSQLImpl implements DbClient {
     )
   }
 
-  async getGroups(userId: number): Promise<{group_name: string}[]> {
-    const query = 'SELECT group_name FROM user_group where user_id  = $1'
-    return this.connection.any(query, [userId])
-      .then((data: {group_name: string}[]) => {
-        return data
-      })
-      .catch((error: any) => {
-        console.log('ERROR:', error);
-        return [];
-      })
+  async getGroups(userId: number): Promise<string[]> {
+    return await this.connection.any({
+      name: 'getGroups',
+      text: 'SELECT group_name FROM user_group where user_id = $1',
+      values: [userId],
+      rowMode: 'array'
+    }).then((data: any) => {
+        return data.flat();
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    }); 
   }
 
   async addAssignmentToCourse(assignmentCourse: {assignment_id: number, course_id: number}[]): Promise<boolean> {
@@ -225,7 +226,7 @@ class DbClientPSQLImpl implements DbClient {
 
   async getCourseDates(courseId: number): Promise<Date[]> {
     return await this.connection.any({
-      name: 'my-prep-statement',
+      name: 'getCourseDates',
       text: 'SELECT meeting FROM course_dates WHERE course_id = $1',
       values: [courseId],
       rowMode: 'array'
@@ -233,6 +234,7 @@ class DbClientPSQLImpl implements DbClient {
         return data.flat();
     }).catch((error: any) => {
       console.log('ERROR:', error);
+      return []
     });      
   }
 
