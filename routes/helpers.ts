@@ -20,5 +20,17 @@ export const calendarEventColors = [{
     }, {
         meeting: '#0dcaf0',
         assignment: ['#56daf5', '#86e5f8']
-    },
+    }, {
+        meeting: '#6f42c1',
+        assignment: ['#9a7bd4', '#b7a1e0']
+    }, {
+        meeting: '#ffc107',
+        assignment: ['#ffd451', '#ffe083']
+    }, {
+        meeting: '#198754',
+        assignment: ['#5eab87', '#8cc3aa']
+    }, {
+        meeting: '#dc3545',
+        assignment: ['#e7727d', '#ee9aa2']
+    }
 ]

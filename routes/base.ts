@@ -66,7 +66,7 @@ export default function (dbClient: DbClient) {
                         start: courseAssignment.start_time.toISOString(),
                         end: courseAssignment.end_time.toISOString(),
                         color: calendarEventColors[index].assignment[i%2],
-                        url: courseAssignment.url_link
+                        url: courseAssignment.start_time < new Date() ? courseAssignment.url_link : undefined
                     }
                 )
             })
