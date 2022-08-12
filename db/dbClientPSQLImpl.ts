@@ -223,15 +223,17 @@ class DbClientPSQLImpl implements DbClient {
     }
   }
 
-  async getCourseDates(courseId: number): Promise<CourseDate[]> {
-
-    return this.connection.any(`SELECT * FROM course_dates WHERE course_id = $1`, courseId)
-      .then((data: CourseDate[]) => {
-        return data;
-      })
-      .catch((error: any) => {
-        console.log('ERROR:', error);
-      });
+  async getCourseDates(courseId: number): Promise<Date[]> {
+    return await this.connection.any({
+      name: 'my-prep-statement',
+      text: 'SELECT meeting FROM course_dates WHERE course_id = $1',
+      values: [courseId],
+      rowMode: 'array'
+    }).then((data: Date[]) => {
+        return data.flat();
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+    });      
   }
 
   async setCourseDates(courses: CourseDate[]): Promise<void> {

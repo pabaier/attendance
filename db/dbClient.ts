@@ -14,7 +14,7 @@ export interface DbClient {
     deleteCourse(courseId: number): boolean;
     addUsersToGroups(userGroups: UserGroups[]): Promise<{}[]>;
     deleteUserFromGroup(groupName: string, userId: number): boolean;
-    getCourseDates(courseId: number): Promise<CourseDate[]>
+    getCourseDates(courseId: number): Promise<Date[]>
     setCourseDates(courseDates: CourseDate[]): Promise<void>
     // getAssignments(courseId: number): Promise<(Course & Assignment)[]>
     getAssignments(courseId: number): Promise<Assignment[]>

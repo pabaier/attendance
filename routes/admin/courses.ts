@@ -55,11 +55,11 @@ export default function (dbClient: DbClient) {
         const usersSections = users?.map(user => {
             return renderFile('./views/admin/partials/user-section.ejs', { user, type: 'Remove' })
         })
-        const dates: CourseDate[] = await dbClientPSQLImpl.getCourseDates(courseId);
-        const courseDateEvents = dates.map((date: CourseDate) => {
+        const dates: Date[] = await dbClientPSQLImpl.getCourseDates(courseId);
+        const courseDateEvents = dates.map((date: Date) => {
             const event: CalendarEvent = {
                 title: 'Class',
-                start: date.meeting.toISOString().split('T')[0]
+                start: date.toISOString().split('T')[0]
             }
             return event
         })

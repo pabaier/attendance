@@ -16,6 +16,11 @@ export default function (dbClient: DbClient) {
     // GOOGLE AUTH
     const client = new OAuth2Client(clientId);
 
+    router.get('/test', async (req: Request, res: Response) => {
+        var a = await dbClient.getCourseDates(1)
+        console.log(a);
+    })
+
     router.get('/', authCheckMiddleware, async (req: Request, res: Response) => {
         // get courseIds
         const groups = await dbClient.getGroups(req.session.user?.id as number);
@@ -33,7 +38,7 @@ export default function (dbClient: DbClient) {
         const courseNames: {[courseId: number] : string} = {}
 
         for (const id of courseIds) {
-            courseDates[id] = (await dbClient.getCourseDates(id)).map(courseDate => courseDate.meeting);
+            courseDates[id] = (await dbClient.getCourseDates(id))
             courseAssignments[id] = (await dbClient.getAssignments(id));
             courseNames[id] = (await dbClient.getCourse(id)).course_number;
         }
@@ -41,11 +46,11 @@ export default function (dbClient: DbClient) {
 
         // build calendar events
         courseIds.reduce((acc, id, index) => {
-            courseDates[id].forEach(courseDate => {
+            courseDates[id].forEach(date => {
                 acc.push(
                     {
                         title: courseNames[id].toString(),
-                        start: courseDate.toISOString().split('T')[0],
+                        start: date.toISOString().split('T')[0],
                         color: calendarEventColors[index].meeting
                     }
                 )
