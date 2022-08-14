@@ -10,10 +10,12 @@ CREATE INDEX users_email_idx ON users (email);
 
 CREATE TABLE attendance (
 	user_id integer REFERENCES users (id),
+	course_id integer REFERENCES courses (id),
 	date_created timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX attendance_user_id_idx ON attendance (user_id);
 CREATE INDEX attendance_date_created_idx ON attendance (date_created);
+CREATE INDEX attendance_user_id_course_id_idx ON attendance (user_id, course_id);
 
 CREATE TABLE courses (
 	id SERIAL PRIMARY KEY,

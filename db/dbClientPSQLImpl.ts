@@ -17,6 +17,53 @@ class DbClientPSQLImpl implements DbClient {
       }
     )
   }
+  async getTotalUserSignIns(userId: number, courseId: number): Promise<number> {
+    return await this.connection.any({
+      name: 'getTotalUserSignIns',
+      text: 'SELECT * FROM public.attendance where user_id = $1 and course_id = $2',
+      values: [userId, courseId],
+      rowMode: 'array'
+    }).then((data: any) => {
+      return data.length;
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return 0
+    });
+  }
+
+  async getTotalCourseDays(courseId: number, until?: Date): Promise<number> {
+    var values: (number | Date)[] = [courseId];
+    var text: string = 'SELECT * FROM course_dates where course_id = $1'
+    if (until) {
+      values.push(until);
+      text += ' and meeting <= $2'
+    }
+    return await this.connection.any({
+      name: 'getTotalCourseDays',
+      text,
+      values,
+      rowMode: 'array'
+    }).then((data: any) => {
+      return data.length;
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return 0
+    });
+  }
+
+  async getTodaySignIn(userId: number, courseId: number): Promise<Date[]> {
+    return await this.connection.any({
+      name: 'getTodaySignIn',
+      text: "SELECT date_created FROM attendance where user_id = $1 and course_id = $2 and date_created > (current_date at time zone 'est')::date",
+      values: [userId, courseId],
+      rowMode: 'array'
+    }).then((data: any) => {
+      return data.flat();
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    }); 
+  }
 
   async getGroups(userId: number): Promise<string[]> {
     return await this.connection.any({
@@ -116,8 +163,8 @@ class DbClientPSQLImpl implements DbClient {
       })
   }
 
-  signIn(userId: number) {
-    return this.connection.none('INSERT INTO attendance (user_id) VALUES ($1)', [userId])
+  async signIn(userId: number, courseId: number) {
+    return this.connection.none('INSERT INTO attendance (user_id, course_id) VALUES ($1, $2)', [userId, courseId])
       .then((data: any) => { return true; })
       .catch((error: any) => {
         console.log('ERROR:', error);
