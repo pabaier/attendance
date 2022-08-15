@@ -8,15 +8,6 @@ CREATE TABLE users (
 );
 CREATE INDEX users_email_idx ON users (email);
 
-CREATE TABLE attendance (
-	user_id integer REFERENCES users (id),
-	course_id integer REFERENCES courses (id),
-	date_created timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-CREATE INDEX attendance_user_id_idx ON attendance (user_id);
-CREATE INDEX attendance_date_created_idx ON attendance (date_created);
-CREATE INDEX attendance_user_id_course_id_idx ON attendance (user_id, course_id);
-
 CREATE TABLE courses (
 	id SERIAL PRIMARY KEY,
 	course_name VARCHAR (50),
@@ -28,6 +19,15 @@ CREATE TABLE courses (
 	UNIQUE (course_number, course_year, semester, start_time)
 );
 CREATE INDEX courses_course_number_idx ON courses (course_number);
+
+CREATE TABLE attendance (
+	user_id integer REFERENCES users (id),
+	course_id integer REFERENCES courses (id),
+	date_created timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX attendance_user_id_idx ON attendance (user_id);
+CREATE INDEX attendance_date_created_idx ON attendance (date_created);
+CREATE INDEX attendance_user_id_course_id_idx ON attendance (user_id, course_id);
 
 insert into courses (course_number, semester, course_year, start_time, end_time)
 values (220, 'Fall', 2022, '9:30', '10:30')
