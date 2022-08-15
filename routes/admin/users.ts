@@ -28,11 +28,6 @@ export default function (dbClient: DbClient) {
         res.render('admin/users', { user: req.session.user, users: usersSections, courses: courseIdName, addForm: addUserForm, alert: req.session.alert });
     });
 
-    router.post('/:userId/signin', (req: Request, res: Response) => {
-        const out = dbClient.signIn(parseInt(req.params.userId))
-        res.send(out)
-    })
-
     router.post('/add', async (req: Request, res: Response) => {
         if (Object.keys(req.body).length == 0) {
             if (!req.session.alert)

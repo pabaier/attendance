@@ -17,6 +17,41 @@ class DbClientPSQLImpl implements DbClient {
       }
     )
   }
+
+  async getTodaySignIns(userCourseIds: { userId: number; courseId: number; }[]): Promise<{ userId: number; courseId: number; }[]> {
+    const queries: Promise<{ userId: number; courseId: number; }[]>[] = userCourseIds.map(userCourseId => {
+      const query = {
+        name: 'getTodaySignIns',
+        text: 'SELECT user_id as "userId", course_id as "courseId" FROM attendance where user_id = $1 and course_id = $2 and date_created > (current_date at time zone \'est\')::date LIMIT 1',
+        values: [userCourseId.userId, userCourseId.courseId]
+      }
+      return this.connection.any(query).then((data: { userId: number; courseId: number; }[]) => {
+        return data;
+      }).catch((error: any) => {
+        console.log(error)
+        return false;
+      });
+    })
+
+    return Promise.all(queries).then((data: { userId: number; courseId: number; }[][]) => {
+      return data.flat().filter(x => x);
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
+  }
+
+  async signInUsers(userCourseIds: {user_id: number, course_id: number}[]): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['user_id', 'course_id'], {table: 'attendance'});
+    const query = this.pg.helpers.insert(userCourseIds, cs);
+    return this.connection.any(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
   async getTotalUserSignIns(userId: number, courseId: number): Promise<number> {
     return await this.connection.any({
       name: 'getTotalUserSignIns',

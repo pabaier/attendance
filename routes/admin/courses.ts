@@ -129,5 +129,25 @@ export default function (dbClient: DbClient) {
         res.send('ok')
     })
 
+    router.post('/:courseId/signin', async (req: Request, res: Response) => {
+        const courseId: number = parseInt(req.params.courseId);
+        const userIds: number[] = req.body.userIds;
+        const allUserCourses: {userId: number, courseId: number}[] = userIds.map((userId: number) => {return {userId, courseId}}) 
+        const alreadySignedInToday: {userId: number, courseId: number}[] = await dbClient.getTodaySignIns(allUserCourses);
+        const filteredUserCourses: {user_id: number, course_id: number}[] = allUserCourses.reduce((acc: {user_id: number, course_id: number}[], curr: {userId: number, courseId: number}) => {
+            if (!alreadySignedInToday.some(user => user.userId == curr.userId && user.courseId == curr.courseId)) {
+                acc.push({user_id: curr.userId, course_id: curr.courseId});
+            }
+            return acc;
+        }, [])
+
+        if (!filteredUserCourses.length) return res.send('nobody');
+        const outcome = await dbClient.signInUsers(filteredUserCourses);
+        if (outcome)
+            return res.send('ok')
+        else
+            return res.send('fail') // this should be a 500
+    })
+
     return router;
 }

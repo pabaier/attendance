@@ -3,7 +3,7 @@ import NodeCache from 'node-cache';
 import { authCheckMiddleware } from '../middleware/auth';
 import { DbClient } from '../db/dbClient';
 import { Alert, Course } from '../models';
-import { getUserCourseIds } from './helpers';
+import { getUserCourseIds, signIn } from './helpers';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
     const router = express.Router();
@@ -31,23 +31,22 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         const result = parseInt(req.body.code) == myCache.get('code') as number
         const userId = req.session.user?.id as number
         const courseId = parseInt(req.body.courseId);
-        const signedIn = await dbClient.getTodaySignIn(userId, courseId)
         var success = false;
 
         var alert: Alert[] = [];
-        if (result && !signedIn.length) {
-            dbClient.signIn(req.session.user?.id as number, courseId)
-            alert.push({type: 'success', message: 'success'})
-            success = true;
-        }
-        else if (!result) {
-            alert.push({type: 'danger', message: 'try again'})
-        }
-        else if (signedIn) {
-            alert.push({type: 'warning', message: 'already signed in today'})
+        if (result) {
+            var signInResult = await signIn(dbClient, userId, courseId);
+            if (signInResult.alreadySignedIn) {
+                alert.push({type: 'warning', message: 'already signed in today'})
+            } else if (signInResult.success) {
+                alert.push({type: 'success', message: 'success'})
+                success = true;
+            } else {
+                alert.push({type: 'danger', message: 'try again'})
+            }
         }
         else {
-            alert.push({type: 'danger', message: 'try again'})
+            alert.push({type: 'danger', message: 'wrong code. try again'})
         }
         res.json({ alert,  success })
     });

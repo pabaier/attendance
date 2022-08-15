@@ -1,3 +1,4 @@
+import { DbClient } from '../db/dbClient';
 import { Course } from '../models';
 
 export const makeCourseName = (course: Course) => {
@@ -41,4 +42,18 @@ export const getUserCourseIds = (userGroups: string[]): number[] => {
         if (groupParts[0] == 'course') acc.push(parseInt(groupParts[1]))
         return acc
     }, [])
+}
+
+export const signIn = async (dbClient: DbClient, userId: number, courseId: number): Promise<({alreadySignedIn: boolean, success: boolean})> => {
+    const signedIn = await dbClient.getTodaySignIn(userId, courseId)
+    var success = false;
+
+    if (!signedIn.length) {
+        success = await dbClient.signIn(userId, courseId)
+    }
+
+    return {
+        alreadySignedIn: signedIn.length > 0,
+        success
+    };
 }

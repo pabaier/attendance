@@ -3,6 +3,7 @@ import { Assignment, Course, CourseDate, User, UserGroups } from "../models";
 export interface DbClient {
     connection: any;
     signIn(userId: number, courseId: number): Promise<boolean>;
+    signInUsers(userCourseIds: {user_id: number, course_id: number}[]): Promise<boolean>;
     getUser(user: string | number): Promise<User | null>;
     getUsers(group?: string | null): Promise<User[] | null>;
     addUsers(users: User[]): Promise<User[]>;
@@ -23,6 +24,7 @@ export interface DbClient {
     addAssignmentToCourse(assignmentCourse: {assignment_id: number, course_id: number}[]): Promise<boolean>
     getGroups(userId: number): Promise<string[]>
     getTodaySignIn(userId: number, courseId: number): Promise<Date[]>;
+    getTodaySignIns(userCourseIds: {userId: number, courseId: number}[]): Promise<{userId: number, courseId: number}[]>;
     getTotalCourseDays(courseId: number, until?: Date): Promise<number>;
     getTotalUserSignIns(userId: number, courseId: number): Promise<number>;
 }
