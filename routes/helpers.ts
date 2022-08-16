@@ -10,11 +10,11 @@ export const makeUTCDateString = (original: Date): string => {
 }
 
 export const calendarEventColors = [{
-        meeting: '#0d6efd',
-        assignment: ['#569afe', '#86b7fe']
+        meeting: '#26547C',
+        assignment: ['#6787a3', '#93aabe']
     }, {
-        meeting: '#fd7e14',
-        assignment: ['#fea55b', '#febf8a']
+        meeting: '#FF8427',
+        assignment: ['#ffa968', '#ffc293']
     }, {
         meeting: '#20c997',
         assignment: ['#63d9b6', '#90e4cb']

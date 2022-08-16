@@ -1,3 +1,12 @@
+/* colors:
+  navbar dark blue: #2B2D42
+  hover orange: #FF8427
+  lighter blue: #26547C
+  lightest blue: #8EA8C3
+  hover row gray: #D3D3D3
+  alternating row gray: #E8E8E8
+
+*/
 .alternating-table > div:nth-child(even) {
     background: #E8E8E8;
   }
@@ -15,4 +24,38 @@
 
 header {
   padding-bottom: 10px;
+}
+
+.btn-primary {
+  background-color: #2B2D42;
+  border-color: #2B2D42;
+  border-radius: 0.25ch;
+}
+
+.btn-primary:hover {
+  background-color: #FF8427;
+  border-color: #FF8427;
+}
+
+.breadcrumb-item a {
+  text-decoration: none;
+}
+
+.breadcrumb-item a:link {
+  color: #26547C;
+}
+.breadcrumb-item a:visited {
+  color: #26547C;
+}
+.breadcrumb-item a:hover {
+  color: #2B2D42;
+}
+.breadcrumb-item a:active {
+  color: 2B2D42;
+}
+
+/* for calendar day headers and numbers */
+.fc-day a {
+  color: #26547C;
+  text-decoration: none;
 }
