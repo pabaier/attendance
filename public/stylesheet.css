@@ -8,3 +8,11 @@
     background: #D3D3D3;
     cursor: pointer
 }
+
+.nav-color {
+  background-color: #2B2D42;
+}
+
+header {
+  padding-bottom: 10px;
+}
