@@ -25,7 +25,7 @@ export default function (dbClient: DbClient) {
         const addUserForm = renderFile('./views/partials/input-form.ejs', {action, fields});
 
 
-        res.render('admin/users', { user: req.session.user, users: usersSections, courses: courseIdName, addForm: addUserForm, alert: req.session.alert });
+        res.render('admin/users', { users: usersSections, courses: courseIdName, addForm: addUserForm, alert: req.session.alert });
     });
 
     router.post('/add', async (req: Request, res: Response) => {
@@ -91,13 +91,13 @@ export default function (dbClient: DbClient) {
 
     router.get('/:userId', async (req: Request, res: Response) => {
         const user: User | null= await dbClient.getUser(parseInt(req.params.userId))
-        res.render('admin/user', {user: req.session.user, profile: user})
+        res.render('admin/user', {profile: user})
     })
 
     router.delete('/:userId', async (req: Request, res: Response) => {
         const result: boolean= await dbClient.deleteUser(parseInt(req.params.userId))
         res.send('ok')
-        // res.render('admin/users', {user: req.session.user, section: section[0]})
+        // res.render('admin/users', {section: section[0]})
     })
 
     return router;

@@ -24,7 +24,7 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     router.get('/assignments', async (req: Request, res: Response) => {
         const courses = await dbClient.getCourses();
         const courseNameId = courses.map(course => { return {name: makeCourseName(course), id: course.id}})
-        res.render('admin/assignments.ejs', { user: req.session.user, courses: courseNameId });
+        res.render('admin/assignments.ejs', { courses: courseNameId });
     });
 
     router.post('/assignments', async (req: Request, res: Response) => {
@@ -50,11 +50,11 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     });
 
     router.get('/', (req: Request, res: Response) => {
-        res.render('admin/index', { user: req.session.user })
+        res.render('admin/index')
     });
 
     router.get('/code/', (req: Request, res: Response) => {
-        res.render('admin/code', { user: req.session.user })
+        res.render('admin/code')
     });
 
     router.get('/code/update', (req: Request, res: Response) => {

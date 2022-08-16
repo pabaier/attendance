@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import dotenv from 'dotenv';
 dotenv.config();
 import session from 'express-session';
@@ -44,6 +44,11 @@ app.use(session({
 app.use(express.json());
 app.use(express.urlencoded());
 
+// add user to all responses
+app.use(function(req: Request, res: Response, next: NextFunction) {
+  res.locals.user = req.session.user
+  next()
+})
 app.use('/admin', admin(myCache, dbClient));
 app.use('/user', user(myCache, dbClient));
 app.use('/', base(dbClient))

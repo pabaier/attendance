@@ -21,7 +21,7 @@ export default function (dbClient: DbClient) {
             return {id: name, placeholder: name}
         })
         const addCoursesForm = renderFile('./views/partials/input-form.ejs', {action, fields});
-        res.render('admin/courses', { user: req.session.user, courses: coursesBig, addForm: addCoursesForm });
+        res.render('admin/courses', { courses: coursesBig, addForm: addCoursesForm });
     });
 
     router.post('/add', async (req: Request, res: Response) => {
@@ -78,7 +78,7 @@ export default function (dbClient: DbClient) {
         })
         const assignments = renderFile('./views/admin/partials/assignment-list.ejs', {assignmentItems})
 
-        res.render('admin/course', { user: req.session.user, courseId, courseName: makeCourseName(course), users: usersSections, calendar, assignments, alert: req.session.alert });
+        res.render('admin/course', { courseId, courseName: makeCourseName(course), users: usersSections, calendar, assignments, alert: req.session.alert });
     })
 
     router.post('/:courseId/users', async (req: Request, res: Response) => {
@@ -115,7 +115,7 @@ export default function (dbClient: DbClient) {
             renderFile('./views/admin/partials/assignment-item.ejs', {assignment})
         })
         const assignmentList = renderFile('./views/admin/partials/assignment-list.ejs', {assignmentItems})
-        res.render('admin/assignments', { user: req.session.user });
+        res.render('admin/assignments');
     });
 
     router.delete('/:courseId', (req: Request, res: Response) => {

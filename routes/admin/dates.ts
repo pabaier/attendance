@@ -10,7 +10,7 @@ export default function (dbClient: DbClient) {
     router.get('/', async (req: Request, res: Response) => {
         const courses = await dbClientPSQLImpl.getCourses();
         const courseNameId = courses.map(course => { return {name: makeCourseName(course), id: course.id}})
-        res.render('admin/dates', { user: req.session.user, courses: courseNameId });
+        res.render('admin/dates', { courses: courseNameId });
     });
 
     router.post('/', async (req: Request, res: Response) => {

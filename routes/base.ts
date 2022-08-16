@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import { DbClient } from '../db/dbClient';
 import { Alert, Assignment, CalendarEvent, Course, CourseDate, User } from '../models';
@@ -16,8 +16,8 @@ export default function (dbClient: DbClient) {
     const client = new OAuth2Client(clientId);
 
     router.get('/test', async (req: Request, res: Response) => {
-        var a = await dbClient.getGroups(2)
-        console.log(a);
+        // var a = await dbClient.getGroups(2)
+        res.render('base/test')
     })
 
     router.get('/', authCheckMiddleware, async (req: Request, res: Response) => {
@@ -74,7 +74,7 @@ export default function (dbClient: DbClient) {
 
         const calendar = renderFile('./views/partials/calendar.ejs', {events: calendarEvents});
 
-        res.render('base/index', { title: 'Attendance', user: req.session.user, calendar })
+        res.render('base/index', { title: 'Attendance', calendar })
     });
 
     router.post('/login/verify', async (req: Request, res: Response) => {
@@ -99,7 +99,7 @@ export default function (dbClient: DbClient) {
 
     router.get('/login', (req: Request, res: Response) => {
         const alert: Alert[] = req.query.message ? [{type: 'danger', message: req.query.message as string}] : [];
-        res.render('base/login', { clientId, baseURL, redirect: req.query.redirect, user: req.session.user, alert})
+        res.render('base/login', { clientId, baseURL, redirect: req.query.redirect, alert})
     });
 
     router.get('/logout', (req: Request, res: Response) => {

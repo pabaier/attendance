@@ -23,7 +23,7 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
             const totalSignIns = await dbClient.getTotalUserSignIns(userId, id);
             data.push({'attendance': totalSignIns, 'days': totalDays, course});
         }
-        res.render('user/attendance', { user: req.session.user, data })
+        res.render('user/attendance', { data })
         next();
     });
 
@@ -52,7 +52,6 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     });
 
     router.use((req: Request, res: Response) => {
-        console.log('OOOKKK!')
     })
     return router;
 }
