@@ -53,25 +53,26 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         res.render('admin/index')
     });
 
-    router.get('/code/', (req: Request, res: Response) => {
-        res.render('admin/code')
+    router.get('/code/', async (req: Request, res: Response) => {
+        const courses = await dbClient.getCourses()
+        res.render('admin/code', { courses })
     });
 
     router.get('/code/update', (req: Request, res: Response) => {
-        var minutes: number = 0;
-        if (myCache.has('time')) {
-            minutes  = myCache.take('time') as number;
-        }
-        else {
-            minutes = new Date().getMinutes();
-            myCache.set('time', minutes, 59)
-        }
+        // var minutes: number = 0;
+        // if (myCache.has('time')) {
+        //     minutes  = myCache.take('time') as number;
+        // }
+        // else {
+        //     minutes = new Date().getMinutes();
+        //     myCache.set('time', minutes, 59)
+        // }
         
-        if (minutes < 29 || minutes > 35) {
-            res.json({ code: null })
-            return
-        }
-        else {
+        // if (minutes < 29 || minutes > 35) {
+        //     res.json({ code: null })
+        //     return
+        // }
+        // else {
             const value: number = myCache.has('code') ? myCache.take('code') as number : 0;
             const oldNumber: number = value % 10;
             var newNumber: number = Math.floor(Math.random() * 9) + 1;
@@ -80,7 +81,7 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
             }
             myCache.set('code', (value * 10 + newNumber) % 100000, codeRefreshRate / 1000 + 0.5);
             res.json({ code: newNumber })
-        }
+        // }
     });
 
     return router;

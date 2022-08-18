@@ -1,0 +1,9 @@
+<!-- requires courses list {id, course_number} -->
+<div class="w-25 start-0">
+    <select class="form-select my-2" id="course-select" aria-label="Default select section">
+        <option selected>Select Course</option>
+        <% courses.forEach(course => { %>
+            <option value="<%=course.id%>"><%=course.course_number%></option>
+        <% }) %>
+    </select>
+</div>

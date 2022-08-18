@@ -14,7 +14,6 @@ export default function (dbClient: DbClient) {
             return renderFile('./views/admin/partials/user-section.ejs', { user, type: 'Delete' })
         })
         const courses = await dbClient.getCourses();
-        const courseIdName = courses.map(course => {return {id: course.id, name: makeCourseName(course)}})
 
         // {action: form action, fields: [{id: field id, placeholder, }], }
         const action = "/admin/users/add";
@@ -25,7 +24,7 @@ export default function (dbClient: DbClient) {
         const addUserForm = renderFile('./views/partials/input-form.ejs', {action, fields});
 
 
-        res.render('admin/users', { users: usersSections, courses: courseIdName, addForm: addUserForm, alert: req.session.alert });
+        res.render('admin/users', { users: usersSections, courses, addForm: addUserForm, alert: req.session.alert });
     });
 
     router.post('/add', async (req: Request, res: Response) => {

@@ -1,3 +1,7 @@
+<!-- requires courses list {id, course_number} -->
+<%- include('partials/course-select-dropdown.ejs', {courses: courses}); %>
+<!-- <button type="submit" id="add-class-btn" class="btn btn-primary my-2">Add Users To Course</button> -->
+
 <div class="jumbotron">
     <h5 id="timer"></h5>
     <h1>Code</h1>
@@ -5,46 +9,105 @@
 </div>
 
 <script type="application/javascript">
-    var today = new Date();
-    var target = new Date(today);
-    target.setHours(23, 36)
+    var courses = <%-JSON.stringify(courses)%>
 
-    var timerID = setInterval(function () {
-        var date = new Date()      
-
-        var difference = new Date(target - date);
-
-        if (difference.getMinutes() >= 0 && difference.getMinutes() <= 5) {
-            var seconds = difference.getSeconds() >= 10 ? difference.getSeconds() : `0${difference.getSeconds()}`;
-            $("#timer").html(`${difference.getMinutes()}:${seconds}`)
+    $('#course-select').change( (event) => {
+        var courseId = event.target.value //$('#course-select').val()
+        var course = courses.filter(course => course.id == courseId)
+        try {
+            var startTime = course[0].start_time.split(':')
         }
-        else {
-            $("#timer").html('')
+        catch {
+            return;
         }
-    }, 1000);
+        var startHour = startTime[0]
+        var startMinute = startTime[1]
+        var today = new Date();
+        var classDate = new Date();
+        classDate.setHours(startHour);
+        classDate.setMinutes(startMinute);
+        classDate.setSeconds(0);
+        var diffMilli = classDate - today;
+        console.log(diffMilli)
+        if (diffMilli > 0) {
+            displayTimer(diffMilli);
+        } else {
+            $("#alert-box").html( 
+                "<div class='alert alert-info' role='alert'>" + 
+                    "Attendance Closed" +
+                "</div>"
+            )
+            $("#number").html( "" )
+            $("#timer").html('Class is done for today!');
+        }
+            
+    } )
 
-    var intervalID = setInterval(function () {
-        $.get( "/admin/code/update", function( data ) {
-            if (data.code) {
-                $("#number").html( data.code )
-            }
-            else {
-                $("#alert-box").html( 
-                    "<div class='alert alert-info' role='alert'>" + 
-                        "Attendance Closed" +
-                    "</div>"
-                )
-                $("#number").html( "" )
-                stopCode();
-            }
-        })
-    }, parseInt('<%= process.env.CODE_REFRESH_RATE %>'))
+    const displayTimer = (diffMilli) => {
+        var diffDate = new Date(diffMilli)
+            var minutesLeft = diffDate.getMinutes();
+            var secondsLeft = diffDate.getSeconds();
+            var codeStarted = false;
+            var displayCodeId = undefined;
+            var timerID = setInterval(function () {
+                var seconds = secondsLeft >= 10 ? secondsLeft : `0${secondsLeft}`;
+                $("#timer").html(`${minutesLeft}:${seconds}`);
+                secondsLeft -= 1;
+                // start the code within 5 minutes of class starting
+                if (minutesLeft < 5 && !codeStarted) {
+                    codeStarted = true;
+                    $("#alert-box").html( 
+                        "<div class='alert alert-success' role='alert'>" + 
+                            "Enter the last 5 numbers to sign in!" +
+                        "</div>"
+                    )
+                    console.log('displayCode')
+                    displayCodeId = displayCode();
+                } else if (!codeStarted) {
+                    $("#alert-box").html( 
+                        "<div class='alert alert-warning' role='alert'>" + 
+                            "Sign in will open 5 minutes before class starts" +
+                        "</div>"
+                    )
+                }
+                if (secondsLeft < 0) {
+                    secondsLeft = 59;
+                    minutesLeft -= 1;
+                }
 
-    function stopCode() {
-        clearInterval(intervalID);
+                // stop the time if class has started
+                if (minutesLeft < 0) {
+                    console.log(timerID, displayCodeId)
+                    clearInterval(timerID)
+                    clearInterval(displayCodeId)
+                    codeStarted = false;
+                    $("#alert-box").html( 
+                        "<div class='alert alert-info' role='alert'>" + 
+                            "Attendance Closed" +
+                        "</div>"
+                    )
+                    $("#number").html( "" )
+                }
+            }, 1000);
     }
 
-    function stopTimer() {
-        clearInterval(timerID);
+    const displayCode = () => {
+        const interval = setInterval(function () {
+            $.get( "/admin/code/update", function( data ) {
+                if (data.code) {
+                    $("#number").html( data.code )
+                }
+                else {
+                    $("#alert-box").html( 
+                        "<div class='alert alert-info' role='alert'>" + 
+                            "Attendance Closed" +
+                        "</div>"
+                    )
+                    $("#number").html( "" )
+                    stopCode();
+                }
+            })
+        }, parseInt('<%= process.env.CODE_REFRESH_RATE %>'))
+        return interval
     }
 </script>

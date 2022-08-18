@@ -1,24 +1,15 @@
-<!-- requires courses ({id, name}), users, addForm -->
+<!-- requires courses list {id, course_number}, users, addForm -->
 <div class="jumbotron">
     <h1>Users</h1>
-    <select class="form-select my-2" id="filter-class-select" aria-label="Default select section">
-        <option selected>Select Course</option>
-        <% courses.forEach(course => { %>
-            <option value="<%=course.id%>"><%=course.name%></option>
-        <% }) %>
-    </select>
 
     <div class="container alternating-table users" id="users">
         <% users.forEach(user => { %>
             <%- user %>
         <% }) %>
     </div>
-    <select class="form-select my-2" id="add-class-select" aria-label="Default select section">
-        <option selected>Select Course</option>
-        <% courses.forEach(course => { %>
-            <option value="<%=course.id%>"><%=course.name%></option>
-        <% }) %>
-    </select>
+    
+    <%- include('partials/course-select-dropdown.ejs', {courses: courses}); %>
+
     <button type="submit" id="add-class-btn" class="btn btn-primary form-control my-2">Add Users To Course</button>
     
     <%- addForm %>
@@ -31,7 +22,7 @@
 
 <script>
     $('#add-class-btn').click(function() {
-        var courseId = $('#add-class-select').val()
+        var courseId = $('#course-select').val()
         var userIds = []
         $('.userc:checkbox:checked').each(function() {userIds.push(this.value)})
         $.post(`/admin/courses/${courseId}/users`, { userIds }, function( data ) {
