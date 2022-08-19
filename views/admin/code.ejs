@@ -10,6 +10,8 @@
 
 <script type="application/javascript">
     var courses = <%-JSON.stringify(courses)%>
+    var timerID = undefined;
+    var displayCodeId = undefined;
 
     $('#course-select').change( (event) => {
         var courseId = event.target.value //$('#course-select').val()
@@ -31,6 +33,8 @@
         if (diffMilli > 0) {
             displayTimer(diffMilli);
         } else {
+            if(timerID) clearInterval(timerID)
+            if(displayCodeId) clearInterval(displayCodeId)
             $("#alert-box").html( 
                 "<div class='alert alert-info' role='alert'>" + 
                     "Attendance Closed" +
@@ -38,8 +42,7 @@
             )
             $("#number").html( "" )
             $("#timer").html('Class is done for today!');
-        }
-            
+        }       
     } )
 
     const displayTimer = (diffMilli) => {
@@ -47,13 +50,12 @@
             var minutesLeft = diffDate.getMinutes();
             var secondsLeft = diffDate.getSeconds();
             var codeStarted = false;
-            var displayCodeId = undefined;
-            var timerID = setInterval(function () {
+            timerID = setInterval(function () {
                 var seconds = secondsLeft >= 10 ? secondsLeft : `0${secondsLeft}`;
                 $("#timer").html(`${minutesLeft}:${seconds}`);
                 secondsLeft -= 1;
                 // start the code within 5 minutes of class starting
-                if (minutesLeft < 5 && !codeStarted) {
+                if (minutesLeft < 5 && minutesLeft > 0 && !codeStarted) {
                     codeStarted = true;
                     $("#alert-box").html( 
                         "<div class='alert alert-success' role='alert'>" + 
@@ -93,15 +95,6 @@
             $.get( "/admin/code/update", function( data ) {
                 if (data.code) {
                     $("#number").html( data.code )
-                }
-                else {
-                    $("#alert-box").html( 
-                        "<div class='alert alert-info' role='alert'>" + 
-                            "Attendance Closed" +
-                        "</div>"
-                    )
-                    $("#number").html( "" )
-                    stopCode();
                 }
             })
         }, parseInt('<%= process.env.CODE_REFRESH_RATE %>'))
