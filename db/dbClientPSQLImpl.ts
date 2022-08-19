@@ -209,15 +209,27 @@ class DbClientPSQLImpl implements DbClient {
 
   async getUser(user: string | number): Promise<User | null> {
     const userOption: string = typeof(user) == 'string' ? 'email' : 'id';
-    return this.connection.one(`SELECT * FROM users WHERE ${userOption} = $1`, user)
-      .then((data: User) => {
-        data.roles = data.roles ? (data.roles as string).split(',') : '';
-        return data;
-      })
-      .catch((error: any) => {
-        console.log('ERROR:', error);
-        return null;
-      });
+
+    return await this.connection.any({
+      name: 'getUser',
+      text: `SELECT * FROM users u
+      left join user_group ug 
+      on u.id = ug.user_id
+      WHERE u.${userOption} = $1`,
+      values: [user]
+    }).then((users: any[]) => {
+      return {
+        id: users[0].id,
+        email: users[0].email,
+        first_name: users[0].first_name,
+        last_name: users[0].last_name,
+        roles: users[0].roles.replaceAll(' ', '').split(','),
+        groups: users.map(user => user.group_name)
+      }
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return null
+    }); 
   }
 
   async addUsers(users: User[]): Promise<User[]> {

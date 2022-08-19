@@ -4,5 +4,5 @@ export default interface User {
     first_name: string,
     last_name: string,
     roles: string | string[],
-    groups: string | string[] | null,
+    groups: string[],
 }

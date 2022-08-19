@@ -38,7 +38,7 @@ export default function (dbClient: DbClient) {
             return
         }
         // bulk request has text field
-        var users: User[];
+        var users: any[];
         if (req.body.text) {
             const rawBody: string = req.body.text;
             const rawUsers: string[] = rawBody.split('\n');
