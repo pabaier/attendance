@@ -1,5 +1,5 @@
 <!-- requires assignment -->
-<div class="row" id==<%- assignment.id %> onfocusout="saveChanges(event, <%- assignment.id %>)">
+<div class="row my-2" id==<%- assignment.id %> onfocusout="saveChanges(event, <%- assignment.id %>)">
     <div class="col-2">
         <input class="form-control assignment-input" type="text" id="assignment-title-<%- assignment.id %>" readonly onfocus='editField(event)' onfocusout='doneEditField(event)' value="<%- assignment.title %>">
     </div>

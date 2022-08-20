@@ -18,6 +18,30 @@ class DbClientPSQLImpl implements DbClient {
     )
   }
 
+  async setUserGroups(userGroups: UserGroups): Promise<boolean> {
+    const userId = userGroups.id;
+    var query = 'delete from user_group where user_id = $1'
+    return this.connection.none(query, [userId])
+    .then((data: any) => {
+      return this.addUsersToGroups([userGroups]);
+    })
+    .catch((error: any) => {
+      return false;
+    })
+  }
+
+  async updateUser(user: User): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['first_name', 'last_name', 'roles']);
+    const data = {first_name: user.first_name, last_name: user.last_name, roles: user.roles}
+    const condition = pgp.as.format(' WHERE id = $1', user.id);
+    const query = this.pg.helpers.update(data, cs, 'users') + condition;
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });  }
+
   async getTodaySignIns(userCourseIds: { userId: number; courseId: number; }[]): Promise<{ userId: number; courseId: number; }[]> {
     const queries: Promise<{ userId: number; courseId: number; }[]>[] = userCourseIds.map(userCourseId => {
       const query = {
@@ -128,7 +152,7 @@ class DbClientPSQLImpl implements DbClient {
     return res;
   }
 
-  updateAssignment(assignment: Assignment): Promise<boolean> {
+  async updateAssignment(assignment: Assignment): Promise<boolean> {
     const a = assignment
     var query = `
       UPDATE assignments
@@ -210,14 +234,12 @@ class DbClientPSQLImpl implements DbClient {
   async getUser(user: string | number): Promise<User | null> {
     const userOption: string = typeof(user) == 'string' ? 'email' : 'id';
 
-    return await this.connection.any({
-      name: 'getUser',
-      text: `SELECT * FROM users u
+    return await this.connection.any(
+      `SELECT * FROM users u
       left join user_group ug 
       on u.id = ug.user_id
-      WHERE u.${userOption} = $1`,
-      values: [user]
-    }).then((users: any[]) => {
+      WHERE u.${userOption} = $1`, [user]
+    ).then((users: any[]) => {
       return {
         id: users[0].id,
         email: users[0].email,
@@ -245,7 +267,7 @@ class DbClientPSQLImpl implements DbClient {
     return res;
   }
 
-  deleteUser(userId: number) {
+  async deleteUser(userId: number): Promise<boolean> {
     return this.connection.none('DELETE FROM users WHERE id = $1', userId)
     .then((data: any) => { return true;})
     .catch((error: any) => {

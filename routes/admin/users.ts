@@ -93,8 +93,24 @@ export default function (dbClient: DbClient) {
         res.render('admin/user', {profile: user})
     })
 
+    router.put('/:userId', async (req: Request, res: Response) => {
+        const user: User = {
+            id: parseInt(req.params.userId),
+            email: req.params.email,
+            first_name: req.body.firstName,
+            last_name: req.body.lastName,
+            roles: req.body.roles,
+            groups: req.body.groups,
+        }
+        await dbClient.updateUser(user);
+        await dbClient.setUserGroups({id: user.id as number, groups: user.groups })
+        res.send('ok')
+        // const user: User | null= await dbClient.getUser(parseInt(req.params.userId))
+        // res.render('admin/user', {profile: user})
+    })
+
     router.delete('/:userId', async (req: Request, res: Response) => {
-        const result: boolean= await dbClient.deleteUser(parseInt(req.params.userId))
+        const result: boolean = await dbClient.deleteUser(parseInt(req.params.userId))
         res.send('ok')
         // res.render('admin/users', {section: section[0]})
     })

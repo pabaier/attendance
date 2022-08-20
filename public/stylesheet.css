@@ -64,3 +64,8 @@ header {
   color: #26547C;
   text-decoration: none;
 }
+
+.square {
+  width: 3vw;
+  height: 3vw;
+}
