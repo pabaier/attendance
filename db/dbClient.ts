@@ -26,7 +26,7 @@ export interface DbClient {
     addAssignmentToCourse(assignmentCourse: {assignment_id: number, course_id: number}[]): Promise<boolean>
     getGroups(userId: number): Promise<string[]>
     getTodaySignIn(userId: number, courseId: number): Promise<Date[]>;
-    getTodaySignIns(userCourseIds: {userId: number, courseId: number}[]): Promise<{userId: number, courseId: number}[]>;
+    getTodaySignIns(courseId: number): Promise<User[]>;
     getTotalCourseDays(courseId: number, until?: Date): Promise<number>;
     getTotalUserSignIns(userId: number, courseId: number): Promise<number>;
 }

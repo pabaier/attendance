@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import { DbClient } from '../../db/dbClient';
 import { renderFile } from '../../views/helper';
-import { Course, CourseDate, UserGroups, CalendarEvent, Assignment } from '../../models';
+import { Course, CourseDate, UserGroups, CalendarEvent, Assignment, User } from '../../models';
 import { makeCourseName, makeUTCDateString } from '../helpers';
 import dbClientPSQLImpl from '../../db/dbClientPSQLImpl';
 
@@ -132,22 +132,28 @@ export default function (dbClient: DbClient) {
     router.post('/:courseId/signin', async (req: Request, res: Response) => {
         const courseId: number = parseInt(req.params.courseId);
         const userIds: number[] = req.body.userIds;
-        const allUserCourses: {userId: number, courseId: number}[] = userIds.map((userId: number) => {return {userId, courseId}}) 
-        const alreadySignedInToday: {userId: number, courseId: number}[] = await dbClient.getTodaySignIns(allUserCourses);
-        const filteredUserCourses: {user_id: number, course_id: number}[] = allUserCourses.reduce((acc: {user_id: number, course_id: number}[], curr: {userId: number, courseId: number}) => {
-            if (!alreadySignedInToday.some(user => user.userId == curr.userId && user.courseId == curr.courseId)) {
-                acc.push({user_id: curr.userId, course_id: curr.courseId});
+        const alreadySignedInToday: User[] = await dbClient.getTodaySignIns(courseId);
+        const usersToSignIn = userIds.reduce((acc: {user_id: number, course_id: number}[], currentId: number) => {
+            if (!alreadySignedInToday.some(user => user.id == currentId)) {
+                acc.push({user_id: currentId, course_id: courseId });
             }
             return acc;
-        }, [])
+        }, []) 
 
-        if (!filteredUserCourses.length) return res.send('nobody');
-        const outcome = await dbClient.signInUsers(filteredUserCourses);
+        // TODO: check users are in the course
+
+        const outcome = await dbClient.signInUsers(usersToSignIn);
         if (outcome)
             return res.send('ok')
         else
             return res.send('fail') // this should be a 500
     })
+
+    router.get('/:courseId/signedin', async (req: Request, res: Response) => {
+        const courseId: number = parseInt(req.params.courseId);
+        const users: User[] = await dbClient.getTodaySignIns(courseId);
+        res.json(users);
+    });
 
     return router;
 }

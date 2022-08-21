@@ -42,26 +42,22 @@ class DbClientPSQLImpl implements DbClient {
       return false;
     });  }
 
-  async getTodaySignIns(userCourseIds: { userId: number; courseId: number; }[]): Promise<{ userId: number; courseId: number; }[]> {
-    const queries: Promise<{ userId: number; courseId: number; }[]>[] = userCourseIds.map(userCourseId => {
-      const query = {
-        name: 'getTodaySignIns',
-        text: 'SELECT user_id as "userId", course_id as "courseId" FROM attendance where user_id = $1 and course_id = $2 and date_created > (current_date at time zone \'est\')::date LIMIT 1',
-        values: [userCourseId.userId, userCourseId.courseId]
-      }
-      return this.connection.any(query).then((data: { userId: number; courseId: number; }[]) => {
-        return data;
-      }).catch((error: any) => {
-        console.log(error)
-        return false;
-      });
-    })
-
-    return Promise.all(queries).then((data: { userId: number; courseId: number; }[][]) => {
-      return data.flat().filter(x => x);
+  async getTodaySignIns(courseId: number): Promise<User[]> {
+    const query = {
+      name: 'getTodaySignIns',
+      text: `
+        SELECT u.id, u.email, u.first_name, u.last_name, u.roles FROM attendance a
+        inner join users u
+        on a.user_id = u.id
+        where a.course_id = $1 and a.date_created > (current_date at time zone 'est')::date
+      `,
+      values: [courseId]
+    }
+    return this.connection.any(query).then((data: User[]) => {
+      return data;
     }).catch((error: any) => {
-      console.log('ERROR:', error);
-      return []
+      console.log(error)
+      return [];
     });
   }
 

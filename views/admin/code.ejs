@@ -6,12 +6,24 @@
     <h5 id="timer"></h5>
     <h1>Code</h1>
     <h1 id="number"></h1>
-</div>
+
+
+    <a class="btn btn-primary mt-5" data-bs-toggle="collapse" href="#users-collapse" role="button" aria-expanded="false" aria-controls="collapseExample">
+        Users
+    </a>
+
+    <div class="collapse" id="users-collapse">
+        <div class="container">
+            <div class="row fs-4 fw-bold" id="user-count"></div>
+            <div class="row my-2" id="users"></div>
+        </div>
+    </div>
 
 <script type="application/javascript">
     var courses = <%-JSON.stringify(courses)%>
     var timerID = undefined;
     var displayCodeId = undefined;
+    var displayUsersId = undefined;
 
     $('#course-select').change( (event) => {
         var courseId = event.target.value //$('#course-select').val()
@@ -31,10 +43,11 @@
         classDate.setSeconds(0);
         var diffMilli = classDate - today;
         if (diffMilli > 0) {
-            displayTimer(diffMilli);
+            displayTimer(diffMilli, courseId);
         } else {
             if(timerID) clearInterval(timerID)
             if(displayCodeId) clearInterval(displayCodeId)
+            if(displayUsersId) clearInterval(displayUsersId)
             $("#alert-box").html( 
                 "<div class='alert alert-info' role='alert'>" + 
                     "Attendance Closed" +
@@ -45,7 +58,7 @@
         }       
     } )
 
-    const displayTimer = (diffMilli) => {
+    const displayTimer = (diffMilli, courseId) => {
         var diffDate = new Date(diffMilli)
             var minutesLeft = diffDate.getMinutes();
             var secondsLeft = diffDate.getSeconds();
@@ -55,7 +68,7 @@
                 $("#timer").html(`${minutesLeft}:${seconds}`);
                 secondsLeft -= 1;
                 // start the code within 5 minutes of class starting
-                if (minutesLeft < 5 && minutesLeft > 0 && !codeStarted) {
+                if (minutesLeft < 5 && minutesLeft >= 0 && !codeStarted) {
                     codeStarted = true;
                     $("#alert-box").html( 
                         "<div class='alert alert-success' role='alert'>" + 
@@ -63,6 +76,7 @@
                         "</div>"
                     )
                     displayCodeId = displayCode();
+                    displayUsersId = displayUsers(courseId);
                 } else if (!codeStarted) {
                     $("#alert-box").html( 
                         "<div class='alert alert-warning' role='alert'>" + 
@@ -79,6 +93,7 @@
                 if (minutesLeft < 0) {
                     clearInterval(timerID)
                     clearInterval(displayCodeId)
+                    clearInterval(displayUsersId)
                     codeStarted = false;
                     $("#alert-box").html( 
                         "<div class='alert alert-info' role='alert'>" + 
@@ -98,6 +113,25 @@
                 }
             })
         }, parseInt('<%= process.env.CODE_REFRESH_RATE %>'))
+        return interval
+    }
+
+    const displayUsers = (courseId) => {
+        const interval = setInterval(function () {
+            $.get( `/admin/courses/${courseId}/signedin`, function( data ) {
+                $('#users').html("");
+                data.forEach(element => {
+                    $('#users').append(
+                        `
+                            <div class="col-8 col-md-6 col-lg-4 col-xl-3 my-3 fs-4 fw-bold">
+                                ${element.email.split('@')[0]}
+                            </div>
+                        `
+                    );
+                });
+                $('#user-count').html(data.length)
+            })
+        }, 5000)
         return interval
     }
 </script>
