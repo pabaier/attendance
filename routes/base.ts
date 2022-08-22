@@ -16,7 +16,8 @@ export default function (dbClient: DbClient) {
     const client = new OAuth2Client(clientId);
 
     router.get('/test', async (req: Request, res: Response) => {
-        // var a = await dbClient.getGroups(2)
+        var a = await dbClient.getTodaySignIns(2)
+        console.log(a)
         res.render('base/test')
     })
 
@@ -39,12 +40,13 @@ export default function (dbClient: DbClient) {
         // get course
 
         // build calendar events
+        // course dates
         courseIds.reduce((acc, id, index) => {
             courseDates[id].forEach(date => {
                 acc.push(
                     {
                         title: courseNames[id].toString(),
-                        start: date.toISOString().split('T')[0],
+                        start: date.toISOString(),
                         color: calendarEventColors[index].meeting
                     }
                 )
@@ -57,17 +59,24 @@ export default function (dbClient: DbClient) {
         }
 
         // build calendar events
+        // course assignments
+        var colorIndex = 0;
         courseIds.reduce((acc, id, index) => {
             courseAssignments[id].forEach((courseAssignment, i) => {
+                const singleDayAssignment = new Date(courseAssignment.start_time).setHours(0,0,0,0) == new Date(courseAssignment.end_time).setHours(0,0,0,0)
                 acc.push(
                     {
                         title: courseAssignment.title,
                         start: courseAssignment.start_time.toISOString(),
                         end: courseAssignment.end_time.toISOString(),
-                        color: calendarEventColors[index].assignment[i%2],
+                        color: calendarEventColors[index].assignment[colorIndex%2],
                         url: courseAssignment.start_time < new Date() ? courseAssignment.url_link : undefined
                     }
                 )
+                // choose a different assignment color only for multiday assignments
+                if (!singleDayAssignment) {
+                    colorIndex += 1;
+                }
             })
             return acc
         }, calendarEvents)
