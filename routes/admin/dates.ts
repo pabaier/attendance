@@ -21,7 +21,7 @@ export default function (dbClient: DbClient) {
             dates.forEach((date: string) => {
                 const d: CourseDate = {
                     course_id: parseInt(id),
-                    meeting: new Date(date.trim()+'Z')
+                    meeting: new Date(date.trim())
                 }
                 courseDates.push(d);
             })

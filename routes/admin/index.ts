@@ -33,8 +33,8 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
             const fieldStrings = assignmentString.split(',');
             return {
                 title: fieldStrings[0].trim(),
-                start_time: new Date(fieldStrings[1].trim()+'Z'),
-                end_time: new Date(fieldStrings[2].trim()+'Z'),
+                start_time: new Date(fieldStrings[1].trim()),
+                end_time: new Date(fieldStrings[2].trim()),
                 url_link: fieldStrings[3].trim()
             }
         });
