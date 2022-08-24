@@ -59,3 +59,21 @@ CREATE TABLE course_assignments (
 	assignment_id integer REFERENCES assignments (id) ON DELETE CASCADE
 );
 CREATE INDEX course_assignments_course_id_idx ON course_assignments (course_id);
+
+CREATE TABLE posts (
+	id SERIAL PRIMARY KEY,
+	title VARCHAR (50),
+	body TEXT,
+	url_link TEXT,
+);
+
+CREATE TABLE post_users (
+	post_id integer REFERENCES posts (id) ON DELETE CASCADE,
+	user_id integer REFERENCES users (id) ON DELETE CASCADE,
+	open_time timestamptz,
+	close_time timestamptz,
+	show boolean DEFAULT TRUE
+	UNIQUE(post_id, user_id)
+);
+CREATE INDEX posts_post_id_idx ON posts (post_id);
+CREATE INDEX posts_user_id_idx ON posts (user_id);
