@@ -10,12 +10,17 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav">
-          <li class="nav-item">
-            <a class="nav-link" href="/">Home</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/user/attendance">Attendance</a>
-          </li>
+          <% if (user) { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/user/attendance">Attendance</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="<%= process.env.SYLLABUS_URL %>" target="_blank">Syllabus</a>
+            </li>
+          <% } %>
           <% if (user?.roles?.includes('admin')) { %>
             <li class="nav-item">
               <a class="nav-link" href="/admin/courses">Admin</a>
