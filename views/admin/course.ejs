@@ -17,11 +17,7 @@
         Assignments
     </a>
     <div class="collapse" id="users-collapse">
-        <div class="container alternating-table" id="users">
-            <% users.forEach(user => { %>
-                <%- user %>
-            <% }) %>
-        </div>
+        <%- usersList %>
         <h5>Add User(s)</h5>
         <form id="bulk-add-form" action="/admin/users/add" method="POST">
             <textarea class="form-control my-2" name="text" id="bulk-add-area" placeholder="Add Users&#10;Email|FirstName|LastName|Role1,Role2|Group1,Group2" aria-label="Email" aria-describedby="basic-addon1"></textarea>
@@ -78,30 +74,4 @@
         })
     }
 
-    const signIn = (e) => {
-        $.post(`/admin/users/${e.target.value}/signin`, function( data ) {
-            if (data) {
-                e.target.disabled = true;
-            }
-            else
-                console.log('no')
-        })
-    }
-
-    const rowClick = (e, userId) => {
-        window.location.href=`/admin/users/${userId}`;
-    }
-
-    const remove = (e) => {
-        $.ajax({
-            url: `/admin/courses/<%=courseId%>/${e.target.value}`,
-            type: 'DELETE',
-            success: function(response) {
-                window.location.reload();
-            },
-            error: function(response) {
-                console.log(response);
-            }
-        });
-    }
 </script>

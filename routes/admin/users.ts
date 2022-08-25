@@ -10,9 +10,7 @@ export default function (dbClient: DbClient) {
     router.get('/', async (req: Request, res: Response) => {
         const group = req.query.group ? req.query.group as string : '';
         const users = await dbClient.getUsers(group);
-        const usersSections = users?.map(user => {
-            return renderFile('./views/admin/partials/user-section.ejs', { user, type: 'Delete' })
-        })
+        const usersList = renderFile('./views/admin/partials/users-list.ejs', { users })
         const courses = await dbClient.getCourses();
 
         // {action: form action, fields: [{id: field id, placeholder, }], }
@@ -24,7 +22,7 @@ export default function (dbClient: DbClient) {
         const addUserForm = renderFile('./views/partials/input-form.ejs', {action, fields});
 
 
-        res.render('admin/users', { users: usersSections, courses, addForm: addUserForm, alert: req.session.alert });
+        res.render('admin/users', { usersList, courses, addForm: addUserForm, alert: req.session.alert });
     });
 
     router.post('/add', async (req: Request, res: Response) => {
@@ -113,6 +111,16 @@ export default function (dbClient: DbClient) {
         const result: boolean = await dbClient.deleteUser(parseInt(req.params.userId))
         res.send('ok')
         // res.render('admin/users', {section: section[0]})
+    })
+
+    router.get('/:userId/assume', async (req: Request, res: Response) => {
+        try {
+            const user: User | null = await dbClient.getUser(parseInt(req.params.userId))
+            req.session.user = user as User;
+            res.sendStatus(200)
+        } catch {
+            res.sendStatus(500)
+        }
     })
 
     return router;

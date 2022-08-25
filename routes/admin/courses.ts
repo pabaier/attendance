@@ -52,9 +52,7 @@ export default function (dbClient: DbClient) {
         const course = await dbClient.getCourse(courseId);
         const groupName = `course-${courseId}`
         const users = await dbClient.getUsers(groupName);
-        const usersSections = users?.map(user => {
-            return renderFile('./views/admin/partials/user-section.ejs', { user, type: 'Remove' })
-        })
+        const usersList = renderFile('./views/admin/partials/users-list.ejs', { users })
         const dates: Date[] = await dbClientPSQLImpl.getCourseDates(courseId);
         const courseDateEvents = dates.map((date: Date) => {
             const event: CalendarEvent = {
@@ -78,7 +76,7 @@ export default function (dbClient: DbClient) {
         })
         const assignments = renderFile('./views/admin/partials/assignment-list.ejs', {assignmentItems})
 
-        res.render('admin/course', { courseId, courseName: makeCourseName(course), users: usersSections, calendar, assignments, alert: req.session.alert });
+        res.render('admin/course', { courseId, courseName: makeCourseName(course), usersList, calendar, assignments, alert: req.session.alert });
     })
 
     router.post('/:courseId/users', async (req: Request, res: Response) => {
