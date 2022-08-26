@@ -3,7 +3,7 @@
     <select class="form-select my-2" id="course-select" aria-label="Default select section">
         <option selected>Select Course</option>
         <% courses.forEach(course => { %>
-            <option value="<%=course.id%>"><%=course.course_number%></option>
+            <option value="<%=course.id%>"><%=course.course_number%>-<%=course.start_time%></option>
         <% }) %>
     </select>
 </div>

@@ -208,6 +208,7 @@ class DbClientPSQLImpl implements DbClient {
       query = 'select u.id, u.email, u.first_name, u.last_name, u.roles from user_group ug inner join users u on u.id = ug.user_id'
       query = query + ' where ug.group_name = $1';
     }
+    query = query + ' order by u.roles desc, u.last_name';
     return this.connection.any(query, [group])
       .then((data: User[]) => {
         return data
@@ -273,7 +274,7 @@ class DbClientPSQLImpl implements DbClient {
   };
 
   async getCourses(): Promise<Course[]> {
-    var query = 'SELECT * FROM courses'
+    var query = 'SELECT * FROM courses c ORDER BY c.id'
 
     return this.connection.any(query)
       .then((data: Course[]) => {
