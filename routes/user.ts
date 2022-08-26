@@ -16,10 +16,12 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         const userId = req.session.user?.id as number
 
         var data: {'attendance':number, 'days':number, 'course': Course}[] = [];
+        var tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1)
 
         for (const id of courseIds) {
             const course: Course = await dbClient.getCourse(id);
-            const totalDays = await dbClient.getTotalCourseDays(id, new Date());
+            const totalDays = await dbClient.getTotalCourseDays(id, tomorrow);
             const totalSignIns = await dbClient.getTotalUserSignIns(userId, id);
             data.push({'attendance': totalSignIns, 'days': totalDays, course});
         }
