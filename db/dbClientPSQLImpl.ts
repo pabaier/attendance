@@ -320,6 +320,7 @@ class DbClientPSQLImpl implements DbClient {
   };
 
   async addUsersToGroups(userGroups: UserGroups[]): Promise<{}[]> {
+    if(!userGroups.length) return [];
     const cs = new this.pg.helpers.ColumnSet(['user_id', 'group_name'], {table: 'user_group'});
     var values: {}[] = []
     userGroups.forEach(user => {
