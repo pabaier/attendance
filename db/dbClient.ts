@@ -29,4 +29,5 @@ export interface DbClient {
     getTodaySignIns(courseId: number): Promise<User[]>;
     getTotalCourseDays(courseId: number, until?: Date): Promise<number>;
     getTotalUserSignIns(userId: number, courseId: number): Promise<number>;
+    getUserSignInDates(userId: number, courseId: number): Promise<Date[]>;
 }

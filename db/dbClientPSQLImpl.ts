@@ -18,6 +18,20 @@ class DbClientPSQLImpl implements DbClient {
     )
   }
 
+  async getUserSignInDates(userId: number, courseId: number): Promise<Date[]> {
+    return await this.connection.any({
+      name: 'getUserSignInDates',
+      text: 'SELECT date_created FROM attendance where user_id = $1 and course_id = $2',
+      values: [userId, courseId],
+      rowMode: 'array'
+    }).then((data: any) => {
+      return data.flat();
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return 0
+    });
+  }
+
   async setUserGroups(userGroups: UserGroups): Promise<boolean> {
     const userId = userGroups.id;
     var query = 'delete from user_group where user_id = $1'
@@ -75,7 +89,7 @@ class DbClientPSQLImpl implements DbClient {
   async getTotalUserSignIns(userId: number, courseId: number): Promise<number> {
     return await this.connection.any({
       name: 'getTotalUserSignIns',
-      text: 'SELECT * FROM public.attendance where user_id = $1 and course_id = $2',
+      text: 'SELECT * FROM attendance where user_id = $1 and course_id = $2',
       values: [userId, courseId],
       rowMode: 'array'
     }).then((data: any) => {

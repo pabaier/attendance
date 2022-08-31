@@ -11,28 +11,44 @@ export const makeUTCDateString = (original: Date): string => {
 
 export const calendarEventColors = [{
         meeting: '#26547C',
-        assignment: ['#6787a3', '#93aabe']
+        assignment: ['#6787a3', '#93aabe'],
+        present: '#ACF39D',
+        absent: '#C14953'
     }, {
         meeting: '#FF8427',
-        assignment: ['#ffa968', '#ffc293']
+        assignment: ['#ffa968', '#ffc293'],
+        present: '#AAFAC8',
+        absent: '#C76D7E'
     }, {
         meeting: '#20c997',
-        assignment: ['#63d9b6', '#90e4cb']
+        assignment: ['#63d9b6', '#90e4cb'],
+        present: '#26532B',
+        absent: '#CE4760'
     }, {
         meeting: '#0dcaf0',
-        assignment: ['#56daf5', '#86e5f8']
+        assignment: ['#56daf5', '#86e5f8'],
+        present: '#3F4B3B',
+        absent: '#FF6978'
     }, {
         meeting: '#6f42c1',
-        assignment: ['#9a7bd4', '#b7a1e0']
+        assignment: ['#9a7bd4', '#b7a1e0'],
+        present: '#273B09',
+        absent: '#AC3931'
     }, {
         meeting: '#ffc107',
-        assignment: ['#ffd451', '#ffe083']
+        assignment: ['#ffd451', '#ffe083'],
+        present: '#313628',
+        absent: '#DE3C4B'
     }, {
         meeting: '#198754',
-        assignment: ['#5eab87', '#8cc3aa']
+        assignment: ['#5eab87', '#8cc3aa'],
+        present: '#0E3B43',
+        absent: '#A53F2B'
     }, {
         meeting: '#dc3545',
-        assignment: ['#e7727d', '#ee9aa2']
+        assignment: ['#e7727d', '#ee9aa2'],
+        present: '#C1D7AE',
+        absent: '#220901'
     }
 ]
 
