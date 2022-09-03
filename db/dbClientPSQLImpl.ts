@@ -13,7 +13,7 @@ class DbClientPSQLImpl implements DbClient {
     this.connection = this.pg(
       {
         connectionString: databaseURL,
-        ssl: baseURL?.includes('localhost') ? false : { rejectUnauthorized: false }
+        ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false
       }
     )
   }
