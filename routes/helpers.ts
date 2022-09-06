@@ -53,6 +53,8 @@ export const calendarEventColors = [{
 ]
 
 export const getUserCourseIds = (userGroups: string[]): number[] => {
+    userGroups = userGroups.filter(x => x)
+    if (!userGroups.length) return [];
     return userGroups.reduce((acc: number[], currentGroup) => {
         const groupParts = currentGroup.split('-')
         if (groupParts[0] == 'course') acc.push(parseInt(groupParts[1]))
@@ -72,4 +74,47 @@ export const signIn = async (dbClient: DbClient, userId: number, courseId: numbe
         alreadySignedIn: signedIn.length > 0,
         success
     };
+}
+
+export const getPresentAbsentDates = (signInDates: Date[], courseDates: Date[]): {present: Date[], absent: Date[]} => {
+    var results: {present: Date[], absent: Date[]} = {present: [], absent:[]}
+    return courseDates.reduce((res, currentDate) => {
+        var present = signInDates.some(signInDate => {
+            return signInDate.getFullYear() == currentDate.getFullYear() &&
+            signInDate.getMonth() == currentDate.getMonth() &&
+            signInDate.getDate() == currentDate.getDate()
+        });
+        if (present) {
+            res.present.push(currentDate)
+        } else {
+            res.absent.push(currentDate)
+        }
+        return res;
+    }, results)
+}
+
+export const makePresentAbsentCalendarDates = (presentDates: Date[], absentDates: Date[], index:number = 0) => {
+    const presentCalendarEvents = presentDates.map(date => {
+        return {
+            title: 'Present',
+            start: date.toISOString(),
+            end: undefined,
+            url: undefined,
+            backgroundColor: calendarEventColors[index].present,
+            textColor: undefined,
+        }
+     })
+
+     const absentCalendarEvents = absentDates.map(date => {
+        return {
+            title: 'Present',
+            start: date.toISOString(),
+            end: undefined,
+            url: undefined,
+            backgroundColor: calendarEventColors[index].absent,
+            textColor: undefined,
+        }
+     })
+
+    return {presentCalendarEvents, absentCalendarEvents}
 }

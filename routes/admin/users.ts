@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import { DbClient } from '../../db/dbClient';
 import { renderFile } from '../../views/helper';
 import { CalendarEvent, User, UserGroups } from '../../models';
-import { calendarEventColors, getUserCourseIds, makeCourseName } from '../helpers';
+import { calendarEventColors, getUserCourseIds, makeCourseName, getPresentAbsentDates, makePresentAbsentCalendarDates } from '../helpers';
 
 export default function (dbClient: DbClient) {
     const router = express.Router()
@@ -90,50 +90,22 @@ export default function (dbClient: DbClient) {
         const user: User | null= await dbClient.getUser(parseInt(req.params.userId))
         const courseIds = getUserCourseIds(user?.groups as string[])
         if(!courseIds.length) {
-            res.render('admin/user', {profile: user, calendar: undefined})
+            res.render('admin/user', {profile: user, calendar: undefined, attendance: []})
             return
         }
-        var calendarEvents: CalendarEvent[] = [];
-        var tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1)
-        var attendance: {course: string, present: number, absent: number}[] = [];
+        var calendarEvents: CalendarEvent[] = []
+        var attendance: {course: string, absent: number}[] = [{course: "one", absent: 2 }];
 
-        var index = 0;
-        for (const courseId of courseIds) {
-            var present = 0;
-            var absent = 0;
+        for (const [index, courseId] of courseIds.entries()) {
+            var course = await dbClient.getCourse(courseId);
             var courseDates: Date[] = await dbClient.getCourseDates(courseId)
             var signInDates: Date[] = await dbClient.getUserSignInDates(user?.id as number, courseId)
-            var course = await dbClient.getCourse(courseId);
-            var courseHour = parseInt(course.start_time.split(':')[0]);
-            var courseMinutes = parseInt(course.start_time.split(':')[1]);
-            const signIns = signInDates.map(date => {
-                date.setHours(courseHour, courseMinutes, 0, 0)
-                return date.valueOf()
-            })
-
-            var events = courseDates.map(date => {
-                date.setHours(courseHour)
-                date.setMinutes(courseMinutes)
-                var wasPresent = signIns.includes(date.valueOf());
-                var beforeToday = date < tomorrow;
-                if (wasPresent && beforeToday){
-                    present++;
-                } else if (beforeToday) { absent++ }
-                var event: CalendarEvent =  {
-                    title: beforeToday ? wasPresent ? 'Present' : 'Absent' : course.course_number,
-                    start: date.toISOString(),
-                    end: undefined,
-                    url: undefined,
-                    backgroundColor: beforeToday ? wasPresent ? calendarEventColors[index].present : calendarEventColors[index].absent :calendarEventColors[index].meeting,
-                    textColor: undefined,
-                }
-                return event
-             })
-            
-            calendarEvents = calendarEvents.concat(events)
-            attendance.push({course: course.course_number, present, absent})
-            index ++;
+            const today = new Date();
+            var previousCourseDates = courseDates.filter(date => date < today);
+            const {present, absent} = getPresentAbsentDates(signInDates, previousCourseDates);
+            const {presentCalendarEvents, absentCalendarEvents} = makePresentAbsentCalendarDates(present, absent, index)
+            calendarEvents = calendarEvents.concat(presentCalendarEvents).concat(absentCalendarEvents)
+            attendance.push({course: course.course_number, absent: absent.length})
         };
 
         const calendar = renderFile('./views/partials/calendar.ejs', {events: calendarEvents});
