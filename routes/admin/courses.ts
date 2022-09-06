@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import { DbClient } from '../../db/dbClient';
 import { renderFile } from '../../views/helper';
 import { Course, CourseDate, UserGroups, CalendarEvent, Assignment, User } from '../../models';
-import { makeCourseName, makeUTCDateString } from '../helpers';
+import { makeCourseName, makeUTCDateString, getPresentAbsentDates } from '../helpers';
 import dbClientPSQLImpl from '../../db/dbClientPSQLImpl';
 
 export default function (dbClient: DbClient) {
@@ -52,7 +52,17 @@ export default function (dbClient: DbClient) {
         const course = await dbClient.getCourse(courseId);
         const groupName = `course-${courseId}`
         const users = await dbClient.getUsers(groupName);
-        const usersList = renderFile('./views/admin/partials/users-list.ejs', { users })
+        const courseDates = await dbClient.getCourseDates(courseId);
+        const userWithAbsences = [];
+        const today = new Date()
+        const courseDatesUpToToday = courseDates.filter(date => date < today)
+        for (const user of users as User[]) {
+            const signInDates = await dbClient.getUserSignInDates(user.id as number, courseId);
+            const pAndADates = getPresentAbsentDates(signInDates, courseDatesUpToToday)
+            userWithAbsences.push({...user, absences: pAndADates.absent.length})
+        } 
+
+        const usersList = renderFile('./views/admin/partials/users-list.ejs', { users: userWithAbsences })
         const dates: Date[] = await dbClientPSQLImpl.getCourseDates(courseId);
         const courseDateEvents = dates.map((date: Date) => {
             const event: CalendarEvent = {

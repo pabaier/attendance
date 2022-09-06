@@ -107,7 +107,7 @@ export const makePresentAbsentCalendarDates = (presentDates: Date[], absentDates
 
      const absentCalendarEvents = absentDates.map(date => {
         return {
-            title: 'Present',
+            title: 'Absent',
             start: date.toISOString(),
             end: undefined,
             url: undefined,

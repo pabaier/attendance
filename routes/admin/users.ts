@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import { DbClient } from '../../db/dbClient';
 import { renderFile } from '../../views/helper';
-import { CalendarEvent, User, UserGroups } from '../../models';
+import { CalendarEvent, Course, User, UserGroups } from '../../models';
 import { calendarEventColors, getUserCourseIds, makeCourseName, getPresentAbsentDates, makePresentAbsentCalendarDates } from '../helpers';
 
 export default function (dbClient: DbClient) {
@@ -94,7 +94,7 @@ export default function (dbClient: DbClient) {
             return
         }
         var calendarEvents: CalendarEvent[] = []
-        var attendance: {course: string, absent: number}[] = [{course: "one", absent: 2 }];
+        var attendance: {course: Course, absent: number}[] = [];
 
         for (const [index, courseId] of courseIds.entries()) {
             var course = await dbClient.getCourse(courseId);
@@ -105,7 +105,7 @@ export default function (dbClient: DbClient) {
             const {present, absent} = getPresentAbsentDates(signInDates, previousCourseDates);
             const {presentCalendarEvents, absentCalendarEvents} = makePresentAbsentCalendarDates(present, absent, index)
             calendarEvents = calendarEvents.concat(presentCalendarEvents).concat(absentCalendarEvents)
-            attendance.push({course: course.course_number, absent: absent.length})
+            attendance.push({course, absent: absent.length})
         };
 
         const calendar = renderFile('./views/partials/calendar.ejs', {events: calendarEvents});

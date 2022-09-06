@@ -2,21 +2,16 @@
 <div class="jumbotron">
     <h1><%=courseName%></h1>
 
-    <div class="container text-center" id='calendar-container'>
-        <div class="row justify-content-lg-center">
-            <div class="col col-lg-7">
-                <%-calendar%>
-              </div>
-        </div>
-    </div>
-
     <a class="btn btn-primary" data-bs-toggle="collapse" href="#users-collapse" role="button" aria-expanded="false" aria-controls="collapseExample">
         Users
     </a>
     <a class="btn btn-primary" data-bs-toggle="collapse" href="#assignments-collapse" role="button" aria-expanded="false" aria-controls="collapseExample">
         Assignments
     </a>
-    <div class="collapse" id="users-collapse">
+    <a class="btn btn-primary" data-bs-toggle="collapse" href="#calendar-collapse" role="button" aria-expanded="false" aria-controls="collapseExample">
+        Calendar
+    </a>
+    <div class="collapse show" id="users-collapse">
         <%- usersList %>
         <h5>Add User(s)</h5>
         <form id="bulk-add-form" action="/admin/users/add" method="POST">
@@ -28,6 +23,15 @@
     </div>
     <div class="collapse" id="assignments-collapse">
         <%-assignments%>
+    </div>
+    <div class="collapse show" id="calendar-collapse">
+        <div class="container text-center" id='calendar-container'>
+            <div class="row justify-content-lg-center">
+                <div class="col col-lg-7">
+                    <%-calendar%>
+                  </div>
+            </div>
+        </div>
     </div>
 </div>
 
