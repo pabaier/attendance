@@ -1,4 +1,4 @@
-import { Assignment, Course, CourseDate, User, UserGroups } from "../models";
+import { Assignment, Course, CourseDate, User, UserPost, UserGroups } from "../models";
 
 export interface DbClient {
     connection: any;
@@ -30,4 +30,5 @@ export interface DbClient {
     getTotalCourseDays(courseId: number, until?: Date): Promise<number>;
     getTotalUserSignIns(userId: number, courseId: number): Promise<number>;
     getUserSignInDates(userId: number, courseId: number): Promise<Date[]>;
+    getUserPosts(userId: number): Promise<UserPost[]>
 }

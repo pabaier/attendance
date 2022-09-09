@@ -1,6 +1,6 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
-import { Assignment, Course, CourseDate, User, UserGroups } from '../models';
+import { Assignment, Course, CourseDate, User, UserGroups, UserPost } from '../models';
 
 class DbClientPSQLImpl implements DbClient {
   connection: any;
@@ -16,6 +16,19 @@ class DbClientPSQLImpl implements DbClient {
         ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false
       }
     )
+  }
+
+  async getUserPosts(userId: number): Promise<UserPost[]> {
+    return await this.connection.any({
+      name: 'getUserPosts',
+      text: 'SELECT p.id, pu.user_id "userId", pu.open_time "openTime", pu.close_time "closeTime", pu.visible, p.title, p.body, p.url_link link FROM post_users pu inner join posts p on pu.post_id = p.id where pu.user_id = $1 order by pu.open_time',
+      values: [userId],
+    }).then((data: UserPost[][]) => {
+      return data.flat();
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
   }
 
   async getUserSignInDates(userId: number, courseId: number): Promise<Date[]> {

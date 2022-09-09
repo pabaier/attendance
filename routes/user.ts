@@ -2,7 +2,7 @@ import express, { NextFunction, Request, Response } from 'express';
 import NodeCache from 'node-cache';
 import { authCheckMiddleware } from '../middleware/auth';
 import { DbClient } from '../db/dbClient';
-import { Alert, Course } from '../models';
+import { Alert, Course, UserPost } from '../models';
 import { getUserCourseIds, signIn } from './helpers';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
@@ -27,6 +27,11 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         }
         res.render('user/attendance', { data })
         next();
+    });
+
+    router.get('/announcements', async (req: Request, res: Response) => {
+        const userPosts: UserPost[] = await dbClient.getUserPosts(req.session.user?.id as number);
+        res.render('user/posts', { userPosts: userPosts })
     });
 
     router.post('/attendance', async (req: Request, res: Response) => {

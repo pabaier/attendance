@@ -64,7 +64,7 @@ CREATE TABLE posts (
 	id SERIAL PRIMARY KEY,
 	title VARCHAR (50),
 	body TEXT,
-	url_link TEXT,
+	url_link TEXT
 );
 
 CREATE TABLE post_users (
@@ -72,8 +72,8 @@ CREATE TABLE post_users (
 	user_id integer REFERENCES users (id) ON DELETE CASCADE,
 	open_time timestamptz,
 	close_time timestamptz,
-	show boolean DEFAULT TRUE
+	visible boolean DEFAULT TRUE,
 	UNIQUE(post_id, user_id)
 );
-CREATE INDEX posts_post_id_idx ON posts (post_id);
-CREATE INDEX posts_user_id_idx ON posts (user_id);
+CREATE INDEX post_users_post_id_idx ON post_users (post_id);
+CREATE INDEX posts_users_id_idx ON post_users (user_id);
