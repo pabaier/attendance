@@ -31,7 +31,12 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
 
     router.get('/announcements', async (req: Request, res: Response) => {
         const userPosts: UserPost[] = await dbClient.getUserPosts(req.session.user?.id as number);
-        res.render('user/posts', { userPosts: userPosts })
+        const today = new Date();
+        const filteredPosts = userPosts.filter(post => post.visible).map(post => {
+            post.link = post.openTime < today ? post.link : ''
+            return post
+        })
+        res.render('user/posts', { userPosts: filteredPosts })
     });
 
     router.post('/attendance', async (req: Request, res: Response) => {

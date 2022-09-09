@@ -1,14 +1,18 @@
 <div class="row my-2">
     <div class="col post">
         <div class="row">
-            <div class="col-1">
-                <%- post.title %>:
+            <div class="col-12">
+                <% if (post.link) { %>
+                <a href="<%- post.link %>" target="_blank"><%- post.title %></a>
+                <% } else { %>
+                    <%- post.title %>
+                <% } %>
+                <% if (!post.link) { %>
+                    (opens <%- post.openTime.toLocaleDateString() %> at <%- post.openTime.toLocaleTimeString() %> )
+                <% } %>
             </div>
-            <div class="col-3">
-                <%- post.body %>
-            </div>
-            <div class="col-3">
-                <a href="<%- post.link %>" target="_blank"><%- post.link %></a>
+            <div class="col">
+                <%- post.body %><br>
             </div>
         </div>
     </div>

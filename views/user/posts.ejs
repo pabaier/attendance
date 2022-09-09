@@ -1,14 +1,14 @@
 <div class="jumbotron">
     <h1>Announcements</h1>
     <div class="container posts" id="posts">
-        <ol>
+        <ul>
             <% userPosts.forEach(post => { %>
                 <li>
                     <%- include('post.ejs', {post: post}); %>
                 </li>
             <% }) %>
 
-        </ol>
+        </ul>
     </div>
 </div>
 
