@@ -1,0 +1,36 @@
+<!-- requires courses, addForm -->
+<div class="jumbotron">
+    <h1>Courses</h1>
+    <select class="form-select my-2" id="year-select" aria-label="Default select section">
+        <option selected>Select Year</option>
+        <option value="section1">2021</option>
+        <option value="section2">2022</option>
+        <option value="section3">2023</option>
+    </select>
+
+    <div class="container alternating-table" id="courses">
+        <% courses.forEach(course => { %>
+            <%- course %>
+        <% }) %>
+    </div>
+    <%- addForm %>
+</div>
+
+<script>
+    const viewCourse = (e, courseId) =>  {
+        window.location.href=`/admin/courses/${courseId}`;
+    }
+
+    const deleteCourse = (e) => {
+        $.ajax({
+            url: `/admin/courses/${e.target.value}`,
+            type: 'DELETE',
+            success: function(response) {
+                location.reload();
+            },
+            error: function(response) {
+                console.log(response);
+            }
+        });
+    }
+</script>

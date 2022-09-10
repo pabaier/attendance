@@ -1,59 +1,79 @@
---CREATE TABLE user (
---  id INTEGER PRIMARY KEY autoincrement,
---  first_name text,
---  last_name text,
---  email text
---);
---
---CREATE UNIQUE INDEX user_email ON user(email);
---CREATE UNIQUE INDEX user_section ON user(section);
---
---CREATE TABLE course (
---  id INTEGER PRIMARY KEY autoincrement,
---  name text,
---  number int,
---  subject text,
---  section int
---);
---
---CREATE TABLE user_course (
---  user_id int,
---  course_id int,
---  semester int,
---  FOREIGN KEY(user_id) REFERENCES user(id),
---  FOREIGN KEY(course_id) REFERENCES course(id),
---  UNIQUE(user_id, course_id, semester)
---);
---
---CREATE TABLE user_access (
---  user_id int,
---  access_type text,
---  FOREIGN KEY(user_id) REFERENCES user(id)
---);
+--POSTGRES
+CREATE TABLE users (
+	id SERIAL PRIMARY KEY,
+	email VARCHAR (50) UNIQUE,
+	first_name VARCHAR (50),
+	last_name VARCHAR (50),
+	roles TEXT
+);
+CREATE INDEX users_email_idx ON users (email);
 
+CREATE TABLE courses (
+	id SERIAL PRIMARY KEY,
+	course_name VARCHAR (50),
+	course_number VARCHAR(6),
+	semester VARCHAR (6),
+	course_year INTEGER,
+	start_time VARCHAR (5) NOT NULL,
+	end_time VARCHAR (5) NOT NULL,
+	UNIQUE (course_number, course_year, semester, start_time)
+);
+CREATE INDEX courses_course_number_idx ON courses (course_number);
 
 CREATE TABLE attendance (
-  user_name text,
-  date_created DATETIME DEFAULT (DATETIME('now'))
-);
-
-CREATE INDEX attendance_date ON attendance(date_created);
-
-CREATE TABLE code (
-  value text,
-  date_created DATETIME DEFAULT (DATETIME('now'))
-);
-
---POSTGRES
-CREATE TABLE public.attendance (
-	user_name varchar NOT NULL,
+	user_id integer REFERENCES users (id),
+	course_id integer REFERENCES courses (id),
 	date_created timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX attendance_user_name_idx ON public.attendance (user_name);
+CREATE INDEX attendance_user_id_idx ON attendance (user_id);
+CREATE INDEX attendance_date_created_idx ON attendance (date_created);
+CREATE INDEX attendance_user_id_course_id_idx ON attendance (user_id, course_id);
 
-CREATE TABLE public.code (
-	value varchar NOT NULL,
-	date_created timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+insert into courses (course_number, semester, course_year, start_time, end_time)
+values (220, 'Fall', 2022, '9:30', '10:30')
+
+CREATE TABLE user_group (
+	user_id integer REFERENCES users (id) ON DELETE CASCADE,
+	group_name VARCHAR (50),
+	UNIQUE(user_id, group_name)
+);
+CREATE INDEX user_group_user_id_idx ON user_group (user_id);
+CREATE INDEX user_group_group_name_idx ON user_group (group_name);
+
+CREATE TABLE course_dates (
+	course_id integer REFERENCES courses (id) ON DELETE CASCADE,
+	meeting timestamptz NOT NULL
+);
+CREATE INDEX course_dates_course_id_idx ON course_dates (course_id);
+
+CREATE TABLE assignments (
+	id SERIAL PRIMARY KEY,
+	title VARCHAR (50),
+	start_time timestamptz,
+	end_time timestamptz,
+	url_link TEXT
 );
 
+CREATE TABLE course_assignments (
+	course_id integer REFERENCES courses (id) ON DELETE CASCADE,
+	assignment_id integer REFERENCES assignments (id) ON DELETE CASCADE
+);
+CREATE INDEX course_assignments_course_id_idx ON course_assignments (course_id);
 
+CREATE TABLE posts (
+	id SERIAL PRIMARY KEY,
+	title VARCHAR (50),
+	body TEXT,
+	url_link TEXT
+);
+
+CREATE TABLE post_users (
+	post_id integer REFERENCES posts (id) ON DELETE CASCADE,
+	user_id integer REFERENCES users (id) ON DELETE CASCADE,
+	open_time timestamptz,
+	close_time timestamptz,
+	visible boolean DEFAULT TRUE,
+	UNIQUE(post_id, user_id)
+);
+CREATE INDEX post_users_post_id_idx ON post_users (post_id);
+CREATE INDEX posts_users_id_idx ON post_users (user_id);

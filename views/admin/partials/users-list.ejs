@@ -1,0 +1,45 @@
+<div class="container alternating-table users" id="users">
+    <% users.forEach(user => { %>
+        <%- include('user-row.ejs', {user: user}); %>
+    <% }) %>
+</div>
+
+<script>
+    const rowClick = (e, userId) => {
+        window.location.href=`/admin/users/${userId}`;
+    }
+
+    const signIn = (e) => {
+        $.post(`/admin/users/${e.target.value}/signin`, function( data ) {
+            if (data) {
+                e.target.disabled = true;
+            }
+            else
+                console.log('no')
+        })
+    }
+
+    const remove = (e) => {
+        $.ajax({
+            url: `/admin/users/${e.target.value}`,
+            type: 'DELETE',
+            success: function(response) {
+                window.location.reload();
+            },
+            error: function(response) {
+                console.log(response);
+            }
+        });
+    }
+
+    const assumeUser = (e) => {
+        $.get(`/admin/users/${e.target.value}/assume`, function( data ) {
+            if (data ==  'OK') {
+                window.location.href=`/`;
+            }
+            else
+                console.log('error', data)
+        })
+    }
+    
+</script>

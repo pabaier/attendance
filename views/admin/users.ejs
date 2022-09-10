@@ -1,0 +1,38 @@
+<!-- requires courses list {id, course_number}, users, addForm -->
+<div class="jumbotron">
+    <h1>Users</h1>
+
+    <%- usersList %>
+    
+    <%- include('partials/course-select-dropdown.ejs', {courses: courses}); %>
+
+    <button type="submit" id="add-class-btn" class="btn btn-primary form-control my-2">Add Users To Course</button>
+    
+    <%- addForm %>
+    
+    <form id="bulk-add-form" action="/admin/users/add" method="POST">
+        <textarea class="form-control my-2" name="text" id="bulk-add-area" placeholder="Add Users&#10;Email|FirstName|LastName|Role1,Role2|Group1,Group2" aria-label="Email" aria-describedby="basic-addon1"></textarea>
+        <button type="submit" id="bulk-add-btn" class="btn btn-primary form-control my-2">Add New Users</button>
+    </form>
+</div>
+
+<script>
+    $('#add-class-btn').click(function() {
+        var courseId = $('#course-select').val()
+        var userIds = []
+        $('.userc:checkbox:checked').each(function() {userIds.push(this.value)})
+        $.post(`/admin/courses/${courseId}/users`, { userIds }, function( data ) {
+            if (data) {
+                window.location.href=`/admin/courses/${courseId}`;
+            } else {
+                console.log('nope')
+            }
+        })
+    })
+
+    $('#filter-class-select').change(function(e) {
+        const course = e.target.value;
+        if (course == 'Select Course') return;
+        window.location.href=`/admin/courses/${course}`;
+    })
+</script>

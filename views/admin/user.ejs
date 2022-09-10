@@ -1,0 +1,105 @@
+<div class="jumbotron">
+    <h1><%- profile.email %></h1>
+</div>
+
+<div class="my-2">
+    <% attendance.forEach(c => { %>
+        <span class="fs-5"><%= c.course.course_number%>-<%= c.course.start_time%> - absences: </span><span class="fs-5 fw-bold"><%=c.absent%></span><br>
+    <% }) %>
+</div>
+
+<div class="container">
+    <div class="row" id="<%- profile.id %>">
+        <div class="col-6 col-lg-4">
+            <input class="form-control my-2" type="text" id="firstName" readonly onfocus='editField(event)' onfocusout='doneEditField(event)' value="<%- profile.first_name %>">
+        </div>
+        <div class="col-6 col-lg-4">
+            <input class="form-control my-2" type="text" id="lastName" readonly onfocus='editField(event)' onfocusout='doneEditField(event)' value="<%- profile.last_name %>">
+        </div>
+        <div class="col-9 col-lg-4">
+            <input class="form-control my-2" type="text" id="roles" readonly onfocus='editField(event)' onfocusout='doneEditField(event)' value="<%- profile.roles %>">
+        </div>
+        <label>Groups</label>
+        <div class="row groupList align-items-center">
+            <% profile.groups.forEach((group, i) => { %>
+                <div class="col-3">
+                    <input class="form-control my-2 groups" id="group-<%=i%>" type="text" readonly onfocus='editField(event)' onfocusout='doneEditField(event)' value="<%- group %>">
+                </div>
+            <% }) %>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-auto">
+            <button type="submit" id="addGroup" class="btn btn-primary square" onclick="addGroup(event, <%- profile.id %>)">+</button>
+        </div>
+        <div class="col-auto">
+            <button type="submit" id="removeGroup" class="btn btn-primary square" onclick="removeGroup(event, <%- profile.id %>)">-</button>
+        </div>
+    </div>
+    <button type="submit" id="submit" class="btn btn-primary my-2" onclick="saveChanges(event, <%- profile.id %>)">Submit</button>
+</div>
+
+<%- calendar %>
+
+<script>
+    const removeGroup = (event, userId) => {
+        const groupList = $('.groupList')
+        const groups = $('.groups')
+        $(`#group-${groups.length - 1}`).parent().remove();
+        $(`#remove-${groups.length - 1}`).remove();
+        $(`#group-${groups.length - 2}`).focus()
+    }
+
+
+    const addGroup = (event, userId) => {
+        const groupList = $('.groupList')
+        const groups = $('.groups')
+        // var groups = [];
+        // for(var i = 0; i < groupClasses.length; i++ ) {
+        //     groups.push($(groupClasses[i]).val())
+        // }
+        $('.groupList').append(
+            `
+                <div class="col-3">
+                    <input class="form-control my-2 groups" id="group-${groups.length}" type="text" readonly onfocus='editField(event)' onfocusout='doneEditField(event)'>
+                </div>
+            `
+        );
+        $(`#group-${groups.length}`).focus()
+    }
+
+    const saveChanges = (event, userId) => {
+        const email = <%- JSON.stringify(profile.email) %>;
+        const firstName = $('#firstName').val()
+        const lastName = $('#lastName').val()
+        const roles = $('#roles').val()
+        const groupClasses = $('.groups')
+        const groups = [];
+        for(var i = 0; i < groupClasses.length; i++ ) {
+            const groupName = $(groupClasses[i]).val()
+            if (groupName) groups.push(groupName)
+        }
+        $.ajax({
+            url: `/admin/users/${userId}`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({ firstName, lastName, roles, groups, email }),
+            success: function( data ) {
+            if (data) {
+                console.log('ok')
+                window.location.reload();
+            } else {
+                console.log('nope')
+            }}
+        })
+    }
+
+    const editField = (e) => {
+        e.target.readOnly = false;
+        // e.target.removeAttribute('readonly')
+    }
+
+    const doneEditField = (e) => {
+        e.target.readOnly = true;
+    }
+</script>

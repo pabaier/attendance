@@ -1,0 +1,149 @@
+<!-- requires courses list {id, course_number} -->
+<%- include('partials/course-select-dropdown.ejs', {courses: courses}); %>
+<!-- <button type="submit" id="add-class-btn" class="btn btn-primary my-2">Add Users To Course</button> -->
+
+<div class="jumbotron">
+    <h5 id="timer"></h5>
+    <h1>Code</h1>
+    <h1 id="number"></h1>
+
+
+    <a class="btn btn-primary mt-5" data-bs-toggle="collapse" href="#users-collapse" role="button" aria-expanded="false" aria-controls="collapseExample">
+        Users
+    </a>
+
+    <div class="collapse" id="users-collapse">
+        <div class="container">
+            <div class="row fs-4 fw-bold" id="user-count"></div>
+            <div class="row my-2" id="users"></div>
+        </div>
+    </div>
+
+<script type="application/javascript">
+    var courses = <%-JSON.stringify(courses)%>
+    var clearAllTimers = () => {
+        var highestTimeoutId = setTimeout(";");
+        for(var i = 0; i <= highestTimeoutId; i++) {
+            clearInterval(i);
+        }
+    }
+
+    $('#course-select').change( (event) => {
+        clearAllTimers()
+        $("#timer").html('')
+
+        var courseId = event.target.value //$('#course-select').val()
+        var course = courses.filter(course => course.id == courseId)
+        try {
+            var startTime = course[0].start_time.split(':')
+        }
+        catch {
+            return;
+        }
+        var classStartHour = startTime[0]
+        var classStartMinute = startTime[1]
+        var today = new Date();
+
+        var codeStartMinutesBeforeClassStarts = parseInt(<%= process.env.CODE_TIME_START %>);
+        var codeOpenMinutes = parseInt(<%= process.env.CODE_TIME_WINDOW %>)
+
+        var timerStart = new Date();
+        timerStart.setHours(classStartHour);
+        timerStart.setMinutes(classStartMinute - codeStartMinutesBeforeClassStarts);
+        timerStart.setSeconds(0);
+
+        var timerEnd = new Date();
+        timerEnd.setHours(timerStart.getHours());
+        timerEnd.setMinutes(timerStart.getMinutes() + codeOpenMinutes);
+        timerEnd.setSeconds(0);
+
+
+        var diffMilli = timerEnd - today;
+        if (diffMilli > 0) {
+            displayTimer({timerStart, timerEnd}, courseId);
+        } else {
+            clearAllTimers()
+            $("#alert-box").html( 
+                "<div class='alert alert-info' role='alert'>" + 
+                    "Attendance Closed" +
+                "</div>"
+            )
+            $("#number").html( "" )
+            $("#timer").html('');
+        }       
+    } )
+
+    const displayTimer = ({timerStart, timerEnd}, courseId) => {
+        var timeToEnd = new Date(timerEnd - new Date())
+        var timeToStart = new Date(timerStart - new Date())
+        var codeStarted = false;
+
+        // timer: until class starts
+        setInterval(function () {
+            timeToStart = new Date(timerStart - new Date())
+            timeToEnd = new Date(timerEnd - new Date())
+
+            // stop the time
+            if (timeToEnd.valueOf() < 0) {
+                clearAllTimers()
+                codeStarted = false;
+                $("#alert-box").html( 
+                    "<div class='alert alert-info' role='alert'>" + 
+                        "Attendance Closed" +
+                    "</div>"
+                )
+                $("#number").html('')
+                $("#timer").html('');
+                return;
+            }
+
+            // start the code
+            if (timeToStart.valueOf() < 0 && !codeStarted) {
+                codeStarted = true;
+                $("#alert-box").html( 
+                    "<div class='alert alert-success' role='alert'>" + 
+                        "Enter the last 5 numbers to sign in!" +
+                    "</div>"
+                )
+                displayCode();
+                displayUsers(courseId);
+            } else if (!codeStarted) {
+                $("#alert-box").html( 
+                    "<div class='alert alert-warning' role='alert'>" + 
+                        `Sign in will open in ${timeToStart.getMinutes()}:${("0" + timeToStart.getSeconds()).slice(-2)}.` +
+                    "</div>"
+                )
+            } else {
+                $("#timer").html(`${timeToEnd.getMinutes()}:${("0" + timeToEnd.getSeconds()).slice(-2)}`);
+            }
+        }, 1000);
+    }
+
+    const displayCode = () => {
+        setInterval(function () {
+            $.get( "/admin/code/update", function( data ) {
+                if (data.code) {
+                    $("#number").html( data.code )
+                }
+            })
+        }, parseInt('<%= process.env.CODE_REFRESH_RATE %>'))
+    }
+
+    const displayUsers = (courseId) => {
+        setInterval(function () {
+            $.get( `/admin/courses/${courseId}/signedin`, function( data ) {
+                $('#users').html("");
+                data.forEach(element => {
+                    $('#users').append(
+                        `
+                            <div class="col-8 col-md-6 col-lg-4 col-xl-3 my-3 fs-4 fw-bold">
+                                ${element.email.split('@')[0]}
+                            </div>
+                        `
+                    );
+                });
+                $('#user-count').html(data.length)
+            })
+        }, 5000)
+    }
+</script>

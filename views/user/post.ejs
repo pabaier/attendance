@@ -1,0 +1,19 @@
+<div class="row my-2">
+    <div class="col post">
+        <div class="row">
+            <div class="col-12">
+                <% if (post.link) { %>
+                <a href="<%- post.link %>" target="_blank"><%- post.title %></a>
+                <% } else { %>
+                    <%- post.title %>
+                <% } %>
+                <% if (!post.link) { %>
+                    (opens <%- post.openTime.toLocaleDateString() %> at <%- post.openTime.toLocaleTimeString() %> )
+                <% } %>
+            </div>
+            <div class="col">
+                <%- post.body %><br>
+            </div>
+        </div>
+    </div>
+</div>

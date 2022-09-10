@@ -1,0 +1,26 @@
+<!-- requires user, external func rowClick(event, userId), external func signIn(event), external func remove(event) -->
+<div class="row my-2">
+    <div class="col-1">
+        <input class="form-check-input userc" type="checkbox" value="<%- user.id %>">
+    </div>
+    <div class="col-9 user" onclick="rowClick(event, <%- user.id %>)">
+            <div class="row">
+                <div class="col-3">
+                    <%- user.first_name %>
+                </div>
+                <div class="col-3">
+                    <%- user.last_name %>
+                </div>
+                <div class="col">
+                    <%- user.email %>
+                </div>
+            </div>
+        </div>
+    <div class="col-1">
+        <%- user.absences %>
+        <!-- <button type="button" value=<%- user.id %> onclick="remove(event)" id="delete-<%- user.id %>" class="btn btn-primary form-control">Delete</button> -->
+    </div>
+    <div class="col-1">
+        <button type="button" value=<%- user.id %> onclick="assumeUser(event)" id="assume-<%- user.id %>" class="btn btn-primary form-control">Assume</button>
+    </div>
+</div>

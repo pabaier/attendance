@@ -1,0 +1,13 @@
+<!-- requires {action: form action, fields: [{id: field id, placeholder, }], } -->
+<form id="bulk-add-form" action="<%=action%>" method="POST">
+  <div class="row justify-content-md-center">
+    <% fields.forEach(field => { %>
+      <div class="col-4">
+        <input class="form-control my-2" name="<%=field.id%>" id="<%=field.id%>" placeholder="<%=field.placeholder%>"></input>
+      </div>
+    <% }) %>
+  </div>
+  <div class="row justify-content-md-end">
+    <button type="submit" id="bulk-add-btn" class="btn btn-primary my-2 col-2">Submit</button>
+  </div>
+</form>

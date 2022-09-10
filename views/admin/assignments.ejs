@@ -1,0 +1,28 @@
+<!-- requires courses {name, id},  -->
+<div class="jumbotron">
+    <h1>Assignments</h1>
+    <textarea class="form-control my-2" name="text" id="bulk-add-area" placeholder="Add Assignments&#10;title, 2022-08-12T00:00, 2022-08-12T00:00, URL" aria-label="dates" aria-describedby="basic-addon1"></textarea>
+
+    <label for="courses">Choose course(s):</label>
+    <select class="form-control my-2" name="courses" id="courses" multiple>
+        <%courses.forEach(course => {%>
+            <option value=<%=course.id%>><%=course.name%></option>
+        <%})%>
+    </select>
+    <button type="submit" id="submit" class="btn btn-primary form-control my-2">Submit</button>
+</div>
+
+<script>
+    $('#submit').click(e => {
+        var courses = $('select#courses').val()
+        var assignments = $("#bulk-add-area").val().trim().split('\n')
+        $.post(`/admin/assignments`, { courses, assignments }, function( data ) {
+            if (data) {
+                console.log('ok')
+                // window.location.reload();
+            } else {
+                console.log('nope')
+            }
+        })
+    })
+</script>

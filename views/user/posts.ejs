@@ -1,0 +1,15 @@
+<div class="jumbotron">
+    <h1>Announcements</h1>
+    <div class="container posts" id="posts">
+        <ul>
+            <% userPosts.forEach(post => { %>
+                <li>
+                    <%- include('post.ejs', {post: post}); %>
+                </li>
+            <% }) %>
+
+        </ul>
+    </div>
+</div>
+
+<script></script>

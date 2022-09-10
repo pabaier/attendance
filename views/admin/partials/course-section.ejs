@@ -1,0 +1,22 @@
+<!-- requires course, external func viewCourse(event, course group), external func deleteCourse(event) -->
+<div class="row my-2">
+    <div class="col-10 course" onclick="viewCourse(event, '<%=course.id%>')">
+        <div class="row">
+            <div class="col-3">
+                <%- course.course_number %>
+            </div>
+            <div class="col-3">
+                <%- course.semester %>
+            </div>
+            <div class="col">
+                <%- course.course_year %>
+            </div>
+            <div class="col-3">
+                <%- course.start_time %>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <button type="button" value=<%- course.id %> onclick="deleteCourse(event)" id="course-<%- course.id %>" class="btn btn-primary delete form-control">Delete</button>
+    </div>
+</div>

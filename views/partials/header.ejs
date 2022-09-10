@@ -1,0 +1,66 @@
+<header>
+  <nav class="navbar navbar-expand-lg navbar-dark nav-color rounded-bottom">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/">
+        <%- user?.first_name ? `220 | ${user.first_name}` : '220' -%>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <% if (user) { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/user/attendance">Attendance</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/user/announcements">Announcements</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="<%= process.env.SYLLABUS_URL %>" target="_blank">Syllabus</a>
+            </li>
+          <% } %>
+          <% if (user?.roles?.includes('admin')) { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/admin/courses">Admin</a>
+            </li>
+            <% } %>
+              <li class="nav-item">
+                <% if (user) { %>
+                  <a class="nav-link" href="/logout">Logout</a>
+                  <% } else { %>
+                    <a class="nav-link" href="/login">Login</a>
+                    <% } %>
+              </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <nav style="--bs-breadcrumb-divider: '|';" aria-label="breadcrumb">
+    <div class="container-fluid admin-breadcrumb" hidden>
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/admin/code">Code</a></li>
+        <li class="breadcrumb-item"><a href="/admin/users">Users</a></li>
+        <li class="breadcrumb-item"><a href="/admin/courses">Courses</a></li>
+        <li class="breadcrumb-item"><a href="/admin/dates">Dates</a></li>
+        <li class="breadcrumb-item"><a href="/admin/assignments">Assignments</a></li>
+      </ol>
+    </div>
+  </nav>
+</header>
+
+<script>
+  $(document).ready(() => {
+    const path = window.location.pathname;
+    const top = path.split('/')[1];
+    switch(top) {
+      case 'admin':
+        $('.admin-breadcrumb').removeAttr('hidden');
+        break;
+    }
+  })
+</script>

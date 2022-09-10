@@ -1,0 +1,74 @@
+<!-- requires data {'attendance':number, 'days':number, 'course': Course}[] -->
+<div class="jumbotron">
+    <h1>Attendance</h1>
+    <div class='h5' style="background-color:#D3D3D3">Enter the latest 5 numbers displayed to sign in</div>
+    <div class="container alternating-table">
+        <div class="row align-items-center d-lg-none text-center">
+            <div class="col-2">
+                <small>Course</small>
+              </div>
+              <div class="col-2">
+                <small>Present</small>
+              </div>
+              <div class="col-2">
+                <small>Total</small>
+              </div>
+              <div class="col">
+                <small>code</small>
+              </div>
+        </div>
+        <div class="row align-items-center text-center">
+            <div class="col-2 h5 d-none d-lg-block ">
+                Course
+              </div>
+              <div class="col-2 h5 d-none d-lg-block ">
+                Present Total
+              </div>
+              <div class="col-2 h5 d-none d-lg-block ">
+                Total Classes
+              </div>
+              <div class="col h5 d-none d-lg-block ">
+                Enter Code
+              </div>
+        </div>
+        <% data.forEach(d => {%>
+            <div class="row align-items-center text-center">
+                <div class="col-2">
+                    <%-d.course.course_number%>
+                  </div>
+                  <div class="col-2" id="attendance-<%-d.course.id%>" data-value="<%-d.attendance%>">
+                    <%-d.attendance%>
+                  </div>
+                  <div class="col-2">
+                    <%-d.days%>
+                  </div>
+                  <div class="col">
+                    <input type="number" class="form-control code" id="<%-d.course.id%>" name="quantity">
+                  </div>
+            </div>
+        <% }) %>
+    </div>
+</div>
+
+<script>
+    $( ".code" ).keyup(function (event) {
+        const code = event.target.value;
+        const courseId = event.target.id
+        if (code > 9999) {
+            $.post( "/user/attendance", {code, courseId}, function( data ) {
+                $( "#alert-box" ).html(
+                    `
+                    <div class="alert alert-${data.alert[0].type}" role="alert">
+                        ${data.alert[0].message}
+                    </div>
+                    `
+                )
+                if (data.success) {
+                    const currentAttendance = $(`#attendance-${courseId}`).data('value')
+                    $( `#attendance-${courseId}` ).html(currentAttendance + 1);
+                }
+                event.target.value = ''
+            })
+        }
+    })
+</script>
