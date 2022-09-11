@@ -6,7 +6,8 @@ import CourseDate from './CourseDate';
 import CalendarEvent from './CalendarEvent';
 import Assignment from './Assignment';
 import CourseAssignment from './CourseAssignment';
-import UserPost from './UserPost';
+import PostGroup from './PostGroup';
+import Group from './Group';
 
 export {
     Alert,
@@ -17,5 +18,6 @@ export {
     CalendarEvent,
     CourseAssignment,
     Assignment,
-    UserPost,
+    PostGroup,
+    Group,
 }

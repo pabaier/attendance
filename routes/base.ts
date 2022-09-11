@@ -5,7 +5,7 @@ import { Alert, Assignment, CalendarEvent, Course, CourseDate, User } from '../m
 import {  authCheckMiddleware, rollCheckMiddleware } from '../middleware/auth';
 import session from 'express-session';
 import { renderFile } from '../views/helper';
-import { calendarEventColors, getUserCourseIds } from './helpers';
+import { calendarEventColors } from './helpers';
 
 export default function (dbClient: DbClient) {
     const router = express.Router();
@@ -23,21 +23,20 @@ export default function (dbClient: DbClient) {
 
     router.get('/', authCheckMiddleware, async (req: Request, res: Response) => {
         // get courseIds
-        const groups: string[] = await dbClient.getGroups(req.session.user?.id as number);
-        const courseIds: number[] = getUserCourseIds(groups);
+        const userId = req.session.user?.id as number
+        const courseIds: number[] = await dbClient.getCourseIds(userId);
         var calendarEvents: CalendarEvent[] = []
         
         // get dates
         const courseDates: {[courseId: number] : Date[]} = {}
         const courseAssignments: {[courseId: number] : Assignment[]} = {}
-        const courseNames: {[courseId: number] : string} = {}
+        const courseNumber: {[courseId: number] : string} = {}
 
         for (const id of courseIds) {
             courseDates[id] = (await dbClient.getCourseDates(id))
             courseAssignments[id] = (await dbClient.getAssignments(id));
-            courseNames[id] = (await dbClient.getCourse(id)).course_number;
+            courseNumber[id] = (await dbClient.getCourse(id)).courseNumber;
         }
-        // get course
 
         // build calendar events
         // course dates
@@ -45,7 +44,7 @@ export default function (dbClient: DbClient) {
             courseDates[id].forEach(date => {
                 acc.push(
                     {
-                        title: courseNames[id].toString(),
+                        title: courseNumber[id].toString(),
                         start: date.toISOString(),
                         color: calendarEventColors[index].meeting
                     }
@@ -53,10 +52,6 @@ export default function (dbClient: DbClient) {
             })
             return acc
         }, calendarEvents)
-
-        // get assignments
-        for (const id of courseIds) {
-        }
 
         // build calendar events
         // course assignments

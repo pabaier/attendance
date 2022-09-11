@@ -1,9 +1,10 @@
 export default interface Course {
     id?: number,
-	course_number: string,
-	course_name?: string,
+	courseNumber: string,
+	courseName?: string,
 	semester: string,
-	course_year: number,
-	start_time: string,
-	end_time: string,
+	courseYear: number,
+	startTime: string,
+	endTime: string,
+	groupId: number
 }

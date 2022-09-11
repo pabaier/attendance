@@ -2,7 +2,7 @@ import { DbClient } from '../db/dbClient';
 import { Course } from '../models';
 
 export const makeCourseName = (course: Course) => {
-    return `${course.course_number} ${course.semester}-${course.course_year} ${course.start_time}`
+    return `${course.courseNumber} ${course.semester}-${course.courseYear} ${course.startTime}`
 }
 
 export const makeUTCDateString = (original: Date): string => {
@@ -51,16 +51,6 @@ export const calendarEventColors = [{
         absent: '#220901'
     }
 ]
-
-export const getUserCourseIds = (userGroups: string[]): number[] => {
-    userGroups = userGroups.filter(x => x)
-    if (!userGroups.length) return [];
-    return userGroups.reduce((acc: number[], currentGroup) => {
-        const groupParts = currentGroup.split('-')
-        if (groupParts[0] == 'course') acc.push(parseInt(groupParts[1]))
-        return acc
-    }, [])
-}
 
 export const signIn = async (dbClient: DbClient, userId: number, courseId: number): Promise<({alreadySignedIn: boolean, success: boolean})> => {
     const signedIn = await dbClient.getTodaySignIn(userId, courseId)

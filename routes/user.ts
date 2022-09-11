@@ -2,8 +2,8 @@ import express, { NextFunction, Request, Response } from 'express';
 import NodeCache from 'node-cache';
 import { authCheckMiddleware } from '../middleware/auth';
 import { DbClient } from '../db/dbClient';
-import { Alert, Course, UserPost } from '../models';
-import { getUserCourseIds, signIn } from './helpers';
+import { Alert, Course, Group, PostGroup } from '../models';
+import { signIn } from './helpers';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
     const router = express.Router();
@@ -11,9 +11,8 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     router.use(authCheckMiddleware);
 
     router.get('/attendance', async (req: Request, res: Response, next: NextFunction) => {
-        const userGroups: string[] = await dbClient.getGroups(req.session.user?.id as number);
-        const courseIds: number[] = getUserCourseIds(userGroups);
         const userId = req.session.user?.id as number
+        const courseIds: number[] = await dbClient.getCourseIds(userId);
 
         var data: {'attendance':number, 'days':number, 'course': Course}[] = [];
         var tomorrow = new Date();
@@ -30,13 +29,17 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     });
 
     router.get('/announcements', async (req: Request, res: Response) => {
-        const userPosts: UserPost[] = await dbClient.getUserPosts(req.session.user?.id as number);
+        const userGroupIds = req.session.user?.groups as number[];
+        const posts: PostGroup[][] = []
         const today = new Date();
-        const filteredPosts = userPosts.filter(post => post.visible).map(post => {
-            post.link = post.openTime < today ? post.link : ''
-            return post
-        })
-        res.render('user/posts', { userPosts: filteredPosts })
+        for (const id of userGroupIds) {
+            const unfilteredPosts: PostGroup[] = await dbClient.getPosts(id);
+            posts.push(unfilteredPosts.filter(post => post.visible).map(post => {
+                post.link = post.openTime < today ? post.link : ''
+                return post
+            }))
+        }
+        res.render('user/posts', { posts })
     });
 
     router.post('/attendance', async (req: Request, res: Response) => {
