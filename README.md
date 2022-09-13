@@ -4,7 +4,7 @@
 
 ##### Env Variables
 
-* `DATABASE_URL`
+* `DB_URL`
 * `BASE_URL`
 * `CODE_REFRESH_RATE` - how long codes last, and how quickly the code page refreshes, in seconds
 * `CODE_TIME_START` - minutes before class that the code should open

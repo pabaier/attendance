@@ -8,7 +8,7 @@ class DbClientPSQLImpl implements DbClient {
 
   constructor() {
     const baseURL = process.env.BASEURL;
-    const databaseURL: string = process.env.DATABASE_URL as string;
+    const databaseURL: string = process.env.DB_URL as string;
     this.pg = pgp()
     this.connection = this.pg(
       {
