@@ -2,12 +2,10 @@
     <h1>Announcements</h1>
     <div class="container posts" id="posts">
         <ul>
-            <% posts.forEach(grouping => { %>
-                <% grouping.forEach(post => { %>
-                    <li>
-                        <%- include('post.ejs', {post: post}); %>
-                    </li>
-                <% }) %>
+            <% posts.forEach(post => { %>
+                <li>
+                    <%- include('post.ejs', {post: post}); %>
+                </li>
             <% }) %>
         </ul>
     </div>
