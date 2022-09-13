@@ -72,7 +72,7 @@ class DbClientPSQLImpl implements DbClient {
       inner join posts p
       on pg.post_id = p.id 
       where pg.group_id = $1 
-      order by pg.open_time`,
+      order by pg.open_time desc, pg.post_id desc`,
       values: [groupId],
     }).then((data: PostGroup[][]) => {
       return data.flat();
