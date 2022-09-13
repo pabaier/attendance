@@ -29,14 +29,12 @@ export default function (dbClient: DbClient) {
         
         // get dates
         const courseDates: {[courseId: number] : Date[]} = {}
-        const courseAssignments: {[courseId: number] : Assignment[]} = {}
         const courseNumber: {[courseId: number] : string} = {}
 
         for (const id of courseIds) {
             const course: Course = await dbClient.getCourse(id);
             courseNumber[id] = course.courseNumber;
             courseDates[id] = (await dbClient.getCourseDates(id))
-            courseAssignments[id] = (await dbClient.getAssignments(course.groupId));
         }
 
         // build calendar events
@@ -56,28 +54,24 @@ export default function (dbClient: DbClient) {
 
         // build calendar events
         // course assignments
+        const userAssignments = (await dbClient.getUserAssignments(userId));
         var colorIndex = 0;
-        courseIds.reduce((acc, id, index) => {
-            courseAssignments[id].forEach((courseAssignment, i) => {
-                const singleDayAssignment = new Date(courseAssignment.start_time).setHours(0,0,0,0) == new Date(courseAssignment.end_time).setHours(0,0,0,0)
-                acc.push(
-                    {
-                        title: courseAssignment.title,
-                        start: courseAssignment.start_time.toISOString(),
-                        end: courseAssignment.end_time.toISOString(),
-                        color: calendarEventColors[index].assignment[colorIndex%2],
-                        url: courseAssignment.start_time < new Date() ? courseAssignment.url_link : undefined
-                    }
-                )
-                // choose a different assignment color only for multiday assignments
-                if (!singleDayAssignment) {
-                    colorIndex += 1;
+        const userAssignmentsEvents: CalendarEvent[] = userAssignments.map((courseAssignment) => {
+            const singleDayAssignment = new Date(courseAssignment.start_time).setHours(0,0,0,0) == new Date(courseAssignment.end_time).setHours(0,0,0,0)
+            // choose a different assignment color only for multiday assignments
+            if (!singleDayAssignment) {
+                colorIndex += 1;
+            }
+            return {
+                    title: courseAssignment.title,
+                    start: courseAssignment.start_time.toISOString(),
+                    end: courseAssignment.end_time.toISOString(),
+                    color: calendarEventColors[0].assignment[colorIndex%2],
+                    url: courseAssignment.start_time < new Date() ? courseAssignment.url_link : undefined
                 }
-            })
-            return acc
-        }, calendarEvents)
+        })
 
-        const calendar = renderFile('./views/partials/calendar.ejs', {events: calendarEvents});
+        const calendar = renderFile('./views/partials/calendar.ejs', {events: calendarEvents.concat(userAssignmentsEvents) });
 
         res.render('base/index', { title: 'Attendance', calendar })
     });

@@ -18,6 +18,24 @@ class DbClientPSQLImpl implements DbClient {
     )
   }
 
+  async getUserAssignments(userId: number): Promise<Assignment[]> {
+    var query = `select a.id, a.title, a.start_time, a.end_time, a.url_link
+    from assignments a 
+    join assignment_group ag
+    on a.id = ag.assignment_id
+    join user_group ug
+    on ag.group_id = ug.group_id
+    where ug.user_id = $1
+    ORDER BY a.start_time`;
+    return this.connection.any(query, [userId])
+      .then((data: Assignment[]) => {
+        return data
+      })
+      .catch((error: any) => {
+        console.log('ERROR:', error);
+        return [];
+      })  }
+
   async createGroup(groupName: string): Promise<number> {
     const cs = new this.pg.helpers.ColumnSet(['group_name'], {table: 'groups'});
     const query = this.pg.helpers.insert({group_name: groupName}, cs) + ' RETURNING id';
