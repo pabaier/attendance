@@ -29,9 +29,9 @@ class DbClientPSQLImpl implements DbClient {
     return await this.connection.any({
       name: 'getCourseIds',
       text: `select c.id from users u
-        left join user_group ug
+        join user_group ug
         on u.id = ug.user_id
-        left join courses c
+        join courses c
         on ug.group_id = c.group_id 
         where u.id = $1`,
       values: [userId],

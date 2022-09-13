@@ -36,8 +36,8 @@ CREATE INDEX attendance_date_created_idx ON attendance (date_created);
 CREATE INDEX attendance_user_id_course_id_idx ON attendance (user_id, course_id);
 
 CREATE TABLE user_group (
-	user_id integer REFERENCES users (id) ON DELETE CASCADE,
-	group_id integer REFERENCES groups (id) ON DELETE CASCADE,
+	user_id integer REFERENCES users (id) ON DELETE CASCADE NOT NULL,
+	group_id integer REFERENCES groups (id) ON DELETE CASCADE NOT NULL,
 	UNIQUE(user_id, group_id)
 );
 CREATE INDEX user_group_user_id_idx ON user_group (user_id);

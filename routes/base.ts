@@ -33,9 +33,10 @@ export default function (dbClient: DbClient) {
         const courseNumber: {[courseId: number] : string} = {}
 
         for (const id of courseIds) {
+            const course: Course = await dbClient.getCourse(id);
+            courseNumber[id] = course.courseNumber;
             courseDates[id] = (await dbClient.getCourseDates(id))
-            courseAssignments[id] = (await dbClient.getAssignments(id));
-            courseNumber[id] = (await dbClient.getCourse(id)).courseNumber;
+            courseAssignments[id] = (await dbClient.getAssignments(course.groupId));
         }
 
         // build calendar events
