@@ -2,13 +2,14 @@ import express, { Request, Response } from 'express';
 import { DbClient } from '../../db/dbClient';
 import { renderFile } from '../../views/helper';
 import { CalendarEvent, Course, User, UserGroups } from '../../models';
-import { calendarEventColors, getUserCourseIds, makeCourseName, getPresentAbsentDates, makePresentAbsentCalendarDates } from '../helpers';
+import { calendarEventColors, makeCourseName, getPresentAbsentDates, makePresentAbsentCalendarDates } from '../helpers';
 
 export default function (dbClient: DbClient) {
     const router = express.Router()
 
     router.get('/', async (req: Request, res: Response) => {
-        const group = req.query.group ? req.query.group as string : '';
+        const groupString: string = req.query.group as string;
+        const group = groupString ? parseInt(groupString) : null;
         const users = await dbClient.getUsers(group);
         const usersList = renderFile('./views/admin/partials/users-list.ejs', { users })
         const courses = await dbClient.getCourses();
@@ -44,8 +45,8 @@ export default function (dbClient: DbClient) {
                 const line: string[] = rawUser.split('|')
                 return {
                     email: line[0].trim(),
-                    first_name: line[1].trim(),
-                    last_name: line[2].trim(),
+                    firstName: line[1].trim(),
+                    lastName: line[2].trim(),
                     roles: line[3].trim(),
                     groups: line[4].trim(),
                 }
@@ -54,19 +55,19 @@ export default function (dbClient: DbClient) {
             users = [
                 {
                     email: req.body.email.trim(),
-                    first_name: req.body.firstName.trim(),
-                    last_name: req.body.lastName.trim(),
+                    firstName: req.body.firstName.trim(),
+                    lastName: req.body.lastName.trim(),
                     roles: req.body.roles.trim(),
-                    groups: req.body.groups.trim()
+                    groups: req.body.groups.trim().split(' ').map((x: string) => parseInt(x))
                 }
             ];
         }
 
         // users.roles and users.groups should now be a string of comma separated values ex: "group1,group2,group3"
         // create object of {userEmail: groups list}
-        const emailGroups: {[key: string]: string[] } = {}
+        const emailGroups: {[key: string]: number[] } = {}
         users.filter(user => user.groups).forEach(user => {
-            const groups: string[] = (user.groups as string).replaceAll(' ', '').split(',');
+            const groups: number[] = (user.groups as string).replaceAll(' ', '').split(',').map(x => parseInt(x));
             emailGroups[user.email] = groups
         })
 
@@ -76,8 +77,8 @@ export default function (dbClient: DbClient) {
         // map new user ids to groups by email address
         const userGroups: UserGroups[] = newUsers
         .map(user => {
-            const groups: string[] = emailGroups[user.email];
-            return {id: user.id as number, groups}
+            const groupIds: number[] = emailGroups[user.email];
+            return {userId: user.id as number, groupIds}
         })
 
         // add user groups to db
@@ -88,7 +89,7 @@ export default function (dbClient: DbClient) {
 
     router.get('/:userId', async (req: Request, res: Response) => {
         const user: User | null= await dbClient.getUser(parseInt(req.params.userId))
-        const courseIds = getUserCourseIds(user?.groups as string[])
+        const courseIds = await dbClient.getCourseIds(user?.id as number)
         if(!courseIds.length) {
             res.render('admin/user', {profile: user, calendar: undefined, attendance: []})
             return
@@ -117,16 +118,14 @@ export default function (dbClient: DbClient) {
         const user: User = {
             id: parseInt(req.params.userId),
             email: req.params.email,
-            first_name: req.body.firstName,
-            last_name: req.body.lastName,
+            firstName: req.body.firstName,
+            lastName: req.body.lastName,
             roles: req.body.roles,
-            groups: req.body.groups,
+            groups: req.body.groups.map((gId: string) => parseInt(gId)),
         }
         await dbClient.updateUser(user);
-        await dbClient.setUserGroups({id: user.id as number, groups: user.groups })
+        await dbClient.setUserGroups({userId: user.id as number, groupIds: user.groups })
         res.send('ok')
-        // const user: User | null= await dbClient.getUser(parseInt(req.params.userId))
-        // res.render('admin/user', {profile: user})
     })
 
     router.delete('/:userId', async (req: Request, res: Response) => {

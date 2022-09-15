@@ -4,17 +4,17 @@
 
 <div class="my-2">
     <% attendance.forEach(c => { %>
-        <span class="fs-5"><%= c.course.course_number%>-<%= c.course.start_time%> - absences: </span><span class="fs-5 fw-bold"><%=c.absent%></span><br>
+        <span class="fs-5"><%= c.course.courseNumber%>-<%= c.course.startTime%> - absences: </span><span class="fs-5 fw-bold"><%=c.absent%></span><br>
     <% }) %>
 </div>
 
 <div class="container">
     <div class="row" id="<%- profile.id %>">
         <div class="col-6 col-lg-4">
-            <input class="form-control my-2" type="text" id="firstName" readonly onfocus='editField(event)' onfocusout='doneEditField(event)' value="<%- profile.first_name %>">
+            <input class="form-control my-2" type="text" id="firstName" readonly onfocus='editField(event)' onfocusout='doneEditField(event)' value="<%- profile.firstName %>">
         </div>
         <div class="col-6 col-lg-4">
-            <input class="form-control my-2" type="text" id="lastName" readonly onfocus='editField(event)' onfocusout='doneEditField(event)' value="<%- profile.last_name %>">
+            <input class="form-control my-2" type="text" id="lastName" readonly onfocus='editField(event)' onfocusout='doneEditField(event)' value="<%- profile.lastName %>">
         </div>
         <div class="col-9 col-lg-4">
             <input class="form-control my-2" type="text" id="roles" readonly onfocus='editField(event)' onfocusout='doneEditField(event)' value="<%- profile.roles %>">

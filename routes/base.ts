@@ -5,7 +5,7 @@ import { Alert, Assignment, CalendarEvent, Course, CourseDate, User } from '../m
 import {  authCheckMiddleware, rollCheckMiddleware } from '../middleware/auth';
 import session from 'express-session';
 import { renderFile } from '../views/helper';
-import { calendarEventColors, getUserCourseIds } from './helpers';
+import { calendarEventColors } from './helpers';
 
 export default function (dbClient: DbClient) {
     const router = express.Router();
@@ -23,21 +23,19 @@ export default function (dbClient: DbClient) {
 
     router.get('/', authCheckMiddleware, async (req: Request, res: Response) => {
         // get courseIds
-        const groups: string[] = await dbClient.getGroups(req.session.user?.id as number);
-        const courseIds: number[] = getUserCourseIds(groups);
+        const userId = req.session.user?.id as number
+        const courseIds: number[] = await dbClient.getCourseIds(userId);
         var calendarEvents: CalendarEvent[] = []
         
         // get dates
         const courseDates: {[courseId: number] : Date[]} = {}
-        const courseAssignments: {[courseId: number] : Assignment[]} = {}
-        const courseNames: {[courseId: number] : string} = {}
+        const courseNumber: {[courseId: number] : string} = {}
 
         for (const id of courseIds) {
+            const course: Course = await dbClient.getCourse(id);
+            courseNumber[id] = course.courseNumber;
             courseDates[id] = (await dbClient.getCourseDates(id))
-            courseAssignments[id] = (await dbClient.getAssignments(id));
-            courseNames[id] = (await dbClient.getCourse(id)).course_number;
         }
-        // get course
 
         // build calendar events
         // course dates
@@ -45,7 +43,7 @@ export default function (dbClient: DbClient) {
             courseDates[id].forEach(date => {
                 acc.push(
                     {
-                        title: courseNames[id].toString(),
+                        title: courseNumber[id].toString(),
                         start: date.toISOString(),
                         color: calendarEventColors[index].meeting
                     }
@@ -54,34 +52,26 @@ export default function (dbClient: DbClient) {
             return acc
         }, calendarEvents)
 
-        // get assignments
-        for (const id of courseIds) {
-        }
-
         // build calendar events
         // course assignments
+        const userAssignments = (await dbClient.getUserAssignments(userId));
         var colorIndex = 0;
-        courseIds.reduce((acc, id, index) => {
-            courseAssignments[id].forEach((courseAssignment, i) => {
-                const singleDayAssignment = new Date(courseAssignment.start_time).setHours(0,0,0,0) == new Date(courseAssignment.end_time).setHours(0,0,0,0)
-                acc.push(
-                    {
-                        title: courseAssignment.title,
-                        start: courseAssignment.start_time.toISOString(),
-                        end: courseAssignment.end_time.toISOString(),
-                        color: calendarEventColors[index].assignment[colorIndex%2],
-                        url: courseAssignment.start_time < new Date() ? courseAssignment.url_link : undefined
-                    }
-                )
-                // choose a different assignment color only for multiday assignments
-                if (!singleDayAssignment) {
-                    colorIndex += 1;
+        const userAssignmentsEvents: CalendarEvent[] = userAssignments.map((courseAssignment) => {
+            const singleDayAssignment = new Date(courseAssignment.start_time).setHours(0,0,0,0) == new Date(courseAssignment.end_time).setHours(0,0,0,0)
+            // choose a different assignment color only for multiday assignments
+            if (!singleDayAssignment) {
+                colorIndex += 1;
+            }
+            return {
+                    title: courseAssignment.title,
+                    start: courseAssignment.start_time.toISOString(),
+                    end: courseAssignment.end_time.toISOString(),
+                    color: calendarEventColors[0].assignment[colorIndex%2],
+                    url: courseAssignment.start_time < new Date() ? courseAssignment.url_link : undefined
                 }
-            })
-            return acc
-        }, calendarEvents)
+        })
 
-        const calendar = renderFile('./views/partials/calendar.ejs', {events: calendarEvents});
+        const calendar = renderFile('./views/partials/calendar.ejs', {events: calendarEvents.concat(userAssignmentsEvents) });
 
         res.render('base/index', { title: 'Attendance', calendar })
     });

@@ -2,8 +2,8 @@ import express, { NextFunction, Request, Response } from 'express';
 import NodeCache from 'node-cache';
 import { authCheckMiddleware } from '../middleware/auth';
 import { DbClient } from '../db/dbClient';
-import { Alert, Course, UserPost } from '../models';
-import { getUserCourseIds, signIn } from './helpers';
+import { Alert, Course, Group, PostGroup } from '../models';
+import { signIn } from './helpers';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
     const router = express.Router();
@@ -11,9 +11,8 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     router.use(authCheckMiddleware);
 
     router.get('/attendance', async (req: Request, res: Response, next: NextFunction) => {
-        const userGroups: string[] = await dbClient.getGroups(req.session.user?.id as number);
-        const courseIds: number[] = getUserCourseIds(userGroups);
         const userId = req.session.user?.id as number
+        const courseIds: number[] = await dbClient.getCourseIds(userId);
 
         var data: {'attendance':number, 'days':number, 'course': Course}[] = [];
         var tomorrow = new Date();
@@ -30,13 +29,33 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     });
 
     router.get('/announcements', async (req: Request, res: Response) => {
-        const userPosts: UserPost[] = await dbClient.getUserPosts(req.session.user?.id as number);
+        const userGroupIds = req.session.user?.groups as number[];
+        var posts: PostGroup[] = []
         const today = new Date();
-        const filteredPosts = userPosts.filter(post => post.visible).map(post => {
-            post.link = post.openTime < today ? post.link : ''
-            return post
+        for (const id of userGroupIds) {
+            const unfilteredPosts: PostGroup[] = await dbClient.getPosts(id);
+            posts = posts.concat(unfilteredPosts.filter(post => post.visible).map(post => {
+                post.link = post.openTime < today ? post.link : ''
+                return post
+            }))
+        }
+
+        // earlier items in the list will show higher, which is what we want
+        // so they need to register as "less than" (-1) during the sort
+        // closed items always show lower in the list
+        const p = posts.sort((a: PostGroup, b:PostGroup) => {
+            const aIsEarlier = a.openTime < b.openTime;
+            const aIsOpen = a.openTime < today;
+            const bIsOpen = b.openTime < today;
+            if (aIsOpen && bIsOpen && aIsEarlier) return 1 // b shows up earlier/higher
+            if (aIsOpen && bIsOpen && !aIsEarlier) return -1 // a shows up earlier/higher
+            if (aIsOpen && !bIsOpen) return -1; // a shows up earlier/higher
+            if (!aIsOpen && bIsOpen) return 1; //b shows up earlier/hight
+            if (!aIsOpen && !bIsOpen && aIsEarlier) return 1
+            if (!aIsOpen && !bIsOpen && !aIsEarlier) return -1 
+            return 0
         })
-        res.render('user/posts', { userPosts: filteredPosts })
+        res.render('user/posts', { posts: p })
     });
 
     router.post('/attendance', async (req: Request, res: Response) => {

@@ -34,15 +34,26 @@ export default function (dbClient: DbClient) {
             res.redirect('/admin/courses')
             return
         }
+
+        const courseNumber = req.body.number;
+        const semester = req.body.semester;
+        const courseYear = parseInt(req.body.year);
+        const startTime = req.body.startTime;
+        const endTime = req.body.endTime;
+        const groupName = `${courseNumber}|${courseYear}-${semester}-${startTime}`;
+
+        const groupId = await dbClient.createGroup(groupName);
+    
         const course: Course = {
-            course_number: req.body.number,
-            semester: req.body.semester,
-            course_year: parseInt(req.body.year),
-            start_time: req.body.startTime,
-            end_time: req.body.endTime
+            courseNumber,
+            semester,
+            courseYear,
+            startTime,
+            endTime,
+            groupId
         }
 
-        const r = dbClient.addCourse(course)
+        const r = dbClient.createCourse(course)
 
         res.redirect('/admin/courses')
     })
@@ -50,8 +61,7 @@ export default function (dbClient: DbClient) {
     router.get('/:courseId', async (req: Request, res: Response) => {
         const courseId = parseInt(req.params.courseId)
         const course = await dbClient.getCourse(courseId);
-        const groupName = `course-${courseId}`
-        const users = await dbClient.getUsers(groupName);
+        const users = await dbClient.getUsers(course.groupId);
         const courseDates = await dbClient.getCourseDates(courseId);
         const userWithAbsences = [];
         const today = new Date()
@@ -73,7 +83,7 @@ export default function (dbClient: DbClient) {
         })
         const calendar = renderFile('./views/partials/calendar.ejs', {events: courseDateEvents});
 
-        const assignmentsList = await dbClientPSQLImpl.getAssignments(parseInt(req.params.courseId));
+        const assignmentsList = await dbClientPSQLImpl.getAssignments(course.groupId);
         const assignmentItems = assignmentsList.map(assignment => {
             const startTime = makeUTCDateString(assignment.start_time);
             const endTime = makeUTCDateString(assignment.end_time);
@@ -91,9 +101,10 @@ export default function (dbClient: DbClient) {
 
     router.post('/:courseId/users', async (req: Request, res: Response) => {
         const courseId: number = parseInt(req.params.courseId);
+        const course: Course = await dbClient.getCourse(courseId)
         const userIds: number[] = req.body.userIds;
-        const userGroups: UserGroups[] = userIds.map(uId => {
-            return {id: uId, groups: [`course-${courseId}`]}
+        const userGroups: UserGroups[] = userIds.map(userId => {
+            return {userId, groupIds: [course.groupId]}
         })
         const outcome = await dbClient.addUsersToGroups(userGroups);
         if (outcome)
@@ -118,7 +129,9 @@ export default function (dbClient: DbClient) {
     })
 
     router.get('/:courseId/assignments', async (req: Request, res: Response) => {
-        const assignments = await dbClientPSQLImpl.getAssignments(parseInt(req.params.courseId));
+        const courseId = parseInt(req.params.courseId);
+        const course = await dbClient.getCourse(courseId);
+        const assignments = await dbClientPSQLImpl.getAssignments(course.groupId);
         const assignmentItems = assignments.map(assignment => {
             renderFile('./views/admin/partials/assignment-item.ejs', {assignment})
         })
