@@ -35,7 +35,8 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         for (const id of userGroupIds) {
             const unfilteredPosts: PostGroup[] = await dbClient.getPosts(id);
             posts = posts.concat(unfilteredPosts.filter(post => post.visible).map(post => {
-                post.link = post.openTime < today ? post.link : ''
+                post.visible = post.openTime < today;
+                post.link =  post.visible ? post.link : '';
                 return post
             }))
         }

@@ -7,7 +7,7 @@
                 <% } else { %>
                     <%- post.title %>
                 <% } %>
-                <% if (!post.link) { %>
+                <% if (!post.visible) { %>
                     (opens <%- post.openTime.toLocaleDateString() %> at <%- post.openTime.toLocaleTimeString() %> )
                 <% } %>
             </div>
