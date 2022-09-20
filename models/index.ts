@@ -8,16 +8,22 @@ import Assignment from './Assignment';
 import CourseAssignment from './CourseAssignment';
 import PostGroup from './PostGroup';
 import Group from './Group';
+import Test from './Test';
+import TestUserData from './TestUserData';
+import UserQuestionGrade from './UserQuestionGrade';
 
 export {
     Alert,
-    User,
-    Course,
-    UserGroups,
-    CourseDate,
-    CalendarEvent,
-    CourseAssignment,
     Assignment,
-    PostGroup,
+    CalendarEvent,
+    Course,
+    CourseAssignment,
+    CourseDate,
     Group,
+    PostGroup,
+    Test,
+    TestUserData,
+    User,
+    UserGroups,
+    UserQuestionGrade,
 }

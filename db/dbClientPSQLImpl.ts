@@ -1,6 +1,6 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
-import { Assignment, Course, CourseDate, User, UserGroups, PostGroup, Group } from '../models';
+import { Assignment, Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData } from '../models';
 
 class DbClientPSQLImpl implements DbClient {
   connection: any;
@@ -16,6 +16,48 @@ class DbClientPSQLImpl implements DbClient {
         ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false
       }
     )
+  }
+  async getTestUserData(groupId: number, testDate: Date): Promise<TestUserData[]> {
+    var query = `
+      select u.id "userId", tq.question_name "questionName", tq.question_page "questionPage",
+      tq.ordinal, tq.points, tq.question_weight "questionWeight", tq.id "questionId", uqg.grade,
+      ut.url_link "url", ut.grade "overallGrade"
+      from users u
+      join user_group ug
+      on u.id = ug.user_id 
+      left join test_questions tq 
+      on ug.group_id = tq.group_id
+      left join user_question_grades uqg
+      on tq.id = uqg.question_id and u.id = uqg.user_id
+      left join user_test ut 
+      on u.id = ut.user_id and tq.test_date = ut.test_date
+      where ug.group_id = $1 and tq.test_date = $2
+      order by tq.ordinal,uqg.grade
+    `
+    return this.connection.any(query, [groupId, testDate])
+    .then((data: TestUserData[]) => {
+      return data
+    })
+    .catch((error: any) => {
+      console.log('ERROR:', error);
+      return [];
+    }) 
+  }
+
+  async getTests(): Promise<Test[]> {
+    var query = `select tq.test_date "testDate", tq.group_id "groupId", g.group_name "groupName"
+    from test_questions tq
+    join "groups" g 
+    on tq.group_id = g.id 
+    group by tq.test_date, tq.group_id, g.group_name`;
+    return this.connection.any(query)
+      .then((data: Test[]) => {
+        return data
+      })
+      .catch((error: any) => {
+        console.log('ERROR:', error);
+        return [];
+      }) 
   }
 
   async getUserAssignments(userId: number): Promise<Assignment[]> {
@@ -34,7 +76,8 @@ class DbClientPSQLImpl implements DbClient {
       .catch((error: any) => {
         console.log('ERROR:', error);
         return [];
-      })  }
+      })  
+  }
 
   async createGroup(groupName: string): Promise<number> {
     const cs = new this.pg.helpers.ColumnSet(['group_name'], {table: 'groups'});
