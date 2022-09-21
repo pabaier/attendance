@@ -3,7 +3,7 @@
     <h3 id="question-name"></h3>
     <h5 id="user-id"></h5>
     <div class="w-25">
-        <select class="form-select my-2" id="grade" hidden onchange="submitGrade(event)">
+        <select class="form-select my-2" id="grade" hidden>
             <option value=-1>Select Grade</option>
             <option value="4.0">A</option>
             <option value="3.7">A-</option>
@@ -19,35 +19,58 @@
             <option value="0.0">F</option>
         </select>
     </div>
+    <button type="button" class="btn btn-outline-primary" id="btn-start" onclick="setCurrentGrading()">Start</button>
     <button type="button" hidden class="btn btn-outline-primary" id="btn-back" onclick="back(event)">Back</button>
     <button type="button" hidden class="btn btn-outline-primary" id="btn-forward" onclick="forward(event)">Forward</button>
-    <button type="button" class="btn btn-outline-primary" id="btn-start" onclick="setCurrentGrading()">Start</button>
+    <br>
+    <button type="button" hidden class="btn btn-outline-primary my-2" id="btn-cancel" onclick="cancel(event)">Cancel</button>
 </div>
 
 <script type="application/javascript">
     var testUserData = <%-JSON.stringify(testUserData)%>;
     var grading = false;
     var index = -1;
+    var oldGrade;
     testUserData.every(user => {
         index ++;
         return user.grade
     })
     var user;
+
+    var checkSubmitGrade = () => {
+        selectedGrade = $('#grade').find(":selected").val();
+        if (selectedGrade == -1 || selectedGrade == oldGrade) return false;
+        user.grade = selectedGrade;
+        return true;
+    }
+
     var forward = (e) => {
+        if (checkSubmitGrade()) submitGrade();
         index ++;
         setCurrentGrading();
     }
 
     var back = (e) => {
+        if (checkSubmitGrade()) submitGrade();
         index --;
         if (index < 0) index = testUserData.length
         setCurrentGrading();
+    }
+
+    var cancel = (e) => {
+        if (oldGrade) {
+            $('#grade').val(`${oldGrade}`).change(null);
+        }
+        else {
+            $('#grade').val(-1).change(null);
+        }
     }
     
     var setCurrentGrading = () => {
         if (!grading) {
             $('#btn-back').prop('hidden', false);
             $('#btn-forward').prop('hidden', false);
+            $('#btn-cancel').prop('hidden', false);
             $('#grade').prop('hidden', false);
             $('#btn-start').prop('hidden', true);
             grading = true;
@@ -57,17 +80,25 @@
         $('#question-name').html(`Question ${user.questionName}`)
         $('#user-id').html(`User ${user.userId}`)
         if (user.grade) {
-            console.log('setting', user.grade)
+            oldGrade = user.grade;
             $('#grade').val(`${user.grade}`).change(null);
         }
-        else $('#grade').val(-1).change(null);
+        else {
+            oldGrade = null;
+            $('#grade').val(-1).change(null);
+        }
         window.open(`${user.url}#toolbar=0&page=${user.questionPage}`,'new window')
     }
 
-    var submitGrade = (e) => {
-        user.grade = e.target.value
-        console.log('submitting', e.target.value)
+    var submitGrade = () => {
+        $.post(`/grading`, { userId: user.userId, questionId: user.questionId, grade: user.grade }, function( data ) {
+            if (data) {
+                console.log('ok')
+                // window.location.reload();
+            } else {
+                console.log('nope')
+            }
+        })
     }
 
-    console.log(testUserData)
 </script>

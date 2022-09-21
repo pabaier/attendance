@@ -17,6 +17,21 @@ class DbClientPSQLImpl implements DbClient {
       }
     )
   }
+
+  async setUserQuestionGrade(userQuestionGrade: UserQuestionGrade): Promise<boolean> {
+    const col1 = { name: 'user_id', prop: 'userId' };
+    const col2 = { name: 'question_id', prop: 'questionId' };
+    const col3 = { name: 'grade', cast: 'numeric(2,1)' };
+    const cs = new this.pg.helpers.ColumnSet([col1, col2, col3], {table: 'user_question_grades'});
+
+    const onConflict = ' ON CONFLICT(user_id, question_id) DO UPDATE SET ' +
+    cs.assignColumns({from: 'EXCLUDED', skip: ['user_id', 'question_id']});
+
+    const query = this.pg.helpers.insert(userQuestionGrade, cs) + onConflict;
+    await this.connection.none(query);
+    return true;
+  }
+
   async getTestUserData(groupId: number, testDate: Date): Promise<TestUserData[]> {
     var query = `
       select u.id "userId", tq.question_name "questionName", tq.question_page "questionPage",

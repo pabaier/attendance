@@ -15,6 +15,14 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         res.render('grading/index.ejs', { tests })
     });
 
+    router.post('/', async (req: Request, res: Response) => {
+        const userId = parseInt(req.body.userId);
+        const questionId = parseInt(req.body.questionId);
+        const grade = parseFloat(req.body.grade);
+        const result: boolean = await dbClient.setUserQuestionGrade({userId, questionId, grade})
+        res.send('OK')
+    });
+
     router.get('/questions', async (req: Request, res: Response) => {
         const groupId = parseInt(req.query.groupId as string)
         const testDate = new Date(req.query.date as string)
