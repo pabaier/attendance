@@ -42,6 +42,15 @@
         Where I left off (noop if question is complete)
     </label>
 </div>
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong class="me-auto" id="toastHeader"></strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastBody"></div>
+    </div>
+</div>
 
 <script type="application/javascript">
     var testUserData = <%-JSON.stringify(testUserData)%>;
@@ -120,12 +129,20 @@
     }
 
     var submitGrade = () => {
+        var header, body;
         $.post(`/grading`, { userId: user.userId, questionId: user.questionId, grade: user.grade }, function( data ) {
             if (data) {
-                console.log('ok')
+                var selectedOption = $('#grade option:selected').text()
+                var grade = selectedOption === 'Select Grade' ? 'None' : selectedOption;
+                header = "Success"
+                body = `Grade set to ${grade}`
             } else {
-                console.log('nope')
+                header = 'Error'
+                body = 'Unable to set grade.'
             }
+            $('#toastHeader').html(header)
+            $('#toastBody').html(body)
+            $('#liveToast').toast('show');
         })
     }
 
