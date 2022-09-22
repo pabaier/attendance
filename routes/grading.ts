@@ -18,7 +18,7 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     router.post('/', async (req: Request, res: Response) => {
         const userId = parseInt(req.body.userId);
         const questionId = parseInt(req.body.questionId);
-        const grade = parseFloat(req.body.grade);
+        const grade = req.body.grade ? parseFloat(req.body.grade) : undefined;
         const result: boolean = await dbClient.setUserQuestionGrade({userId, questionId, grade})
         res.send('OK')
     });

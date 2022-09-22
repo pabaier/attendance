@@ -2,10 +2,10 @@
 <div class="py-5" id='test'>
     <h3 id="question-name"></h3>
     <h5 id="user-id"></h5>
-    <div hidden id="grading-buttons">
+    <div hidden class="mb-5" id="grading-buttons">
         <div class="w-25">
-            <select class="form-select my-2" id="grade">
-                <option value=-1>Select Grade</option>
+            <select class="form-select my-2" id="grade" onchange="checkSubmitGrade()">
+                <option value=-2>Select Grade</option>
                 <option value="4.0">A</option>
                 <option value="3.7">A-</option>
                 <option value="3.3">B+</option>
@@ -18,6 +18,7 @@
                 <option value="1.0">D</option>
                 <option value="0.7">D-</option>
                 <option value="0.0">F</option>
+                <option value=-1>None</option>
             </select>
         </div>
         <button type="button" class="btn btn-outline-primary" id="btn-back" onclick="back(event)">Back</button>
@@ -25,21 +26,21 @@
         <button type="button" class="btn btn-outline-primary my-2" id="btn-cancel" onclick="cancel(event)">Cancel</button>
     </div>
 
-    <h5 class="mt-5">Jump to Question</h5>
-    <input class="form-check-input" type="checkbox" id="check-left-off">
-    <label class="form-check-label" for="check-left-off">
-        Where I left off (noop if question is complete)
-    </label>
+    <div id="pre-grading">
+        <button type="button" class="btn btn-outline-primary my-2" id="btn-start" onclick="setCurrentGrading()">Start</button>
+        <h5>or</h5>
+    </div>
+
+    <h5 class="my-2">Jump to Question</h5>
     <div class="w-25">
         <select class="form-select my-2" id="select-question" onchange="jumpToQuestion(event)">
             <option value=-1>Select Question</option>
         </select>
     </div>
-    <div id="pre-grading">
-        <h5>or</h5>
-        <button type="button" class="btn btn-outline-primary" id="btn-start" onclick="setCurrentGrading()">Start</button>
-    </div>
-    <br>
+    <input class="form-check-input" type="checkbox" id="check-left-off">
+    <label class="form-check-label" for="check-left-off">
+        Where I left off (noop if question is complete)
+    </label>
 </div>
 
 <script type="application/javascript">
@@ -65,19 +66,18 @@
 
     var checkSubmitGrade = () => {
         selectedGrade = $('#grade').find(":selected").val();
-        if (selectedGrade == -1 || selectedGrade == oldGrade) return false;
-        user.grade = selectedGrade;
-        return true;
+        if (selectedGrade == -2) return;
+        selectedGrade == -1 ? user.grade = null : user.grade = selectedGrade;
+        oldGrade = user.grade;
+        submitGrade();
     }
 
     var forward = (e) => {
-        if (checkSubmitGrade()) submitGrade();
         index ++;
         setCurrentGrading();
     }
 
     var back = (e) => {
-        if (checkSubmitGrade()) submitGrade();
         index --;
         if (index < 0) index = testUserData.length
         setCurrentGrading();
@@ -88,7 +88,7 @@
             $('#grade').val(`${oldGrade}`).change(null);
         }
         else {
-            $('#grade').val(-1).change(null);
+            $('#grade').val(-2).change(null);
         }
     }
     
@@ -108,16 +108,15 @@
         }
         else {
             oldGrade = null;
-            $('#grade').val(-1).change(null);
+            $('#grade').val(-2).change(null);
         }
-        window.open(`${user.url}#toolbar=0&page=${user.questionPage}`,'new window')
+        // window.open(`${user.url}#toolbar=0&page=${user.questionPage}`,'new window')
     }
 
     var submitGrade = () => {
         $.post(`/grading`, { userId: user.userId, questionId: user.questionId, grade: user.grade }, function( data ) {
             if (data) {
                 console.log('ok')
-                // window.location.reload();
             } else {
                 console.log('nope')
             }
