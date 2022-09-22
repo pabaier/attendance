@@ -4,7 +4,7 @@
     <h5 id="user-id"></h5>
     <div hidden class="mb-5" id="grading-buttons">
         <div class="w-25">
-            <select class="form-select my-2" id="grade" onchange="checkSubmitGrade()">
+            <select class="form-select my-2" id="grade" onchange="changeGrade()">
                 <option value=-2>Select Grade</option>
                 <option value="4.0">A</option>
                 <option value="3.7">A-</option>
@@ -48,6 +48,7 @@
     var grading = false;
     var index = -1;
     var oldGrade;
+    var gradeChanged = false;
     testUserData.every(user => {
         index ++;
         return user.grade
@@ -64,11 +65,11 @@
         }
     });
 
-    var checkSubmitGrade = () => {
-        selectedGrade = $('#grade').find(":selected").val();
+    var changeGrade = (selectedGrade = null) => {
+        selectedGrade = selectedGrade ?? $('#grade').find(":selected").val();
+        gradeChanged = true;
         if (selectedGrade == -2) return;
         selectedGrade == -1 ? user.grade = null : user.grade = selectedGrade;
-        oldGrade = user.grade;
         submitGrade();
     }
 
@@ -84,12 +85,16 @@
     }
 
     var cancel = (e) => {
-        if (oldGrade) {
-            $('#grade').val(`${oldGrade}`).change(null);
-        }
-        else {
+        if (!gradeChanged) return;
+        // if they started with no grade, set their grade to null
+        // and change dropdown to select grade
+        if (oldGrade == null) {
+            changeGrade(-1);
             $('#grade').val(-2).change(null);
+        } else {
+            $('#grade').val(`${oldGrade}`).change();
         }
+        gradeChanged = false;
     }
     
     var setCurrentGrading = () => {
@@ -99,6 +104,7 @@
             grading = true;
         }
 
+        gradeChanged = false;
         user = testUserData[index % testUserData.length]
         $('#question-name').html(`Question ${user.questionName}`)
         $('#user-id').html(`<a href='${user.url}' target='_blank'>User ${user.userId}</a>`)
