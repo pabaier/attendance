@@ -116,7 +116,7 @@
         gradeChanged = false;
         user = testUserData[index % testUserData.length]
         $('#question-name').html(`Question ${user.questionName}`)
-        $('#user-id').html(`<a href='${user.url}' target='_blank'>User ${user.userId}</a>`)
+        $('#user-id').html(`<a href='${user.url}#toolbar=0&page=${user.questionPage}' target='_blank'>User ${user.userId}</a>`)
         if (user.grade) {
             oldGrade = user.grade;
             $('#grade').val(`${user.grade}`).change(null);
