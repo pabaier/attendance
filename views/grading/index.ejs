@@ -1,0 +1,56 @@
+<div class="jumbotron">
+    <h1>grading</h1>
+    <div class="test-pickers w-25">
+        <select class="form-select my-2" id="course-select" aria-label=".form-select-sm example" onchange="courseSelected(event)">
+            <option value=-1>Select a Course</option>
+            <%tests.forEach(test => {%>
+                <option value=<%=test.groupId%>><%=test.groupName%></option>
+            <%})%>
+        </select>
+        <select class="form-select my-2" disabled id="date-select" aria-label=".form-select-sm example" onchange="dateSelected(event)">
+        </select>
+    </div>
+    <div class="test-container"></div>
+</div>
+
+<script type="application/javascript">
+    var tests = <%-JSON.stringify(tests)%>
+    var groupId;
+    var date;
+
+    const courseSelected = (e) => {
+        const value = parseInt(e.target.value)
+        $('#date-select').find('option').remove();
+        if (value == -1){
+            $('#date-select').prop('disabled', true);
+        } else {
+            $('#date-select').prop('disabled', false);
+            groupId = parseInt(e.target.value)
+            var filteredCourses = tests.filter(x => x.groupId == groupId)
+            $('#date-select').append($('<option>', {
+                value: -1,
+                text: 'Select a date'
+            }))
+            filteredCourses.forEach(x => {
+                $('#date-select').append($('<option>', {
+                    value: x.testDate,
+                    text: new Date(x.testDate).toDateString()
+                }));
+            })
+        }
+    }
+
+    const dateSelected = (e) => {
+        if (e.target.value == "-1") return;
+        getTestQuestions(groupId, e.target.value)
+    }
+
+    const getTestQuestions = (groupId, testDate) => {
+        $(".test-container").empty()
+        const url = `/grading/questions?groupId=${groupId}&date=${testDate}`
+        $.get(url, function( data ) {
+            $(".test-container").html(data)
+        })
+    }
+
+</script>

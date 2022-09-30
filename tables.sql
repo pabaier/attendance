@@ -80,3 +80,36 @@ CREATE TABLE post_group (
 );
 CREATE INDEX post_group_post_id_idx ON post_group (post_id);
 CREATE INDEX post_group_group_id_idx ON post_group (group_id);
+
+CREATE TABLE test_questions (
+	id SERIAL PRIMARY KEY,
+	group_id INTEGER REFERENCES groups (id) ON DELETE CASCADE,
+	test_date timestamptz,
+	question_name VARCHAR (50),
+	question_page INTEGER,
+	ordinal INTEGER,
+	points INTEGER,
+	question_weight INTEGER,
+	UNIQUE (group_id, test_date, question_name),
+	UNIQUE (group_id, test_date, ordinal)
+);
+CREATE INDEX test_questions_group_id_test_date_idx ON test_questions (group_id, test_date);
+CREATE INDEX test_questions_ordinal_idx ON test_questions (ordinal);
+
+CREATE TABLE user_test (
+	user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
+	test_date timestamptz,
+	grade DECIMAL,
+	url_link TEXT
+);
+
+CREATE TABLE user_question_grades (
+	id SERIAL PRIMARY KEY,
+	user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
+	question_id INTEGER REFERENCES test_questions (id) ON DELETE CASCADE,
+	grade DECIMAL,
+	UNIQUE (user_id, question_id)	
+);
+CREATE INDEX user_question_grades_user_id_idx ON user_question_grades (user_id);
+CREATE INDEX user_question_grades_question_id_idx ON user_question_grades (question_id);
+CREATE INDEX user_question_grades_user_id_question_id_idx ON user_question_grades (user_id, question_id);

@@ -32,12 +32,17 @@ header {
   border-radius: 0.25ch;
 }
 
-.btn-primary:hover {
+.btn-outline-primary {
+  color: #2B2D42;
+  border-color: #2B2D42;
+}
+
+.btn-primary:hover, .btn-outline-primary:hover {
   background-color: #FF8427;
   border-color: #FF8427;
 }
 
-.btn-primary:focus {
+.btn-primary:focus, .btn-outline-primary:focus {
   background-color: #26547C;
   border-color: #26547C;
 }

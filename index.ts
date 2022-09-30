@@ -7,7 +7,7 @@ import expressLayouts from 'express-ejs-layouts';
 import path from 'path';
 import NodeCache from "node-cache";
 import { Alert, User } from './models';
-import { admin, base, user } from './routes';
+import { admin, base, grading, user } from './routes';
 import dbClient from './db/dbClientPSQLImpl';
 
 const app = express();
@@ -36,7 +36,7 @@ app.use(session({
     checkPeriod: 86400000 // prune expired entries every 24h
   }),
   resave: false,
-  secret: 'keyboard cat',
+  secret: [process.env.SESSION_SECRET as string, 'keyboard cat'],
   saveUninitialized: true
 }))
 
@@ -49,6 +49,7 @@ app.use(function(req: Request, res: Response, next: NextFunction) {
   res.locals.user = req.session.user
   next()
 })
+app.use('/grading', grading(myCache, dbClient));
 app.use('/admin', admin(myCache, dbClient));
 app.use('/user', user(myCache, dbClient));
 app.use('/', base(dbClient))

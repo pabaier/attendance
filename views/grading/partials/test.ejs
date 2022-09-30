@@ -1,0 +1,169 @@
+<!-- requires testUserData: TestUserData -->
+<div class="py-5" id='test'>
+    <h3 id="question-name"></h3>
+    <h5 id="user-id"></h5>
+    <div hidden class="mb-5" id="grading-buttons">
+        <div class="w-25">
+            <select class="form-select my-2" id="grade" onchange="changeGrade()">
+                <option value=-2>Select Grade</option>
+                <option value="4.0">A</option>
+                <option value="3.7">A-</option>
+                <option value="3.3">B+</option>
+                <option value="3.0">B</option>
+                <option value="2.7">B-</option>
+                <option value="2.3">C+</option>
+                <option value="2.0">C</option>
+                <option value="1.7">C-</option>
+                <option value="1.3">D+</option>
+                <option value="1.0">D</option>
+                <option value="0.7">D-</option>
+                <option value="0.0">F</option>
+                <option value=-1>None</option>
+            </select>
+        </div>
+        <button type="button" class="btn btn-outline-primary" id="btn-back" onclick="back(event)">Back</button>
+        <button type="button" class="btn btn-outline-primary" id="btn-forward" onclick="forward(event)">Forward</button>
+        <button type="button" class="btn btn-outline-primary my-2" id="btn-cancel" onclick="cancel(event)">Cancel</button>
+    </div>
+
+    <div id="pre-grading">
+        <button type="button" class="btn btn-outline-primary my-2" id="btn-start" onclick="setCurrentGrading()">Start</button>
+        <h5>or</h5>
+    </div>
+
+    <h5 class="my-2">Jump to Question</h5>
+    <div class="w-25">
+        <select class="form-select my-2" id="select-question" onchange="jumpToQuestion(event)">
+            <option value=-1>Select Question</option>
+        </select>
+    </div>
+    <input class="form-check-input" type="checkbox" id="check-left-off">
+    <label class="form-check-label" for="check-left-off">
+        Where I left off (noop if question is complete)
+    </label>
+</div>
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong class="me-auto" id="toastHeader"></strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastBody"></div>
+    </div>
+</div>
+
+<script type="application/javascript">
+    var testUserData = <%-JSON.stringify(testUserData)%>;
+    var grading = false;
+    var index = -1;
+    var oldGrade;
+    var gradeChanged = false;
+    testUserData.every(user => {
+        index ++;
+        return user.grade
+    })
+    var user;
+    var questions = []
+    testUserData.forEach(x => {
+        if (!questions.includes(x.questionId)) {
+            $('#select-question').append($('<option>', {
+                value: x.questionId,
+                text: x.questionName
+            }))
+            questions.push(x.questionId)
+        }
+    });
+
+    var changeGrade = (selectedGrade = null) => {
+        selectedGrade = selectedGrade ?? $('#grade').find(":selected").val();
+        gradeChanged = true;
+        if (selectedGrade == -2) return;
+        selectedGrade == -1 ? user.grade = null : user.grade = selectedGrade;
+        submitGrade();
+    }
+
+    var forward = (e) => {
+        index ++;
+        setCurrentGrading();
+    }
+
+    var back = (e) => {
+        index --;
+        if (index < 0) index = testUserData.length
+        setCurrentGrading();
+    }
+
+    var cancel = (e) => {
+        if (!gradeChanged) return;
+        // if they started with no grade, set their grade to null
+        // and change dropdown to select grade
+        if (oldGrade == null) {
+            changeGrade(-1);
+            $('#grade').val(-2).change(null);
+        } else {
+            $('#grade').val(`${oldGrade}`).change();
+        }
+        gradeChanged = false;
+    }
+    
+    var setCurrentGrading = () => {
+        if (!grading) {
+            $('#grading-buttons').prop('hidden', false);
+            $('#pre-grading').prop('hidden', true);
+            grading = true;
+        }
+
+        gradeChanged = false;
+        user = testUserData[index % testUserData.length]
+        $('#question-name').html(`Question ${user.questionName}`)
+        $('#user-id').html(`<a href='${user.url}#toolbar=0&page=${user.questionPage}' target='_blank'>User ${user.userId}</a>`)
+        if (user.grade) {
+            oldGrade = user.grade;
+            $('#grade').val(`${user.grade}`).change(null);
+        }
+        else {
+            oldGrade = null;
+            $('#grade').val(-2).change(null);
+        }
+        // window.open(`${user.url}#toolbar=0&page=${user.questionPage}`,'new window')
+    }
+
+    var submitGrade = () => {
+        var header, body;
+        $.post(`/grading`, { userId: user.userId, questionId: user.questionId, grade: user.grade }, function( data ) {
+            if (data) {
+                var selectedOption = $('#grade option:selected').text()
+                var grade = selectedOption === 'Select Grade' ? 'None' : selectedOption;
+                header = "Success"
+                body = `Grade set to ${grade}`
+            } else {
+                header = 'Error'
+                body = 'Unable to set grade.'
+            }
+            $('#toastHeader').html(header)
+            $('#toastBody').html(body)
+            $('#liveToast').toast('show');
+        })
+    }
+
+    var jumpToQuestion = (e) => {
+        const questionId = parseInt(e.target.value)
+        if (questionId == -1) return;
+        const leftOff = $('#check-left-off').is(":checked")
+        const cond = leftOff ? (qId, grade) => {
+            return qId == questionId && grade == null
+        } : (qId, grade) => {
+            return qId == questionId
+        }
+
+        testUserData.every((x, i) => {
+            if (cond(x.questionId, x.grade)) {
+                index = i;
+                return false;
+            }
+            return true;
+        })
+        setCurrentGrading();
+    }
+
+</script>
