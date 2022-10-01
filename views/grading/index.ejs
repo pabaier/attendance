@@ -14,15 +14,6 @@
     <br>
     <button type="button" class="btn btn-outline-primary my-4" id="btn-calc" onclick="calculateFinalGrades()">Calculate Grades</button>
 </div>
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-    <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-header">
-            <strong class="me-auto" id="toastHeader"></strong>
-            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body" id="toastBody"></div>
-    </div>
-</div>
 
 <script type="application/javascript">
     var tests = <%-JSON.stringify(tests)%>
