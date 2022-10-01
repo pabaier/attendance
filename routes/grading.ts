@@ -2,7 +2,7 @@ import express, { NextFunction, Request, Response } from 'express';
 import NodeCache from 'node-cache';
 import { authCheckMiddleware, rollCheckMiddleware } from '../middleware/auth';
 import { DbClient } from '../db/dbClient';
-import { Test, TestUserData } from '../models';
+import { Test, TestUserData, UserQuestionGrade } from '../models';
 import { renderFile } from '../views/helper';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
@@ -29,6 +29,27 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         const testUserData: TestUserData[] = await dbClient.getTestUserData(groupId, testDate);
         const data = renderFile('./views/grading/partials/test.ejs', { testUserData });
         res.send(data)
+    });
+
+    router.post('/calculate', async (req: Request, res: Response) => {
+        const groupId = parseInt(req.body.groupId as string)
+        const testDate = new Date(req.body.date as string)
+        const testUserData: TestUserData[] = await dbClient.getTestUserData(groupId, testDate);
+        var results: {[key: number]: Array<TestUserData>} = {}
+        var userDataByUser = testUserData.reduce((prev, curr) => {
+            if(!prev[curr.userId]) prev[curr.userId] = [];
+            prev[curr.userId].push(curr);
+            return prev;
+        }, results)
+
+        for (const [userId, gradeList] of Object.entries(userDataByUser)) {
+            var finalGrade = 0
+            gradeList.forEach((userData: TestUserData) => {
+                finalGrade += userData.grade * userData.questionWeight / 100;
+            })
+            dbClient.setUserTestGrade(finalGrade, parseInt(userId), testDate);
+        }
+        res.send('ok')
     });
 
     return router;

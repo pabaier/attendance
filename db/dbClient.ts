@@ -37,4 +37,5 @@ export interface DbClient {
     getTests(): Promise<Test[]>;
     getTestUserData(groupId: number, testDate: Date): Promise<TestUserData[]>;
     setUserQuestionGrade(userQuestionGrade: UserQuestionGrade): Promise<boolean>;
+    setUserTestGrade(grade: number, userId: number, testDate: Date): Promise<boolean>;
 }

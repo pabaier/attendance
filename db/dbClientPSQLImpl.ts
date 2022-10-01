@@ -18,6 +18,19 @@ class DbClientPSQLImpl implements DbClient {
     )
   }
 
+  async setUserTestGrade(grade: number, userId: number, testDate: Date): Promise<boolean> {
+    var query = `update user_test 
+      set grade = $1
+      where user_id = $2 and test_date = $3`
+    return this.connection.none(query, [grade, userId, testDate])
+    .then((data: any) => {
+      return true;
+    })
+    .catch((error: any) => {
+      return false;
+    })
+  }
+
   async setUserQuestionGrade(userQuestionGrade: UserQuestionGrade): Promise<boolean> {
     const col1 = { name: 'user_id', prop: 'userId' };
     const col2 = { name: 'question_id', prop: 'questionId' };
