@@ -10,9 +10,10 @@
         <select class="form-select my-2" disabled id="date-select" aria-label=".form-select-sm example" onchange="dateSelected(event)">
         </select>
     </div>
-    <div class="test-container"></div>
+    <div class="test-container my-5"></div>
     <br>
     <button type="button" class="btn btn-outline-primary my-4" id="btn-calc" onclick="calculateFinalGrades()">Calculate Grades</button>
+    <button type="button" class="btn btn-outline-primary mx-2 my-4" id="btn-final" onclick="viewFinalGrades()">View Grades</button>
 </div>
 
 <script type="application/javascript">
@@ -70,6 +71,27 @@
                 $('#toastHeader').html(header)
                 $('#toastBody').html(body)
                 $('#liveToast').toast('show');
+            })
+        } else {
+            $('#toastHeader').html(header)
+            $('#toastBody').html(body)
+            $('#liveToast').toast('show');
+        }
+    }
+
+    var viewFinalGrades = () => {
+        var header = 'Fail';
+        var body = 'Select Course and Test Date';
+        if (groupId && date) {
+            $.get(`/grading/${groupId}/grades?date=${date}`, function( data ) {
+                if (data) {
+                    $(".test-container").empty()
+                    $(".test-container").html(data)
+                } else {
+                    $('#toastHeader').html(header)
+                    $('#toastBody').html('Error Getting Grades')
+                    $('#liveToast').toast('show');
+                }
             })
         } else {
             $('#toastHeader').html(header)
