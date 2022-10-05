@@ -293,17 +293,22 @@ class DbClientPSQLImpl implements DbClient {
     }); 
   }
 
-  async getGroups(userId: number): Promise<Group[]> {
-    return await this.connection.any({
-      name: 'getGroups',
-      text: `SELECT g.id, g.group_name "name" 
+  async getGroups(userId?: number): Promise<Group[]> {
+    var request: any = {
+      name: `getGroups${userId}`,
+      text: `SELECT g.id, g.group_name "name" FROM "groups" g`
+    };
+    if (userId) {
+      request.text = `
+        SELECT g.id, g.group_name "name" 
         FROM user_group ug
         left join "groups" g 
-        on g.id = ug.group_id 
+        on g.id = ug.group_id
         where user_id = $1
-      `,
-      values: [userId],
-    }).then((data: Group[]) => {
+      `;
+      request.values = [userId]
+    }
+    return await this.connection.any(request).then((data: Group[]) => {
         return data;
     }).catch((error: any) => {
       console.log('ERROR:', error);

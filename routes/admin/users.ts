@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import { DbClient } from '../../db/dbClient';
 import { renderFile } from '../../views/helper';
-import { CalendarEvent, Course, User, UserGroups } from '../../models';
+import { CalendarEvent, Course, Group, User, UserGroups } from '../../models';
 import { calendarEventColors, makeCourseName, getPresentAbsentDates, makePresentAbsentCalendarDates } from '../helpers';
 
 export default function (dbClient: DbClient) {
@@ -88,10 +88,13 @@ export default function (dbClient: DbClient) {
     })
 
     router.get('/:userId', async (req: Request, res: Response) => {
-        const user: User | null= await dbClient.getUser(parseInt(req.params.userId))
+        const userId: number = parseInt(req.params.userId)
+        const user: User | null= await dbClient.getUser(userId)
+        const userGroups: Group[] = await dbClient.getGroups(userId)
+        const allGroups: Group[] = await dbClient.getGroups();
         const courseIds = await dbClient.getCourseIds(user?.id as number)
         if(!courseIds.length) {
-            res.render('admin/user', {profile: user, calendar: undefined, attendance: []})
+            res.render('admin/user', {profile: {...user, groups: userGroups}, allGroups, calendar: undefined, attendance: []})
             return
         }
         var calendarEvents: CalendarEvent[] = []
@@ -110,8 +113,7 @@ export default function (dbClient: DbClient) {
         };
 
         const calendar = renderFile('./views/partials/calendar.ejs', {events: calendarEvents});
-
-        res.render('admin/user', {profile: user, calendar, attendance})
+        res.render('admin/user', {profile: {...user, groups: userGroups}, allGroups, calendar, attendance})
     })
 
     router.put('/:userId', async (req: Request, res: Response) => {
