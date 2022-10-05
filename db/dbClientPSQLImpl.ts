@@ -1,6 +1,6 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
-import { Assignment, Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData } from '../models';
+import { Assignment, Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest } from '../models';
 
 class DbClientPSQLImpl implements DbClient {
   connection: any;
@@ -16,6 +16,43 @@ class DbClientPSQLImpl implements DbClient {
         ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false
       }
     )
+  }
+
+  async getGroupTests(groupId: number, testDate: Date): Promise<UserTest[]> {
+    var query = `select ut.user_id "userId", u.first_name "firstName", u.last_name "lastName", u.email, ut.test_date "testDate", ut.grade, ut.url_link "urlLink"
+      from user_test ut 
+      join users u 
+      on ut.user_id = u.id
+      join user_group ug 
+      on ut.user_id = ug.user_id
+      where ug.group_id = $1 and ut.test_date = $2
+      order by u.last_name`;
+    
+    return this.connection.any(query, [groupId, testDate])
+    .then((data: UserTest[]) => {
+        return data.map(userTest => {
+          const floatGrade = parseFloat(userTest.grade.toString());
+          userTest.grade = floatGrade;
+          return userTest;
+        })
+    })
+    .catch((error: any) => {
+      console.log('ERROR:', error);
+      return [];
+    }) 
+  }
+
+  async setUserTestGrade(grade: number, userId: number, testDate: Date): Promise<boolean> {
+    var query = `update user_test 
+      set grade = $1
+      where user_id = $2 and test_date = $3`
+    return this.connection.none(query, [grade, userId, testDate])
+    .then((data: any) => {
+      return true;
+    })
+    .catch((error: any) => {
+      return false;
+    })
   }
 
   async setUserQuestionGrade(userQuestionGrade: UserQuestionGrade): Promise<boolean> {

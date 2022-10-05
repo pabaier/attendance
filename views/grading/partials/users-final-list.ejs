@@ -1,0 +1,10 @@
+<!-- requires users -->
+<div class="w-75 center">
+    <div class="container alternating-table users-final" id="users">
+        <% users.forEach(user => { %>
+            <%- include('user-final-row.ejs', {user: user}); %>
+        <% }) %>
+    </div>
+</div>
+
+<script></script>

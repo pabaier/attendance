@@ -11,6 +11,7 @@ import Group from './Group';
 import Test from './Test';
 import TestUserData from './TestUserData';
 import UserQuestionGrade from './UserQuestionGrade';
+import UserTest from './UserTest';
 
 export {
     Alert,
@@ -26,4 +27,5 @@ export {
     User,
     UserGroups,
     UserQuestionGrade,
+    UserTest,
 }

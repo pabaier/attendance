@@ -1,4 +1,4 @@
-import { Assignment, Course, CourseDate, User, PostGroup, UserGroups, Group, Test, UserQuestionGrade, TestUserData } from "../models";
+import { Assignment, Course, CourseDate, User, PostGroup, UserGroups, Group, Test, UserQuestionGrade, TestUserData, UserTest } from "../models";
 
 export interface DbClient {
     connection: any;
@@ -37,4 +37,6 @@ export interface DbClient {
     getTests(): Promise<Test[]>;
     getTestUserData(groupId: number, testDate: Date): Promise<TestUserData[]>;
     setUserQuestionGrade(userQuestionGrade: UserQuestionGrade): Promise<boolean>;
+    setUserTestGrade(grade: number, userId: number, testDate: Date): Promise<boolean>;
+    getGroupTests(groupId: number, testDate: Date): Promise<UserTest[]>;
 }

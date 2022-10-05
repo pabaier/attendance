@@ -108,3 +108,18 @@ export const makePresentAbsentCalendarDates = (presentDates: Date[], absentDates
 
     return {presentCalendarEvents, absentCalendarEvents}
 }
+
+export const numberToGrade = (numberGrade: number) => {
+    if(numberGrade > 3.7) return 'A'
+    if(numberGrade > 3.3) return 'A-'
+    if(numberGrade > 3.0) return 'B+'
+    if(numberGrade > 2.7) return 'B'
+    if(numberGrade > 2.3) return 'B-'
+    if(numberGrade > 2.0) return 'C+'
+    if(numberGrade > 1.7) return 'C'
+    if(numberGrade > 1.3) return 'C-'
+    if(numberGrade > 1.0) return 'D+'
+    if(numberGrade > 0.7) return 'D'
+    if(numberGrade > 0.3) return 'D-'
+    return 'F'
+}
