@@ -29,6 +29,7 @@ CREATE INDEX courses_course_number_idx ON courses (course_number);
 CREATE TABLE attendance (
 	user_id integer REFERENCES users (id),
 	course_id integer REFERENCES courses (id),
+	ip VARCHAR(51),
 	date_created timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX attendance_user_id_idx ON attendance (user_id);

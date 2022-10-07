@@ -400,8 +400,8 @@ class DbClientPSQLImpl implements DbClient {
       })
   }
 
-  async signIn(userId: number, courseId: number) {
-    return this.connection.none('INSERT INTO attendance (user_id, course_id) VALUES ($1, $2)', [userId, courseId])
+  async signIn(userId: number, courseId: number, ip?: string) {
+    return this.connection.none('INSERT INTO attendance (user_id, course_id, ip) VALUES ($1, $2, $3)', [userId, courseId, ip])
       .then((data: any) => { return true; })
       .catch((error: any) => {
         console.log('ERROR:', error);

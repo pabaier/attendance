@@ -61,13 +61,14 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
 
     router.post('/attendance', async (req: Request, res: Response) => {
         const result = parseInt(req.body.code) == myCache.get('code') as number
+        const ip: string = `${req.socket.remoteAddress}|${req.socket.remotePort}`
         const userId = req.session.user?.id as number
         const courseId = parseInt(req.body.courseId);
         var success = false;
 
         var alert: Alert[] = [];
         if (result) {
-            var signInResult = await signIn(dbClient, userId, courseId);
+            var signInResult = await signIn(dbClient, userId, courseId, ip);
             if (signInResult.alreadySignedIn) {
                 alert.push({type: 'warning', message: 'already signed in today'})
             } else if (signInResult.success) {
