@@ -2,7 +2,7 @@ import { Assignment, Course, CourseDate, User, PostGroup, UserGroups, Group, Tes
 
 export interface DbClient {
     connection: any;
-    signIn(userId: number, courseId: number): Promise<boolean>;
+    signIn(userId: number, courseId: number, ip?: string): Promise<boolean>;
     signInUsers(userCourseIds: {user_id: number, course_id: number}[]): Promise<boolean>;
     getUser(user: string | number): Promise<User | null>;
     updateUser(user: User): Promise<boolean>;
