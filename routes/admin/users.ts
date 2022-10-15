@@ -3,6 +3,7 @@ import { DbClient } from '../../db/dbClient';
 import { renderFile } from '../../views/helper';
 import { CalendarEvent, Course, Group, User, UserGroups } from '../../models';
 import { calendarEventColors, makeCourseName, getPresentAbsentDates, makePresentAbsentCalendarDates } from '../helpers';
+import crypto from 'crypto';
 
 export default function (dbClient: DbClient) {
     const router = express.Router()
@@ -145,6 +146,34 @@ export default function (dbClient: DbClient) {
             res.sendStatus(500)
         }
     })
+
+    router.get('/:userId/password', async (req: Request, res: Response) => {
+        const userId: number = parseInt(req.params.userId)
+        res.render('admin/user-password', { userId })
+    })
+
+    router.post('/:userId/password', async (req: Request, res: Response) => {
+        res.setHeader('Content-Type', 'application/json');
+        const userId: number = parseInt(req.params.userId)
+        const newPassword = req.body.password;
+
+        // create salt
+        var salt: Buffer = crypto.randomBytes(16);
+        var saltHash: string = salt.toString('base64');
+
+        // create password
+        const newPasswordBuffer: Buffer = crypto.pbkdf2Sync(newPassword, salt, 310000, 32, 'sha256')
+        const newPasswordHash = newPasswordBuffer.toString('base64');
+        const result = await dbClient.updateUserPassword(userId, newPasswordHash,saltHash);
+        if (result) {
+            res.status(200).send({status: 200, message: 'success!'});
+        } else {
+            return res.status(500).send({
+                status: 500,
+                message: 'unable to save new password. please try again or contact the administrator'
+            });
+        }
+    });
 
     return router;
 }

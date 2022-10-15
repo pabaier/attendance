@@ -1,0 +1,23 @@
+<h1>Login</h1>
+<div class="w-25 start-0 center">
+        <input type="email" class="form-control" id="email" name="email" placeholder="email"><br>
+        <input type="password" class="form-control" id="password" name="password" placeholder="password"><br><br>
+        <button type="submit" class="btn btn-primary" id="submit">Submit</button>
+</div>
+
+<script>
+    $('#submit').click(e => {
+        var email = $("#email").val().trim();
+        var password = $("#password").val().trim();
+        $.post(`/auth/login?redirect=<%- redirect %>`, { email, password }, function( data ) {
+            window.location.href = data.message;
+        }).fail((response, textStatus, errorThrown) => {
+            $('#toastHeader').html(textStatus);
+            $('#toastBody').html(`${errorThrown}-${JSON.parse(response.responseText).message}`);
+            $('#liveToast').toast('show');            
+            $("#email").val('');
+            $("#password").val('');
+            $("#email").focus();
+        })
+    })
+</script>

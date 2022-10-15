@@ -18,6 +18,20 @@ class DbClientPSQLImpl implements DbClient {
     )
   }
 
+  async updateUserPassword(userId: number, password: string, salt?: string): Promise<boolean> {
+    const columns = salt ? ['salt', 'password_hash'] : ['password_hash'];
+    const cs = new this.pg.helpers.ColumnSet(columns);
+    const data = salt ? {salt, password_hash: password} : {password_hash: password}
+    const condition = pgp.as.format(' WHERE id = $1', userId);
+    const query = this.pg.helpers.update(data, cs, 'users') + condition;
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });  
+  }
+
   async getGroupTests(groupId: number, testDate: Date): Promise<UserTest[]> {
     var query = `select ut.user_id "userId", u.first_name "firstName", u.last_name "lastName", u.email, ut.test_date "testDate", ut.grade, ut.url_link "urlLink"
       from user_test ut 
@@ -213,7 +227,8 @@ class DbClientPSQLImpl implements DbClient {
     }).catch((error: any) => {
       console.log(error)
       return false;
-    });  }
+    });  
+  }
 
   async getTodaySignIns(courseId: number): Promise<User[]> {
     const query = {
@@ -413,19 +428,23 @@ class DbClientPSQLImpl implements DbClient {
     const userOption: string = typeof(user) == 'string' ? 'email' : 'id';
 
     return await this.connection.any(
-      `SELECT u.id, u.email, u.first_name "firstName", u.last_name "lastName", u.roles, ug.group_id FROM users u
+      `SELECT u.id, u.email, u.first_name "firstName", u.last_name "lastName", u.roles, u.salt, u.password_hash "password",
+      ug.group_id FROM users u
       left join user_group ug 
       on u.id = ug.user_id
       WHERE u.${userOption} = $1`, [user]
     ).then((users: any[]) => {
-      return {
+      var u: User = {
         id: users[0].id,
         email: users[0].email,
         firstName: users[0].firstName,
         lastName: users[0].lastName,
         roles: users[0].roles.replaceAll(' ', '').split(','),
-        groups: users.map(user => user.group_id)
+        groups: users.map(user => user.group_id),
+        salt: users[0].salt,
+        password: users[0].password,
       }
+      return u;
     }).catch((error: any) => {
       console.log('ERROR:', error);
       return null

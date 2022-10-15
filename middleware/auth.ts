@@ -5,7 +5,7 @@ export const authCheckMiddleware = (req: Request, res: Response, next: NextFunct
         next()
     }
     else {
-        res.redirect(`/login?redirect=${req.originalUrl}`)
+        res.redirect(`/auth/login?redirect=${req.originalUrl}`)
     }
 };
 
@@ -14,7 +14,7 @@ export const rollCheckMiddleware = (roles: string[]) => {
         if ((<string[]>req.session.user?.roles)?.some(role => roles.includes(role)))
             next()
         else {
-            res.redirect('/logout')
+            res.redirect('/auth/logout')
         }
     }
 };

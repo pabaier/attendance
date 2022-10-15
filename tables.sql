@@ -4,6 +4,8 @@ CREATE TABLE users (
 	email VARCHAR (50) UNIQUE,
 	first_name VARCHAR (50),
 	last_name VARCHAR (50),
+	password_hash VARCHAR (64),
+	salt VARCHAR (32),
 	roles TEXT
 );
 CREATE INDEX users_email_idx ON users (email);
