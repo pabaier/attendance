@@ -166,7 +166,7 @@ export default function (dbClient: DbClient) {
         const newPasswordHash = newPasswordBuffer.toString('base64');
         const result = await dbClient.updateUserPassword(userId, newPasswordHash,saltHash);
         if (result) {
-            res.status(200).send({status: 200, message: 'success!'});
+            res.status(200).send({status: 200, message: 'success!', redirect: `/admin/users/${userId}`});
         } else {
             return res.status(500).send({
                 status: 500,
