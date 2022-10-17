@@ -13,13 +13,19 @@
     </a>
     <div class="collapse show" id="users-collapse">
         <%- usersList %>
-        <h5>Add User(s)</h5>
-        <form id="bulk-add-form" action="/admin/users/add" method="POST">
-            <textarea class="form-control my-2" name="text" id="bulk-add-area" placeholder="Add Users&#10;Email|FirstName|LastName|Role1,Role2|Group1,Group2" aria-label="Email" aria-describedby="basic-addon1"></textarea>
-            <button type="submit" id="bulk-add-btn" class="btn btn-primary my-2">Submit</button>
-        </form>
-        <h5>Sign In User(s)</h5>
-        <button type="submit" id="bulk-sign-in-btn" value="<%=courseId%>" class="btn btn-primary my-2">Sign In</button>
+
+        <div class="my-3">
+            <h5>Sign In User(s)</h5>
+            <button type="submit" id="bulk-sign-in-btn" value="<%=courseId%>" class="btn btn-primary my-2">Sign In</button>
+        </div>
+
+        <div class="my-5">
+            <h5>Add User(s)</h5>
+            <form id="bulk-add-form" action="/admin/users/add" method="POST">
+                <textarea class="form-control my-2" name="text" id="bulk-add-area" placeholder="Add Users&#10;Email|FirstName|LastName|Role1,Role2|Group1,Group2" aria-label="Email" aria-describedby="basic-addon1"></textarea>
+                <button type="submit" id="bulk-add-btn" class="btn btn-primary my-2">Submit</button>
+            </form>
+        </div>
     </div>
     <div class="collapse" id="assignments-collapse">
         <%-assignments%>

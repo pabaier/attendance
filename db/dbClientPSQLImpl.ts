@@ -452,14 +452,16 @@ class DbClientPSQLImpl implements DbClient {
   }
 
   async addUsers(users: User[]): Promise<User[]> {
-    const cs = new this.pg.helpers.ColumnSet(['email', 'first_name', 'last_name', 'roles'], {table: 'users'});
+    const cs = new this.pg.helpers.ColumnSet(['email', 'first_name', 'last_name', 'roles', 'salt', 'password_hash'], {table: 'users'});
     const values = users.map(u => { return {
       email: u.email, 
       first_name: u.firstName, 
       last_name: u.lastName, 
-      roles: u.roles, 
+      roles: u.roles,
+      salt: u.salt,
+      password_hash: u.password,
     }})
-    const query = this.pg.helpers.insert(values, cs) + ' RETURNING id, email, first_name as "firstName", last_name as "lastName", roles';
+    const query = this.pg.helpers.insert(values, cs) + ' RETURNING id, email, first_name as "firstName", last_name as "lastName", roles, salt, password_hash as password';
     const res: User[] = await this.connection.many(query);
     return res;
   }

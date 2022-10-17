@@ -44,22 +44,30 @@ export default function (dbClient: DbClient) {
             const rawUsers: string[] = rawBody.split('\n');
             users = rawUsers.map((rawUser) => {
                 const line: string[] = rawUser.split('|')
+                const email: string = line[0].trim()
+                const {password, salt} = createPasswordHash(email);
                 return {
-                    email: line[0].trim(),
+                    email,
                     firstName: line[1].trim(),
                     lastName: line[2].trim(),
                     roles: line[3].trim(),
                     groups: line[4].trim(),
+                    password,
+                    salt
                 }
             });
         } else {
+            const email = req.body.email.trim()
+            const {password, salt} = createPasswordHash(email);
             users = [
                 {
-                    email: req.body.email.trim(),
+                    email,
                     firstName: req.body.firstName.trim(),
                     lastName: req.body.lastName.trim(),
                     roles: req.body.roles.trim(),
-                    groups: req.body.groups.trim().split(' ').map((x: string) => parseInt(x))
+                    groups: req.body.groups.trim().split(' ').map((x: string) => parseInt(x)),
+                    password,
+                    salt
                 }
             ];
         }
@@ -157,14 +165,9 @@ export default function (dbClient: DbClient) {
         const userId: number = parseInt(req.params.userId)
         const newPassword = req.body.password;
 
-        // create salt
-        var salt: Buffer = crypto.randomBytes(16);
-        var saltHash: string = salt.toString('base64');
+        const {password, salt} = createPasswordHash(newPassword);
 
-        // create password
-        const newPasswordBuffer: Buffer = crypto.pbkdf2Sync(newPassword, salt, 310000, 32, 'sha256')
-        const newPasswordHash = newPasswordBuffer.toString('base64');
-        const result = await dbClient.updateUserPassword(userId, newPasswordHash,saltHash);
+        const result = await dbClient.updateUserPassword(userId, password, salt);
         if (result) {
             res.status(200).send({status: 200, message: 'success!', redirect: `/admin/users/${userId}`});
         } else {
@@ -174,6 +177,28 @@ export default function (dbClient: DbClient) {
             });
         }
     });
+
+    const createPasswordHash = (newPassword: string, previousSalt?: string) => {
+        var salt: Buffer;
+        var saltHash: string;
+
+        // create salt
+        if (previousSalt) {
+            salt = Buffer.from(previousSalt, 'base64');
+            saltHash = previousSalt;
+        } else {
+            salt = crypto.randomBytes(16);            
+            saltHash = salt.toString('base64');
+        }
+
+        // create password
+        const newPasswordBuffer: Buffer = crypto.pbkdf2Sync(newPassword, salt, 310000, 32, 'sha256')
+
+        // hash salt and password
+        const newPasswordHash = newPasswordBuffer.toString('base64');
+
+        return {password: newPasswordHash, salt: saltHash}
+    }
 
     return router;
 }
