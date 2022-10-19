@@ -1,7 +1,7 @@
 <!-- requires testUserData: TestUserData -->
 <div class="py-5" id='test'>
     <h3 id="question-name"></h3>
-    <h5 id="user-id"></h5>
+    <b><span id="user-id"></span></b> <span id="count"></span>
     <div hidden class="mb-5" id="grading-buttons">
         <div class="w-25">
             <select class="form-select my-2" id="grade" onchange="changeGrade()">
@@ -54,16 +54,26 @@
         return user.grade
     })
     var user;
-    var questions = []
-    testUserData.forEach(x => {
-        if (!questions.includes(x.questionId)) {
+    var questions = {}
+    var previousQuestionId = null;
+    testUserData.forEach((x, index) => {
+        var questionId = x.questionId.toString();
+        if (!Object.keys(questions).includes(questionId)) {
             $('#select-question').append($('<option>', {
                 value: x.questionId,
                 text: x.questionName
             }))
-            questions.push(x.questionId)
+            questions[questionId] = {start: index}
+            if (previousQuestionId) {
+                questions[previousQuestionId]['end'] = index - 1
+                questions[previousQuestionId]['total'] = questions[previousQuestionId].end - questions[previousQuestionId].start
+            }
+            previousQuestionId = questionId;
         }
     });
+    questions[previousQuestionId]['end'] = testUserData.length - 1
+    questions[previousQuestionId]['total'] = questions[previousQuestionId].end - questions[previousQuestionId].start
+
 
     var changeGrade = (selectedGrade = null) => {
         selectedGrade = selectedGrade ?? $('#grade').find(":selected").val();
@@ -116,6 +126,10 @@
             oldGrade = null;
             $('#grade').val(-2).change(null);
         }
+        
+        var questionCount = questions[user.questionId]
+        var numberInQuestion = index - questionCount.start;
+        $('#count').html(`${numberInQuestion}/${questionCount.total}`);
         // window.open(`${user.url}#toolbar=0&page=${user.questionPage}`,'new window')
     }
 
