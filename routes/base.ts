@@ -97,8 +97,8 @@ export default function (dbClient: DbClient) {
     });
 
     router.get('/login', (req: Request, res: Response) => {
-        const alert: Alert[] = req.query.message ? [{type: 'danger', message: req.query.message as string}] : [];
-        res.render('base/login', { clientId, baseURL, redirect: req.query.redirect, alert})
+        const redirect = req.query.redirect?.toString() || '/'
+        res.redirect(307, 'auth/login?redirect=' + redirect);
     });
 
     router.get('/logout', (req: Request, res: Response) => {
