@@ -9,7 +9,12 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     const router = express.Router();
 
     router.get('/login', async (req: Request, res: Response) => {
-        res.render('auth/login', {redirect: req.query.redirect?.toString() || '/'})
+        const message = `
+            Your default password is your email + CWID<br>
+            Once logged in, please change your password if you have not yet done so.
+        `
+        const alert = [{type: 'warning', message}];
+        res.render('auth/login', {redirect: req.query.redirect?.toString() || '/', alert})
     })
 
     router.post('/login', async (req: Request, res: Response) => {
