@@ -3,6 +3,7 @@ import { DbClient } from '../../db/dbClient';
 import { renderFile } from '../../views/helper';
 import { CalendarEvent, Course, Group, User, UserGroups } from '../../models';
 import { calendarEventColors, makeCourseName, getPresentAbsentDates, makePresentAbsentCalendarDates } from '../helpers';
+import crypto from 'crypto';
 
 export default function (dbClient: DbClient) {
     const router = express.Router()
@@ -43,22 +44,30 @@ export default function (dbClient: DbClient) {
             const rawUsers: string[] = rawBody.split('\n');
             users = rawUsers.map((rawUser) => {
                 const line: string[] = rawUser.split('|')
+                const email: string = line[0].trim()
+                const {password, salt} = createPasswordHash(email);
                 return {
-                    email: line[0].trim(),
+                    email,
                     firstName: line[1].trim(),
                     lastName: line[2].trim(),
                     roles: line[3].trim(),
                     groups: line[4].trim(),
+                    password,
+                    salt
                 }
             });
         } else {
+            const email = req.body.email.trim()
+            const {password, salt} = createPasswordHash(email);
             users = [
                 {
-                    email: req.body.email.trim(),
+                    email,
                     firstName: req.body.firstName.trim(),
                     lastName: req.body.lastName.trim(),
                     roles: req.body.roles.trim(),
-                    groups: req.body.groups.trim().split(' ').map((x: string) => parseInt(x))
+                    groups: req.body.groups.trim().split(' ').map((x: string) => parseInt(x)),
+                    password,
+                    salt
                 }
             ];
         }
@@ -145,6 +154,51 @@ export default function (dbClient: DbClient) {
             res.sendStatus(500)
         }
     })
+
+    router.get('/:userId/password', async (req: Request, res: Response) => {
+        const userId: number = parseInt(req.params.userId)
+        res.render('admin/user-password', { userId })
+    })
+
+    router.post('/:userId/password', async (req: Request, res: Response) => {
+        res.setHeader('Content-Type', 'application/json');
+        const userId: number = parseInt(req.params.userId)
+        const newPassword = req.body.password;
+
+        const {password, salt} = createPasswordHash(newPassword);
+
+        const result = await dbClient.updateUserPassword(userId, password, salt);
+        if (result) {
+            res.status(200).send({status: 200, message: 'success!', redirect: `/admin/users/${userId}`});
+        } else {
+            return res.status(500).send({
+                status: 500,
+                message: 'unable to save new password. please try again or contact the administrator'
+            });
+        }
+    });
+
+    const createPasswordHash = (newPassword: string, previousSalt?: string) => {
+        var salt: Buffer;
+        var saltHash: string;
+
+        // create salt
+        if (previousSalt) {
+            salt = Buffer.from(previousSalt, 'base64');
+            saltHash = previousSalt;
+        } else {
+            salt = crypto.randomBytes(16);            
+            saltHash = salt.toString('base64');
+        }
+
+        // create password
+        const newPasswordBuffer: Buffer = crypto.pbkdf2Sync(newPassword, salt, 310000, 32, 'sha256')
+
+        // hash salt and password
+        const newPasswordHash = newPasswordBuffer.toString('base64');
+
+        return {password: newPasswordHash, salt: saltHash}
+    }
 
     return router;
 }
