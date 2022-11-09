@@ -1,4 +1,4 @@
-# fly.toml file generated for cofc on 2022-09-03T13:58:59-04:00
+# fly.toml file generated for cofc on 2022-11-09T08:35:55-05:00
 
 app = "cofc"
 kill_signal = "SIGINT"
@@ -10,10 +10,21 @@ processes = []
 
 [env]
   PORT = "8080"
+  CODE_REFRESH_RATE="2000"
+  CODE_TIME_START="3"
+  CODE_TIME_WINDOW="5"
+  SYLLABUS_URL="https://docs.google.com/document/d/19E1DKHJcHcmiGWqvRPOfrjg_MQ4P2cimzDdciefzggI/edit?usp=sharing"
+  TZ="America/New_York"
+  BASEURL="https://cofc.fly.dev/"
+  PGSSLMODE="no-verify"
+  DATABASE_SSL="false"
 
 [experimental]
   allowed_public_ports = []
   auto_rollback = true
+  cmd = []
+  entrypoint = []
+  exec = []
 
 [[services]]
   http_checks = []
