@@ -5,11 +5,13 @@ import { DbClient } from '../db/dbClient';
 import { Test, TestUserData, UserQuestionGrade, UserTest } from '../models';
 import { renderFile } from '../views/helper';
 import * as helpers from './helpers';
+import path from 'path';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
     const router = express.Router();
 
     router.use(authCheckMiddleware, rollCheckMiddleware(['admin', 'assistant']));
+    router.use(express.static(path.join(__dirname, "../../private")));
 
     router.get('/', async (req: Request, res: Response) => {
         const tests: Test[] = await dbClient.getTests()
@@ -28,6 +30,10 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         const groupId = parseInt(req.query.groupId as string)
         const testDate = new Date(req.query.date as string)
         const testUserData: TestUserData[] = await dbClient.getTestUserData(groupId, testDate);
+        const folderName = testDate.toLocaleDateString().replaceAll("/", "-");
+        testUserData.forEach(x => {
+            x.url = (process.env.BASEURL as string).concat("grading/", "files/", folderName, "/", x.userId.toString(), ".pdf")
+        })
         const data = renderFile('./views/grading/partials/test.ejs', { testUserData });
         res.send(data)
     });
