@@ -39,10 +39,10 @@ class DbClientPSQLImpl implements DbClient {
       on ut.user_id = u.id
       join user_group ug 
       on ut.user_id = ug.user_id
-      where ug.group_id = $1 and ut.test_date = $2
+      where ug.group_id = $1 and ut.test_date = to_timestamp(cast($2/1000 as bigint))
       order by u.last_name`;
     
-    return this.connection.any(query, [groupId, testDate])
+    return this.connection.any(query, [groupId, testDate.getTime()])
     .then((data: UserTest[]) => {
         return data.map(userTest => {
           const floatGrade = parseFloat(userTest.grade.toString());
@@ -59,8 +59,8 @@ class DbClientPSQLImpl implements DbClient {
   async setUserTestGrade(grade: number, userId: number, testDate: Date): Promise<boolean> {
     var query = `update user_test 
       set grade = $1
-      where user_id = $2 and test_date = $3`
-    return this.connection.none(query, [grade, userId, testDate])
+      where user_id = $2 and test_date = to_timestamp(cast($3/1000 as bigint))`
+    return this.connection.none(query, [grade, userId, testDate.getTime()])
     .then((data: any) => {
       return true;
     })
@@ -97,10 +97,10 @@ class DbClientPSQLImpl implements DbClient {
       on tq.id = uqg.question_id and u.id = uqg.user_id
       left join user_test ut 
       on u.id = ut.user_id and tq.test_date = ut.test_date
-      where ug.group_id = $1 and tq.test_date = $2
+      where ug.group_id = $1 and tq.test_date = to_timestamp(cast($2/1000 as bigint))
       order by tq.ordinal,uqg.grade
     `
-    return this.connection.any(query, [groupId, testDate])
+    return this.connection.any(query, [groupId, testDate.getTime()])
     .then((data: TestUserData[]) => {
       return data
     })
@@ -278,8 +278,8 @@ class DbClientPSQLImpl implements DbClient {
     var values: (number | Date)[] = [courseId];
     var text: string = 'SELECT * FROM course_dates where course_id = $1'
     if (until) {
-      values.push(until);
-      text += ' and meeting <= $2'
+      values.push(until.getTime());
+      text += ' and meeting <= to_timestamp(cast($2/1000 as bigint))'
     }
     return await this.connection.any({
       name: 'getTotalCourseDays',
