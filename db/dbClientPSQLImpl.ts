@@ -479,7 +479,8 @@ class DbClientPSQLImpl implements DbClient {
     var query = `SELECT 
     id, semester, course_year "courseYear", start_time "startTime", end_time "endTime",
     course_number "courseNumber", course_name "courseName", group_id "groupId"
-    FROM courses`
+    FROM courses
+    ORDER BY course_year, semester, TO_TIMESTAMP(start_time, 'HH:MI:ss')`
     return this.connection.any(query)
       .then((data: Course[]) => {
         return data
