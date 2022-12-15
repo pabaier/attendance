@@ -37,10 +37,6 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         res.redirect(redirect)
     });
 
-    router.get('/changePassword', authCheckMiddleware, async (req: Request, res: Response) => {
-        res.render('auth/change-password')
-    })
-
     router.post('/changePassword', authCheckMiddleware, async (req: Request, res: Response) => {
         res.setHeader('Content-Type', 'application/json');
         const user: User = req.session.user as User;

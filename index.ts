@@ -7,7 +7,7 @@ import expressLayouts from 'express-ejs-layouts';
 import path from 'path';
 import NodeCache from "node-cache";
 import { Alert, User } from './models';
-import { admin, auth, base, grading, user } from './routes';
+import { admin, auth, base, grading, settings, user } from './routes';
 import dbClient from './db/dbClientPSQLImpl';
 
 const app = express();
@@ -49,6 +49,7 @@ app.use(function(req: Request, res: Response, next: NextFunction) {
   res.locals.user = req.session.user
   next()
 })
+app.use('/settings', settings(myCache, dbClient))
 app.use('/grading', grading(myCache, dbClient));
 app.use('/admin', admin(myCache, dbClient));
 app.use('/auth', auth(myCache, dbClient));
