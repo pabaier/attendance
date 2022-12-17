@@ -18,3 +18,14 @@ export const rollCheckMiddleware = (roles: string[]) => {
         }
     }
 };
+
+export const resourceAccessMiddleware = (req: Request, res: Response, next: NextFunction) => {
+    const resourceUserId = parseInt(req.params.userId)
+    const requestUserId = req.session.user?.id as number;
+    const isAdmin = (<string[]>req.session.user?.roles)?.some(role => role == 'admin')
+    if (isAdmin || resourceUserId === requestUserId)
+        next()
+    else {
+        res.status(403).send({status: 403, message: 'forbidden'});
+    }
+};

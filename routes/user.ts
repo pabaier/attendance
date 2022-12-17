@@ -1,8 +1,8 @@
 import express, { NextFunction, Request, Response } from 'express';
 import NodeCache from 'node-cache';
-import { authCheckMiddleware } from '../middleware/auth';
+import { authCheckMiddleware, resourceAccessMiddleware } from '../middleware/auth';
 import { DbClient } from '../db/dbClient';
-import { Alert, Course, Group, PostGroup } from '../models';
+import { Alert, Course, Group, PostGroup, User } from '../models';
 import { signIn } from './helpers';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
@@ -83,6 +83,30 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         }
         res.json({ alert,  success })
     });
+
+    router.get('/:userId/settings', resourceAccessMiddleware, async (req: Request, res: Response) => {
+        const userId = parseInt(req.params.userId)
+        var user: User = await dbClient.getUser(userId) as User;
+        res.render('user/settings', { user })
+    });
+
+    router.patch('/:userId/settings', resourceAccessMiddleware, async (req: Request, res: Response) => {
+        const userId = parseInt(req.params.userId)
+        var user: User = await dbClient.getUser(userId) as User;
+
+        let firstName = req.body.firstName;
+        let lastName = req.body.lastName;
+        const newUser = {...user, firstName, lastName}
+        let response = await dbClient.updateUser(newUser)
+        const isAdmin = (<string[]>req.session.user?.roles)?.some(role => role == 'admin')
+        if (response) {
+            if(!isAdmin)
+                req.session.user = newUser;
+            res.status(200).send({status: 200, message: 'success!'});
+        }
+        else
+            res.status(500).send({status: 500, message: 'error saving user info'});
+    })
 
     router.use((req: Request, res: Response) => {
     })

@@ -5,6 +5,6 @@ export default interface User {
     lastName: string,
     password?: string,
     salt?: string,
-    roles: string | string[],
+    roles: string[],
     groups: number[],
 }

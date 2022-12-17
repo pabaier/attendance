@@ -219,7 +219,7 @@ class DbClientPSQLImpl implements DbClient {
 
   async updateUser(user: User): Promise<boolean> {
     const cs = new this.pg.helpers.ColumnSet(['first_name', 'last_name', 'roles']);
-    const data = {first_name: user.firstName, last_name: user.lastName, roles: user.roles}
+    const data = {first_name: user.firstName, last_name: user.lastName, roles: user.roles.join()}
     const condition = pgp.as.format(' WHERE id = $1', user.id);
     const query = this.pg.helpers.update(data, cs, 'users') + condition;
     return this.connection.none(query).then((data: any) => {

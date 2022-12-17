@@ -1,0 +1,108 @@
+<div class="jumbotron">
+    <h1>Settings</h1>
+
+    <h3>User Info</h3>
+    <div class="w-25 mb-4 start-0">
+        <input type="text" class="form-control border border-1 border-success" id="firstName" name="firstName" value="<%= user.firstName ?? '' %>" placeholder="first name"><br>
+        <input type="text" class="form-control border border-1 border-success" id="lastName" name="lastName" value="<%= user.lastName ?? '' %>" placeholder="last name"><br>
+    </div>
+
+
+    <h3>Change Password</h3>
+    <div class="w-25 start-0">
+        <input type="password" class="form-control" id="password" name="password" placeholder="current password"><br><br>
+        <input type="password" class="form-control" id="newPassword" name="newPassword" placeholder="new password"><br>
+        <input type="password" class="form-control" id="confirmedPassword" name="confirmedPassword" placeholder="confirm new password"><br>
+        <button type="submit" class="btn btn-primary" id="submit">Submit</button>
+    </div>
+</div>
+
+<script>
+    var user = <%-JSON.stringify(user)%>
+    
+    $('#firstName').focusout(e => {
+        buttonFocusOut('firstName')
+        sendToServer();
+    });
+    
+    $('#lastName').focusout(e => {
+        buttonFocusOut('lastName')
+        sendToServer();
+    });
+
+    $('#firstName').focusin(e => {
+        buttonFocusIn('firstName')
+    });
+
+    $('#lastName').focusin(e => {
+        buttonFocusIn('lastName')
+    });
+
+
+    var buttonFocusIn = (field) => {
+        $(`#${field}`).removeClass('border-success')
+        $(`#${field}`).removeClass('border-1')
+        $(`#${field}`).addClass('border-warning')
+        $(`#${field}`).addClass('border-3')
+    }
+
+    var buttonFocusOut = (field) => {
+        $(`#${field}`).removeClass('border-warning')
+        $(`#${field}`).removeClass('border-3')
+        $(`#${field}`).addClass('border-success')
+        $(`#${field}`).addClass('border-1')
+    }
+
+    var editOutcome = (field) => {
+        $('#toastHeader').html('Success');
+        $('#toastBody').html(`${field} updated!`);
+        $('#liveToast').toast('show');
+    }
+
+    var sendToServer = () => {
+        var firstName = $("#firstName").val().trim();
+        var lastName = $("#lastName").val().trim();
+
+        $.ajax({
+            url: `/user/${user.id}/settings/`,
+            type: 'PATCH',
+            contentType: 'application/json',
+            data: JSON.stringify({ firstName, lastName }),
+            success: function( data ) {
+                if (data) {
+                    $('#toastHeader').html('Success');
+                    $('#toastBody').html('Data updated!');
+                    $('#liveToast').toast('show');
+                } else {
+                    $('#toastHeader').html('Fail');
+                    $('#toastBody').html('Unable to update profile');
+                    $('#liveToast').toast('show');
+            }},
+            fail: function( data ) {
+                $('#toastHeader').html('Fail');
+                $('#toastBody').html(data.message);
+                $('#liveToast').toast('show');
+            }
+        })
+    }
+
+    $('#submit').click(e => {
+        var password = $("#password").val().trim();
+        var newPassword = $("#newPassword").val().trim();
+        var confirmedPassword = $("#confirmedPassword").val().trim();
+
+        $.post(`/auth/changePassword`, { password, newPassword, confirmedPassword }, function( data, statusCode ) {
+            $('#toastHeader').html(statusCode);
+            $('#toastBody').html(data.message);
+        }).fail((response, textStatus, errorThrown) => {
+            $('#toastHeader').html(textStatus);
+            $('#toastBody').html(`${errorThrown}-${JSON.parse(response.responseText).message}`);
+        }).always(() => {
+            $('#liveToast').toast('show');            
+            $("#password").val('');
+            $("#newPassword").val('');
+            $("#confirmedPassword").val('');
+            $("#password").focus();
+        })
+    })
+</script>
