@@ -477,10 +477,12 @@ class DbClientPSQLImpl implements DbClient {
 
   async getCourses(): Promise<Course[]> {
     var query = `SELECT 
-    id, semester, course_year "courseYear", start_time "startTime", end_time "endTime",
-    course_number "courseNumber", course_name "courseName", group_id "groupId"
-    FROM courses
-    ORDER BY course_year, semester, TO_TIMESTAMP(start_time, 'HH:MI:ss')`
+    c.id, s.id "semesterId", s.season, s.semester_year "year", c.start_time "startTime", c.end_time "endTime",
+    c.course_number "courseNumber", c.course_name "courseName", c.group_id "groupId"
+    FROM courses c
+    join semester s
+    on c.semester_id = s.id
+    ORDER BY s.semester_year, s.season, TO_TIMESTAMP(c.start_time, 'HH:MI:ss')`
     return this.connection.any(query)
       .then((data: Course[]) => {
         return data
@@ -494,9 +496,12 @@ class DbClientPSQLImpl implements DbClient {
   async getCourse(courseId: number): Promise<Course> {
 
     return this.connection.one(`SELECT 
-    id, semester, course_year "courseYear", start_time "startTime", end_time "endTime",
-    course_number "courseNumber", course_name "courseName", group_id "groupId"
-    FROM courses WHERE id = $1`, courseId)
+    c.id, s.id "semesterId", s.season, s.semester_year "year", c.start_time "startTime", c.end_time "endTime",
+    c.course_number "courseNumber", c.course_name "courseName", c.group_id "groupId"
+    FROM courses c
+    JOIN semester s
+    on c.semester_id = s.id
+    WHERE c.id = $1`, courseId)
       .then((data: Course) => {
         return data;
       })
@@ -506,11 +511,11 @@ class DbClientPSQLImpl implements DbClient {
   }
 
   async createCourse(course: Course): Promise<number> {
-    const cs = new this.pg.helpers.ColumnSet(['course_number', 'semester', 'course_year', 'start_time', 'end_time', 'group_id'], {table: 'courses'});
+    const cs = new this.pg.helpers.ColumnSet(['course_number', 'course_name', 'semester_id', 'start_time', 'end_time', 'group_id'], {table: 'courses'});
     const insertObj = {
       course_number: course.courseNumber,
-      semester: course.semester,
-      course_year: course.courseYear,
+      course_name: course.courseName,
+      semester_id: course.semesterId,
       start_time: course.startTime,
       end_time: course.endTime,
       group_id: course.groupId,

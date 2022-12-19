@@ -36,18 +36,20 @@ export default function (dbClient: DbClient) {
         }
 
         const courseNumber = req.body.number;
-        const semester = req.body.semester;
+        const season = req.body.season;
+        const semesterId = req.body.semesterId;
         const courseYear = parseInt(req.body.year);
         const startTime = req.body.startTime;
         const endTime = req.body.endTime;
-        const groupName = `${courseNumber}|${courseYear}-${semester}-${startTime}`;
+        const groupName = `${courseNumber}|${courseYear}-${season}-${startTime}`;
 
         const groupId = await dbClient.createGroup(groupName);
     
         const course: Course = {
             courseNumber,
-            semester,
-            courseYear,
+            season,
+            year: courseYear,
+            semesterId,
             startTime,
             endTime,
             groupId

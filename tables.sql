@@ -15,16 +15,22 @@ CREATE TABLE groups (
 	group_name VARCHAR (50)
 );
 
+CREATE TABLE semester (
+	id SERIAL PRIMARY KEY,
+	season VARCHAR (6),
+	semester_year INTEGER,
+	UNIQUE (season, semester_year)
+);
+
 CREATE TABLE courses (
 	id SERIAL PRIMARY KEY,
 	course_name VARCHAR (50),
 	course_number VARCHAR(6),
-	semester VARCHAR (6),
-	course_year INTEGER,
+	semester_id integer REFERENCES semester (id) NOT NULL,
 	start_time VARCHAR (5) NOT NULL,
 	end_time VARCHAR (5) NOT NULL,
 	group_id integer REFERENCES groups (id) NOT NULL,
-	UNIQUE (course_number, course_year, semester, start_time)
+	UNIQUE (course_number, semester_id, start_time)
 );
 CREATE INDEX courses_course_number_idx ON courses (course_number);
 
@@ -116,3 +122,9 @@ CREATE TABLE user_question_grades (
 CREATE INDEX user_question_grades_user_id_idx ON user_question_grades (user_id);
 CREATE INDEX user_question_grades_question_id_idx ON user_question_grades (question_id);
 CREATE INDEX user_question_grades_user_id_question_id_idx ON user_question_grades (user_id, question_id);
+
+CREATE TABLE user_settings (
+	user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
+	semester_id INTEGER REFERENCES semester (id) ON DELETE CASCADE,
+	UNIQUE (user_id, semester_id)
+);
