@@ -60,7 +60,7 @@ export default function (dbClient: DbClient) {
     router.get('/:courseId', async (req: Request, res: Response) => {
         const courseId = parseInt(req.params.courseId)
         const course = await dbClient.getCourse(courseId);
-        const users = await dbClient.getUsers(course.groupId);
+        const users = await dbClient.getUsers([course.groupId]);
         const courseDates = await dbClient.getCourseDates(courseId);
         const userWithAbsences = [];
         const today = new Date()

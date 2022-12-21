@@ -1,19 +1,27 @@
 <!-- requires courses list {id, courseNumber}, users, addForm -->
 <div class="jumbotron">
-    <h1>Users</h1>
+    <table>
+        <tr>
+            <td class="px-3">
+                <h1 style="display:inline;">Users</h1> (<%- userCount %>)
+            </td>
+            <td>
+                <select class="form-select my-2" id="group-select" aria-label="Default select section">
+                    <option selected>Select Group</option>
+                    <% groups.forEach(group => { %>
+                        <% if (group.selected) { %>
+                            <option selected value="<%=group.id%>"><%=group.name%></option>
+                        <% } else { %>
+                            <option value="<%=group.id%>"><%=group.name%></option>
+                        <% } %>
+                    <% }) %>
+                </select>
+            </td>
+        </tr>
+    </table>
 
     <%- usersList %>
-    
-    <%- include('partials/course-select-dropdown.ejs', {courses: courses}); %>
 
-    <button type="submit" id="add-class-btn" class="btn btn-primary form-control my-2">Add Users To Course</button>
-    
-    <%- addForm %>
-    
-    <form id="bulk-add-form" action="/admin/users/add" method="POST">
-        <textarea class="form-control my-2" name="text" id="bulk-add-area" placeholder="Add Users&#10;Email|FirstName|LastName|Role1,Role2|Group1,Group2" aria-label="Email" aria-describedby="basic-addon1"></textarea>
-        <button type="submit" id="bulk-add-btn" class="btn btn-primary form-control my-2">Add New Users</button>
-    </form>
 </div>
 
 <script>
@@ -30,9 +38,9 @@
         })
     })
 
-    $('#filter-class-select').change(function(e) {
-        const course = e.target.value;
-        if (course == 'Select Course') return;
-        window.location.href=`/admin/courses/${course}`;
+    $('#group-select').change(function(e) {
+        const group = e.target.value;
+        if (group == 'Select Group') return;
+        window.location.href=`/admin/users?groupId=${group}`;
     })
 </script>

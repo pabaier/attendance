@@ -6,7 +6,7 @@ export interface DbClient {
     signInUsers(userCourseIds: {user_id: number, course_id: number}[]): Promise<boolean>;
     getUser(user: string | number): Promise<User | null>;
     updateUser(user: User): Promise<boolean>;
-    getUsers(group?: number | null): Promise<User[] | null>;
+    getUsers(group?: number[]): Promise<User[]>;
     addUsers(users: User[]): Promise<User[]>;
     deleteUser(userId: number): Promise<boolean>;
     getLatestSignIn(userId: number): Promise<number | null>;

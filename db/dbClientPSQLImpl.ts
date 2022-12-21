@@ -425,14 +425,17 @@ class DbClientPSQLImpl implements DbClient {
     })
   }
 
-  async getUsers(groupId?: number | null): Promise<User[] | null> {
+  async getUsers(groupIds?: number[]): Promise<User[]> {
     var query = 'select u.id, u.email, u.first_name "firstName", u.last_name "lastName", u.roles from users u'
-    if (groupId) {
-      query = 'select u.id, u.email, u.first_name "firstName", u.last_name "lastName", u.roles from user_group ug inner join users u on u.id = ug.user_id'
-      query = query + ' where ug.group_id = $1';
+    if (groupIds) {
+      query = `select u.id, u.email, u.first_name "firstName", u.last_name "lastName", u.roles 
+                from user_group ug 
+                inner join users u 
+                on u.id = ug.user_id`
+      query = query + ` where ug.group_id in (${groupIds.join(',')})`;
     }
     query = query + ' order by u.roles desc, u.last_name';
-    return this.connection.any(query, [groupId])
+    return this.connection.any(query)
       .then((data: User[]) => {
         return data
       })

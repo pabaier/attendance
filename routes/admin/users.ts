@@ -9,22 +9,33 @@ export default function (dbClient: DbClient) {
     const router = express.Router()
 
     router.get('/', async (req: Request, res: Response) => {
-        const groupString: string = req.query.group as string;
-        const group = groupString ? parseInt(groupString) : null;
-        const users = await dbClient.getUsers(group);
+        const groupQuery = req.query.groupId
+        var users = [];
+        var selected = 0;
+        if (groupQuery) {
+            const groupId = parseInt(groupQuery as string)
+            var selected = groupId;
+            users = await dbClient.getUsers([groupId]);
+
+        } else {
+            const semesterId = req.session.userSettings?.semesterId;
+            const courses = await dbClient.getCourses(semesterId);
+            var groupIds: number[] = courses.map(course => course.groupId);
+            users = await dbClient.getUsers(groupIds);
+        }
+
         const usersList = renderFile('./views/admin/partials/users-list.ejs', { users })
-        const courses = await dbClient.getCourses();
 
-        // {action: form action, fields: [{id: field id, placeholder, }], }
-        const action = "/admin/users/add";
-        const fieldNames = ['email', 'firstName', 'lastName', 'roles', 'groups']
-        const fields = fieldNames.map(name => {
-            return {id: name, placeholder: name}
+        var groups = await dbClient.getGroups();
+        groups = groups.map(group => {
+            if(group.id == selected) {
+                return {...group, selected: true}
+            } else {
+                return {...group}
+            }
         })
-        const addUserForm = renderFile('./views/partials/input-form.ejs', {action, fields});
 
-
-        res.render('admin/users', { usersList, courses, addForm: addUserForm, alert: req.session.alert });
+        res.render('admin/users', { usersList, userCount: users.length, groups });
     });
 
     router.post('/add', async (req: Request, res: Response) => {
