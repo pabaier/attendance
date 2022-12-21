@@ -23,6 +23,7 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         let passBuff = Buffer.from(user.password as string, 'base64');
         var buffedSubmitPassword = crypto.pbkdf2Sync(password, saltBuff, 310000, 32, 'sha256')
         if (crypto.timingSafeEqual(passBuff, buffedSubmitPassword)) {
+            req.session.userSettings = await dbClient.getUserSettings(user.id as number);
             req.session.user = user;
             return res.status(200).send({ status: 200, message: req.query.redirect?.toString() || '/' });
         }

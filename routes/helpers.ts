@@ -2,7 +2,7 @@ import { DbClient } from '../db/dbClient';
 import { Course } from '../models';
 
 export const makeCourseName = (course: Course) => {
-    return `${course.courseNumber} ${course.season}-${course.year} ${course.startTime}`
+    return `${course.courseNumber} - ${course.startTime}`
 }
 
 export const makeUTCDateString = (original: Date): string => {

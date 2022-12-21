@@ -1,6 +1,6 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
-import { Assignment, Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest } from '../models';
+import { Assignment, Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester } from '../models';
 
 class DbClientPSQLImpl implements DbClient {
   connection: any;
@@ -16,6 +16,33 @@ class DbClientPSQLImpl implements DbClient {
         ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false
       }
     )
+  }
+
+  getSemesters(semesterId?: number): Promise<Semester[]> {
+    var query = 'SELECT s.id, s.season, s.semester_year "year" FROM public.semester s'
+    if (semesterId)
+      query += ' WHERE s.id = $1'
+    
+      return this.connection.any(query, [semesterId])
+      .then ((data: Semester[]) => {
+        return data;
+      }).catch((error: any) => {
+        console.log('ERROR:', error)
+      })
+  }
+
+  async getUserSettings(userId: number): Promise<UserSettings> {
+    var query = `SELECT us.semester_id "semesterId"
+    from user_settings us 
+    where us.user_id = $1`;
+  
+    return this.connection.one(query, [userId])
+    .then((data: UserSettings) => {
+        return data;
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return undefined;
+    })
   }
 
   async updateUserPassword(userId: number, password: string, salt?: string): Promise<boolean> {
@@ -53,7 +80,7 @@ class DbClientPSQLImpl implements DbClient {
     .catch((error: any) => {
       console.log('ERROR:', error);
       return [];
-    }) 
+    })
   }
 
   async setUserTestGrade(grade: number, userId: number, testDate: Date): Promise<boolean> {
@@ -475,15 +502,17 @@ class DbClientPSQLImpl implements DbClient {
     });
   };
 
-  async getCourses(): Promise<Course[]> {
+  async getCourses(semesterId?: number): Promise<Course[]> {
     var query = `SELECT 
-    c.id, s.id "semesterId", s.season, s.semester_year "year", c.start_time "startTime", c.end_time "endTime",
+    c.id, c.semester_id "semesterId", c.start_time "startTime", c.end_time "endTime",
     c.course_number "courseNumber", c.course_name "courseName", c.group_id "groupId"
-    FROM courses c
-    join semester s
-    on c.semester_id = s.id
-    ORDER BY s.semester_year, s.season, TO_TIMESTAMP(c.start_time, 'HH:MI:ss')`
-    return this.connection.any(query)
+    FROM courses c`
+    
+    if (semesterId)
+      query += ` WHERE c.semester_id = $1`
+
+    query += ` ORDER BY TO_TIMESTAMP(c.start_time, 'HH:MI:ss')`
+    return this.connection.any(query, [semesterId])
       .then((data: Course[]) => {
         return data
       })
@@ -526,8 +555,17 @@ class DbClientPSQLImpl implements DbClient {
     return res.id;
   }
 
-  deleteCourse(courseId: number) {
+  async deleteCourse(courseId: number): Promise<boolean> {
     return this.connection.none('DELETE FROM courses WHERE id = $1', courseId)
+    .then((data: any) => { return true;})
+    .catch((error: any) => {
+      console.log('ERROR:', error);
+      return false;
+    });
+  };
+
+  async deleteGroup(groupId: number): Promise<boolean> {
+    return this.connection.none('DELETE FROM groups WHERE id = $1', groupId)
     .then((data: any) => { return true;})
     .catch((error: any) => {
       console.log('ERROR:', error);

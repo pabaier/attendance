@@ -1,19 +1,37 @@
 <!-- requires courses, addForm -->
 <div class="jumbotron">
     <h1>Courses</h1>
-    <select class="form-select my-2" id="year-select" aria-label="Default select section">
-        <option selected>Select Year</option>
-        <option value="section1">2021</option>
-        <option value="section2">2022</option>
-        <option value="section3">2023</option>
-    </select>
 
-    <div class="container alternating-table" id="courses">
-        <% courses.forEach(course => { %>
-            <%- course %>
-        <% }) %>
+    <div class="w-75 start-0 center">
+        <div class="container alternating-table" id="courses">
+            <% courses.forEach(course => { %>
+                <%- course %>
+            <% }) %>
+        </div>
+        
+        <h5>New Course</h5>
+        <form id="add-course-form" action="/admin/courses/add" method="POST">
+            <div class="row justify-content-md-center">
+                <div class="col-3">
+                    <input class="form-control my-2" name="number" id="number" placeholder="number"></input>
+                </div>
+                <div class="col-3">
+                    <input class="form-control my-2" name="name" id="name" placeholder="name"></input>
+                </div>
+                <div class="col-3">
+                    <input class="form-control my-2" name="startTime" id="startTime" placeholder="startTime"></input>
+                </div>
+                <div class="col-3">
+                    <input class="form-control my-2" name="endTime" id="endTime" placeholder="endTime"></input>
+                </div>
+                <input type="hidden" name="semesterId" id="semesterId" value="<%= semesterId %>"></input>
+            </div>
+            <div class="row justify-content-md-end">
+              <button type="submit" id="bulk-add-btn" class="btn btn-primary my-2 col-2">Submit</button>
+            </div>
+        </form>
+
     </div>
-    <%- addForm %>
 </div>
 
 <script>

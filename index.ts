@@ -6,7 +6,7 @@ const MemoryStore = require('memorystore')(session)
 import expressLayouts from 'express-ejs-layouts';
 import path from 'path';
 import NodeCache from "node-cache";
-import { Alert, User } from './models';
+import { Alert, User, UserSettings } from './models';
 import { admin, auth, base, grading, user } from './routes';
 import dbClient from './db/dbClientPSQLImpl';
 
@@ -27,6 +27,7 @@ declare module "express-session" {
   interface SessionData {
     user: User,
     alert?: Alert[],
+    userSettings: UserSettings,
   }
 }
 

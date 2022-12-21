@@ -12,6 +12,8 @@ import Test from './Test';
 import TestUserData from './TestUserData';
 import UserQuestionGrade from './UserQuestionGrade';
 import UserTest from './UserTest';
+import UserSettings from './UserSettings';
+import Semester from './Semester';
 
 export {
     Alert,
@@ -22,10 +24,12 @@ export {
     CourseDate,
     Group,
     PostGroup,
+    Semester,
     Test,
     TestUserData,
     User,
     UserGroups,
     UserQuestionGrade,
+    UserSettings,
     UserTest,
 }

@@ -9,19 +9,12 @@ export default function (dbClient: DbClient) {
     const router = express.Router()
 
     router.get('/', async (req: Request, res: Response) => {
-        const courses = await dbClient.getCourses();
+        const courses: Course[] = await dbClient.getCourses(req.session.userSettings?.semesterId);
         const coursesBig = courses.map(course => {
             return renderFile('./views/admin/partials/course-section.ejs', { course })
         })
 
-        // {action: form action, fields: [{id: field id, placeholder, }], }
-        const action = "/admin/courses/add";
-        const fieldNames = ['number', 'semester', 'year', 'startTime', 'endTime']
-        const fields = fieldNames.map(name => {
-            return {id: name, placeholder: name}
-        })
-        const addCoursesForm = renderFile('./views/partials/input-form.ejs', {action, fields});
-        res.render('admin/courses', { courses: coursesBig, addForm: addCoursesForm });
+        res.render('admin/courses', { courses: coursesBig, semesterId: req.session.userSettings?.semesterId });
     });
 
     router.post('/add', async (req: Request, res: Response) => {
@@ -36,26 +29,30 @@ export default function (dbClient: DbClient) {
         }
 
         const courseNumber = req.body.number;
-        const season = req.body.season;
-        const semesterId = req.body.semesterId;
-        const courseYear = parseInt(req.body.year);
+        const semesterId = parseInt(req.body.semesterId);
         const startTime = req.body.startTime;
         const endTime = req.body.endTime;
-        const groupName = `${courseNumber}|${courseYear}-${season}-${startTime}`;
 
+        const semester = (await dbClient.getSemesters(semesterId))[0];
+        const groupName = `${semester.year}-${semester.season}-${courseNumber}-${startTime}`;
         const groupId = await dbClient.createGroup(groupName);
-    
+
+        var courseName;
+        if(req.body.name)
+            courseName = req.body.name;
+        else
+            courseName = groupName
+
         const course: Course = {
             courseNumber,
-            season,
-            year: courseYear,
+            courseName,
             semesterId,
             startTime,
             endTime,
             groupId
         }
 
-        const r = dbClient.createCourse(course)
+        const r = await dbClient.createCourse(course)
 
         res.redirect('/admin/courses')
     })
@@ -141,8 +138,12 @@ export default function (dbClient: DbClient) {
         res.render('admin/assignments');
     });
 
-    router.delete('/:courseId', (req: Request, res: Response) => {
-        const result: boolean= dbClient.deleteCourse(parseInt(req.params.courseId))
+    router.delete('/:courseId', async (req: Request, res: Response) => {
+        const courseId = parseInt(req.params.courseId)
+        const course = await dbClient.getCourse(courseId);
+        const groupDel = await dbClient.deleteGroup(course.groupId);
+        const result: boolean = await dbClient.deleteCourse(courseId)
+
         res.send('ok')
     })
 
