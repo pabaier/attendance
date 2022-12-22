@@ -8,6 +8,24 @@ import crypto from 'crypto';
 export default function (dbClient: DbClient) {
     const router = express.Router()
 
+    router.get('/groups', async (req: Request, res: Response) => {
+        var groups: Group[] = await dbClient.getGroups();
+
+        res.render('admin/groups', { groups });
+    });
+
+    router.post('/groups', async (req: Request, res: Response) => {
+        const groupName = req.body.groupName;
+        await dbClient.createGroup(groupName);
+        res.sendStatus(200)
+    });
+
+    router.delete('/groups/:groupId', async (req: Request, res: Response) => {
+        const groupId = parseInt(req.params.groupId);
+        await dbClient.deleteGroup(groupId);
+        res.sendStatus(200)
+    });
+
     router.get('/', async (req: Request, res: Response) => {
         const groupQuery = req.query.groupId
         var users = [];

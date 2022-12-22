@@ -338,7 +338,7 @@ class DbClientPSQLImpl implements DbClient {
   async getGroups(userId?: number): Promise<Group[]> {
     var request: any = {
       name: `getGroups${userId}`,
-      text: `SELECT g.id, g.group_name "name" FROM "groups" g`
+      text: `SELECT g.id, g.group_name "name" FROM "groups" g order by g.id DESC`
     };
     if (userId) {
       request.text = `
@@ -347,6 +347,7 @@ class DbClientPSQLImpl implements DbClient {
         left join "groups" g 
         on g.id = ug.group_id
         where user_id = $1
+        order by g.id DESC
       `;
       request.values = [userId]
     }
