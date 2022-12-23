@@ -61,7 +61,9 @@ export default function (dbClient: DbClient) {
     });
 
     router.post('/bulkadd', async (req: Request, res: Response) => {
-        const groupId = req.body.groupId;
+        const groupId = parseInt(req.body.groupId);
+        const semesterId = req.session.userSettings?.semesterId as number
+
         var emails = req.body.emails as string
         var emailList = emails.replaceAll(' ', '').split('\n').map(z=>z.split(',')).flat()
 
@@ -83,6 +85,14 @@ export default function (dbClient: DbClient) {
             }
         });
         await dbClient.addUsersToGroups(userGroups);
+
+        var userSettings = ids.map(userId => {
+            return {
+                userId,
+                semesterId
+            }
+        })
+        await dbClient.updateUserSettings(userSettings);
         res.sendStatus(200);
     })
 

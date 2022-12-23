@@ -15,7 +15,7 @@ export interface DbClient {
     createCourse(course: Course): Promise<number>;
     deleteCourse(courseId: number): Promise<boolean>;
     deleteGroup(groupId: number): Promise<boolean>;
-    addUsersToGroups(userGroups: UserGroups[]): Promise<{}[]>;
+    addUsersToGroups(userGroups: UserGroups[]): Promise<boolean>;
     setUserGroups(userGroups: UserGroups): Promise<boolean>;
     deleteUserFromGroup(groupName: string, userId: number): boolean;
     getCourseDates(courseId: number): Promise<Date[]>
@@ -44,4 +44,5 @@ export interface DbClient {
     getUserSettings(userId: number): Promise<UserSettings>;
     getSemesters(semesterId?: number): Promise<Semester[]>;
     createUsers(users: any, ): Promise<number[]>;
+    updateUserSettings(userSettings: (UserSettings & {userId: number})[]): Promise<boolean>;
 }

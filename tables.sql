@@ -126,5 +126,5 @@ CREATE INDEX user_question_grades_user_id_question_id_idx ON user_question_grade
 CREATE TABLE user_settings (
 	user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
 	semester_id INTEGER REFERENCES semester (id) ON DELETE CASCADE,
-	UNIQUE (user_id, semester_id)
+	UNIQUE (user_id)
 );

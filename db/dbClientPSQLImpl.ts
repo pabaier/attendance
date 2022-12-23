@@ -18,6 +18,14 @@ class DbClientPSQLImpl implements DbClient {
     )
   }
 
+  async updateUserSettings(userSettings: (UserSettings & {userId: number})[]): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['user_id', 'semester_id'], {table: 'user_settings'});
+    const us = userSettings.map(x => {return {user_id: x.userId, semester_id: x.semesterId}});
+    const query = this.pg.helpers.insert(us, cs) + ' ON CONFLICT (user_id) DO UPDATE SET semester_id=EXCLUDED.semester_id';
+    const res = await this.connection.any(query);
+    return res ? true : false;  
+  }
+
   async createUsers(users: any): Promise<number[]> {
     const cs = new this.pg.helpers.ColumnSet(['email', 'roles', 'salt', 'password_hash'], {table: 'users'});
     const values = users.map((u: { email: any; roles: any; salt: any; password: any; }) => { return {
@@ -590,8 +598,8 @@ class DbClientPSQLImpl implements DbClient {
     });
   };
 
-  async addUsersToGroups(userGroups: UserGroups[]): Promise<{}[]> {
-    if(!userGroups.length) return [];
+  async addUsersToGroups(userGroups: UserGroups[]): Promise<boolean> {
+    if(!userGroups.length) return false;
     const cs = new this.pg.helpers.ColumnSet(['user_id', 'group_id'], {table: 'user_group'});
     var values: {}[] = []
     userGroups.forEach(entry => {
@@ -601,11 +609,12 @@ class DbClientPSQLImpl implements DbClient {
       })
     })
     if (values.length) {
-      const query = this.pg.helpers.insert(values, cs) + ' ON CONFLICT DO NOTHING RETURNING user_id, group_id';
-      const res = await this.connection.many(query);
-      return res;
+      const query = this.pg.helpers.insert(values, cs) + ' ON CONFLICT DO NOTHING';
+      const res = await this.connection.any(query);
+      if (res) return true;
+      return false;
     } else {
-      return []
+      return false
     }
   }
 
