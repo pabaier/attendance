@@ -43,4 +43,5 @@ export interface DbClient {
     updateUserPassword(userId: number, password: string, salt?: string): Promise<boolean>;
     getUserSettings(userId: number): Promise<UserSettings>;
     getSemesters(semesterId?: number): Promise<Semester[]>;
+    createUsers(users: any, ): Promise<number[]>;
 }

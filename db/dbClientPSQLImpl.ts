@@ -18,6 +18,19 @@ class DbClientPSQLImpl implements DbClient {
     )
   }
 
+  async createUsers(users: any): Promise<number[]> {
+    const cs = new this.pg.helpers.ColumnSet(['email', 'roles', 'salt', 'password_hash'], {table: 'users'});
+    const values = users.map((u: { email: any; roles: any; salt: any; password: any; }) => { return {
+      email: u.email, 
+      roles: u.roles,
+      salt: u.salt,
+      password_hash: u.password,
+    }})
+    const query = this.pg.helpers.insert(values, cs) + ' ON CONFLICT (email) DO UPDATE SET email=EXCLUDED.email RETURNING id';
+    const res = await this.connection.many(query);
+    return res.map((obj: { id: any; }) => obj.id);
+  }
+
   getSemesters(semesterId?: number): Promise<Semester[]> {
     var query = 'SELECT s.id, s.season, s.semester_year "year" FROM public.semester s'
     if (semesterId)
@@ -588,7 +601,7 @@ class DbClientPSQLImpl implements DbClient {
       })
     })
     if (values.length) {
-      const query = this.pg.helpers.insert(values, cs) + ' RETURNING user_id, group_id';
+      const query = this.pg.helpers.insert(values, cs) + ' ON CONFLICT DO NOTHING RETURNING user_id, group_id';
       const res = await this.connection.many(query);
       return res;
     } else {

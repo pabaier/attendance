@@ -56,6 +56,32 @@ export default function (dbClient: DbClient) {
         res.render('admin/users', { usersList, userCount: users.length, groups });
     });
 
+    router.post('/bulkadd', async (req: Request, res: Response) => {
+        const groupId = req.body.groupId;
+        var emails = req.body.emails as string
+        var emailList = emails.replaceAll(' ', '').split('\n').map(z=>z.split(',')).flat()
+
+        // 'email', 'roles', 'salt', 'password_hash'
+        var users = emailList.map(email => {
+            const {password, salt} = createPasswordHash(email);
+            return {
+                email,
+                roles: 'student',
+                salt,
+                password,
+            }
+        });
+        var ids = await dbClient.createUsers(users);
+        var userGroups: UserGroups[] = ids.map(userId => {
+            return {
+                userId,
+                groupIds: [groupId]
+            }
+        });
+        await dbClient.addUsersToGroups(userGroups);
+        res.sendStatus(200);
+    })
+
     router.post('/add', async (req: Request, res: Response) => {
         if (Object.keys(req.body).length == 0) {
             if (!req.session.alert)
@@ -160,7 +186,7 @@ export default function (dbClient: DbClient) {
             email: req.params.email,
             firstName: req.body.firstName,
             lastName: req.body.lastName,
-            roles: req.body.roles,
+            roles: req.body.roles.replaceAll(' ', '').split(','),
             groups: req.body.groups.map((gId: string) => parseInt(gId)),
         }
         await dbClient.updateUser(user);
