@@ -14,6 +14,10 @@ export default function (dbClient: DbClient) {
         res.render('admin/groups', { groups });
     });
 
+    router.get('/utils', async (req: Request, res: Response) => {
+        res.render('admin/utils');
+    });
+
     router.post('/groups', async (req: Request, res: Response) => {
         const groupName = req.body.groupName;
         await dbClient.createGroup(groupName);
