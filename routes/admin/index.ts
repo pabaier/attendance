@@ -7,6 +7,7 @@ import users from './users';
 import dates from './dates';
 import { makeCourseName } from '../helpers';
 import { Assignment } from '../../models';
+import posts from './posts';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
     const router = express.Router()
@@ -14,6 +15,8 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     const codeRefreshRate: number = parseInt(process.env.CODE_REFRESH_RATE || '2');
 
     router.use(authCheckMiddleware, rollCheckMiddleware(['admin']))
+
+    router.use('/posts', posts(dbClient));
 
     router.use('/dates', dates(dbClient));
 

@@ -1,19 +1,20 @@
-import User from './User';
 import Alert from './Alert';
-import Course from './Course';
-import UserGroups from './UserGroups';
-import CourseDate from './CourseDate';
-import CalendarEvent from './CalendarEvent';
 import Assignment from './Assignment';
+import CalendarEvent from './CalendarEvent';
+import Course from './Course';
 import CourseAssignment from './CourseAssignment';
-import PostGroup from './PostGroup';
+import CourseDate from './CourseDate';
 import Group from './Group';
+import Post from './Post';
+import PostGroup from './PostGroup';
+import Semester from './Semester';
 import Test from './Test';
 import TestUserData from './TestUserData';
+import User from './User';
+import UserGroups from './UserGroups';
 import UserQuestionGrade from './UserQuestionGrade';
-import UserTest from './UserTest';
 import UserSettings from './UserSettings';
-import Semester from './Semester';
+import UserTest from './UserTest';
 
 export {
     Alert,
@@ -23,6 +24,7 @@ export {
     CourseAssignment,
     CourseDate,
     Group,
+    Post,
     PostGroup,
     Semester,
     Test,

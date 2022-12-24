@@ -1,0 +1,95 @@
+<!-- requires courses {name, id},  -->
+<div class="jumbotron">
+    <h1>Posts</h1>
+    <h3>New Post</h3>
+    <div class="mb-5 border-bottom border-5">
+        <div class="w-25 start-0 center">
+            <input class="form-control" id="new-post-title" placeholder="title">
+        </div>
+        <div class="w-50 start-0 center">
+            <textarea class="form-control my-2" id="new-post-body" placeholder="body"></textarea>
+        </div>
+        <div class="w-25 start-0 center">
+            <input class="form-control" id="new-post-link" placeholder="link">
+        </div>
+        <div class="w-25 start-0 center">
+            <button type="submit" id="submit" class="btn btn-primary form-control my-2">Submit</button>
+        </div>
+    </div>
+
+
+    <h3>All Posts</h3>
+    <%posts.forEach(post => {%>
+        <div class="my-5 border-bottom border-5 rounded">
+            <div class="w-50 row start-0 center">
+                <div class="col-auto">
+                    <input class="form-control post-title" id="post-title-<%= post.id %>" value="<%= post.title %>">
+                </div>
+                <div class="col-auto">
+                    <button type="button" id="del-<%= post.id %>" class="btn-del btn btn-primary btn-sm">x</button>
+                </div>
+            </div>
+            <div class="w-50 start-0 center">
+                <textarea class="form-control my-2 post-body" id="post-body-<%= post.id %>"><%= post.body %></textarea>
+            </div>
+            <div class="w-25 start-0 center pb-5">
+                <input class="form-control post-link" id="post-link-<%= post.id %>" value="<%= post.link %>">
+            </div>
+        </div>
+    <%})%>
+</div>
+
+<script>
+    $('#submit').click(e => {
+        var title = $("#new-post-title").val()
+        var body = $("#new-post-body").val()
+        var link = $("#new-post-link").val()
+        $.post(`/admin/posts`, { title, body, link }, function( data ) {
+            if (data) {
+                window.location.reload();
+            } else {
+                console.log('nope')
+            }
+        })
+    })
+
+    $('.btn-del').click(e => {
+        var id = e.target.id.split('-')[1];
+        res = confirm("delete post?");
+        if (!res) return;
+        $.ajax({
+            url: `/admin/posts/${id}`,
+            type: 'DELETE',
+            success: function(response) {
+                location.reload();
+            },
+            error: function(response) {
+                console.log(response);
+            }
+        });
+    })
+
+    $('.post-link').focusout(e => {
+        var id = e.target.id.split('-')[2];
+        var title = $(`#post-title-${id}`).val()
+        var body = $(`#post-body-${id}`).val()
+        var link = $(`#post-link-${id}`).val()
+        $.ajax({
+            url: `/admin/posts/${id}`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({ title, body, link }),
+            success: function(response) {
+                $('#toastHeader').html("Success");
+                $('#toastBody').html("Post updated successfully");
+                $('#liveToast').toast('show');
+            },
+            error: function(response) {
+                $('#toastHeader').html("Fail");
+                $('#toastBody').html(response);
+                $('#liveToast').toast('show');
+            }
+        });
+    })
+
+</script>

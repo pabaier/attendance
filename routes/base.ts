@@ -24,22 +24,24 @@ export default function (dbClient: DbClient) {
     router.get('/', authCheckMiddleware, async (req: Request, res: Response) => {
         // get courseIds
         const userId = req.session.user?.id as number
-        const courseIds: number[] = await dbClient.getCourseIds(userId);
+        const semesterId = req.session.userSettings?.semesterId as number;
+        const courses = await dbClient.getUserCourses(userId, semesterId);
         var calendarEvents: CalendarEvent[] = []
         
         // get dates
         const courseDates: {[courseId: number] : Date[]} = {}
         const courseNumber: {[courseId: number] : string} = {}
 
-        for (const id of courseIds) {
-            const course: Course = await dbClient.getCourse(id);
-            courseNumber[id] = course.courseNumber;
-            courseDates[id] = (await dbClient.getCourseDates(id))
+        for (const course of courses) {
+            const courseId = course.id as number;
+            courseNumber[courseId] = course.courseNumber;
+            courseDates[courseId] = (await dbClient.getCourseDates(courseId))
         }
 
         // build calendar events
         // course dates
-        courseIds.reduce((acc, id, index) => {
+        courses.reduce((acc, course, index) => {
+            const id = course.id as number;
             courseDates[id].forEach(date => {
                 acc.push(
                     {
@@ -54,7 +56,10 @@ export default function (dbClient: DbClient) {
 
         // build calendar events
         // course assignments
-        const userAssignments = (await dbClient.getUserAssignments(userId));
+        const groupIds = courses.map(course => course.groupId);
+        const userAssignments = await dbClient.getAssignments(groupIds);
+        console.log(groupIds)
+
         var colorIndex = 0;
         const userAssignmentsEvents: CalendarEvent[] = userAssignments.map((courseAssignment) => {
             const singleDayAssignment = new Date(courseAssignment.start_time).setHours(0,0,0,0) == new Date(courseAssignment.end_time).setHours(0,0,0,0)

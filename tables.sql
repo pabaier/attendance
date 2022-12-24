@@ -67,14 +67,22 @@ CREATE TABLE assignments (
 	url_link TEXT
 );
 
+-- open/close - when assignment starts and ends
+-- active start/end - when the link is active/inactive
+-- visible start/end? - when assignment can be seen
 CREATE TABLE assignment_group (
-	assignment_id integer REFERENCES assignments (id) ON DELETE CASCADE,
-	group_id integer REFERENCES groups (id) ON DELETE CASCADE
+	post_id integer REFERENCES posts (id) ON DELETE CASCADE,
+	group_id integer REFERENCES groups (id) ON DELETE CASCADE,
+	open_time timestamptz,
+	close_time timestamptz,
+	active_start_time timestamptz,
+	active_end_time timestamptz
 );
+CREATE INDEX assignment_group_post_id_idx ON assignment_group (post_id);
 CREATE INDEX assignment_group_group_id_idx ON assignment_group (group_id);
 
 CREATE TABLE posts (
-	id SERIAL PRIMARY KEY,
+	id SERIAL PRIMARY KEY,	
 	title VARCHAR (50),
 	body TEXT,
 	url_link TEXT

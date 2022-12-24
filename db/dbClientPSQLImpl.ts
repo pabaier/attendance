@@ -1,6 +1,6 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
-import { Assignment, Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester } from '../models';
+import { Assignment, Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post } from '../models';
 
 class DbClientPSQLImpl implements DbClient {
   connection: any;
@@ -16,6 +16,56 @@ class DbClientPSQLImpl implements DbClient {
         ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false
       }
     )
+  }
+
+  async updatePost(post: Post): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['title', 'body', 'url_link']);
+    const data = {title: post.title, body: post.body, url_link: post.link}
+    const condition = pgp.as.format(' WHERE id = $1', post.id);
+    const query = this.pg.helpers.update(data, cs, 'posts') + condition;
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });  
+  }
+
+  async deletePost(postId: number): Promise<boolean> {
+    var query = 'delete from posts where id = $1'
+    return this.connection.none(query, [postId])
+    .then((data: any) => {
+      return true;
+    })
+    .catch((error: any) => {
+      return false;
+    })
+  }
+
+  async createPost(post: Post): Promise<number> {
+    const cs = new this.pg.helpers.ColumnSet(['title', 'body', 'url_link'], {table: 'posts'});
+    const values = {
+      title: post.title,
+      body: post.body,
+      url_link: post.link
+    }
+    const query = this.pg.helpers.insert(values, cs) + ' RETURNING id';
+    const res = await this.connection.one(query);
+    return res.id;
+  }
+
+  async getAllPosts(): Promise<Post[]> {
+    return await this.connection.any({
+      name: 'getAllPosts',
+      text: `SELECT p.id, p.title, p.body, p.url_link link
+      FROM posts p
+      order by p.id DESC`,
+    }).then((data: Post[]) => {
+      return data;
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
   }
 
   async updateUserSettings(userSettings: (UserSettings & {userId: number})[]): Promise<boolean> {
@@ -174,15 +224,21 @@ class DbClientPSQLImpl implements DbClient {
       }) 
   }
 
-  async getUserAssignments(userId: number): Promise<Assignment[]> {
+  async getUserAssignments(userId: number, groupIds?: number[]): Promise<Assignment[]> {
     var query = `select a.id, a.title, a.start_time, a.end_time, a.url_link
     from assignments a 
     join assignment_group ag
     on a.id = ag.assignment_id
     join user_group ug
     on ag.group_id = ug.group_id
-    where ug.user_id = $1
-    ORDER BY a.start_time`;
+    where ug.user_id = $1`;
+
+    if (groupIds) {
+      query += ` and ug.group_id in (${groupIds.join(',')})`
+    }
+
+    query += ` ORDER BY a.start_time`;
+
     return this.connection.any(query, [userId])
       .then((data: Assignment[]) => {
         return data
@@ -200,16 +256,22 @@ class DbClientPSQLImpl implements DbClient {
     return res.id;
   }
 
-  async getCourseIds(userId: number): Promise<number[]> {
+  async getCourseIds(userId: number, semesterId?: number): Promise<number[]> {
+    var values = [userId];
+    var query = `select c.id from users u
+                  join user_group ug
+                  on u.id = ug.user_id
+                  join courses c
+                  on ug.group_id = c.group_id 
+                  where u.id = $1`
+    if (semesterId) {
+      query += ' and c.semester_id = $2'
+      values.push(semesterId);
+    }
     return await this.connection.any({
       name: 'getCourseIds',
-      text: `select c.id from users u
-        join user_group ug
-        on u.id = ug.user_id
-        join courses c
-        on ug.group_id = c.group_id 
-        where u.id = $1`,
-      values: [userId],
+      text: query,
+      values,
       rowMode: 'array'
     }).then((data: any) => {
         return data.flat();
@@ -411,15 +473,15 @@ class DbClientPSQLImpl implements DbClient {
   }
 
   // (Course & Assignment)[]
-  async getAssignments(groupId: number): Promise<Assignment[]> {
+  async getAssignments(groupIds: number[]): Promise<Assignment[]> {
     var query = `select a.id, a.title, a.start_time, a.end_time, a.url_link
     from assignment_group ga
     inner join assignments a
     on ga.assignment_id = a.id
-    where ga.group_id = $1
+    where ga.group_id in (${groupIds.join(',')})
     ORDER BY a.start_time`;
     
-    return this.connection.any(query, [groupId])
+    return this.connection.any(query)
       .then((data: Assignment[]) => {
         return data
       })
@@ -526,6 +588,39 @@ class DbClientPSQLImpl implements DbClient {
       return false;
     });
   };
+
+  async getUserCourses(userId: number, semesterId?: number): Promise<Course[]> {
+    var values = [userId];
+
+    var query = `SELECT 
+    c.id, c.semester_id "semesterId", c.start_time "startTime", c.end_time "endTime",
+    c.course_number "courseNumber", c.course_name "courseName", c.group_id "groupId"
+    FROM users u
+    join user_group ug
+    on u.id = ug.user_id
+    join courses c
+    on ug.group_id = c.group_id
+    where u.id = $1
+    `
+    
+    if (semesterId) {
+      query += ` and c.semester_id = $2`
+      values.push(semesterId)
+    }
+
+    query += ` ORDER BY TO_TIMESTAMP(c.start_time, 'HH:MI:ss')`
+
+    return await this.connection.any({
+      name: 'getUserCourses',
+      text: query,
+      values
+    }).then((data: any) => {
+        return data;
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    }); 
+  }
 
   async getCourses(semesterId?: number): Promise<Course[]> {
     var query = `SELECT 

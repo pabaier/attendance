@@ -82,7 +82,7 @@ export default function (dbClient: DbClient) {
         })
         const calendar = renderFile('./views/partials/calendar.ejs', {events: courseDateEvents});
 
-        const assignmentsList = await dbClientPSQLImpl.getAssignments(course.groupId);
+        const assignmentsList = await dbClientPSQLImpl.getAssignments([course.groupId]);
         const assignmentItems = assignmentsList.map(assignment => {
             const startTime = makeUTCDateString(assignment.start_time);
             const endTime = makeUTCDateString(assignment.end_time);
@@ -130,7 +130,7 @@ export default function (dbClient: DbClient) {
     router.get('/:courseId/assignments', async (req: Request, res: Response) => {
         const courseId = parseInt(req.params.courseId);
         const course = await dbClient.getCourse(courseId);
-        const assignments = await dbClientPSQLImpl.getAssignments(course.groupId);
+        const assignments = await dbClientPSQLImpl.getAssignments([course.groupId]);
         const assignmentItems = assignments.map(assignment => {
             renderFile('./views/admin/partials/assignment-item.ejs', {assignment})
         })

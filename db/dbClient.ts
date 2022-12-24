@@ -1,4 +1,4 @@
-import { Assignment, Course, CourseDate, User, PostGroup, UserGroups, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester } from "../models";
+import { Assignment, Course, CourseDate, User, PostGroup, UserGroups, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post } from "../models";
 
 export interface DbClient {
     connection: any;
@@ -11,6 +11,7 @@ export interface DbClient {
     deleteUser(userId: number): Promise<boolean>;
     getLatestSignIn(userId: number): Promise<number | null>;
     getCourses(semesterId?: number): Promise<Course[]>;
+    getUserCourses(userId: number, semesterId?: number): Promise<Course[]>;
     getCourse(courseId: number): Promise<Course>;
     createCourse(course: Course): Promise<number>;
     deleteCourse(courseId: number): Promise<boolean>;
@@ -20,9 +21,8 @@ export interface DbClient {
     deleteUserFromGroup(groupName: string, userId: number): boolean;
     getCourseDates(courseId: number): Promise<Date[]>
     setCourseDates(courseDates: CourseDate[]): Promise<void>
-    // getAssignments(courseId: number): Promise<(Course & Assignment)[]>
-    getAssignments(courseId: number): Promise<Assignment[]>
-    getUserAssignments(userId: number): Promise<Assignment[]>
+    getAssignments(groupIds: number[]): Promise<Assignment[]>
+    getUserAssignments(userId: number, groupIds?: number[]): Promise<Assignment[]>
     updateAssignment(assignment: Assignment): Promise<boolean>
     addAssignments(assignments: Assignment[]): Promise<{id: number}[]>
     addAssignmentToCourse(assignmentCourse: {assignment_id: number, course_id: number}[]): Promise<boolean>
@@ -32,8 +32,9 @@ export interface DbClient {
     getTotalCourseDays(courseId: number, until?: Date): Promise<number>;
     getTotalUserSignIns(userId: number, courseId: number): Promise<number>;
     getUserSignInDates(userId: number, courseId: number): Promise<Date[]>;
+    getAllPosts(): Promise<Post[]>;
     getPosts(groupId: number): Promise<PostGroup[]>;
-    getCourseIds(userId: number): Promise<number[]>;
+    getCourseIds(userId: number, semesterId?: number): Promise<number[]>;
     createGroup(groupName: string): Promise<number>;
     getTests(): Promise<Test[]>;
     getTestUserData(groupId: number, testDate: Date): Promise<TestUserData[]>;
@@ -45,4 +46,7 @@ export interface DbClient {
     getSemesters(semesterId?: number): Promise<Semester[]>;
     createUsers(users: any, ): Promise<number[]>;
     updateUserSettings(userSettings: (UserSettings & {userId: number})[]): Promise<boolean>;
+    createPost(post: Post): Promise<number>;
+    updatePost(post: Post): Promise<boolean>;
+    deletePost(postId: number): Promise<boolean>;
 }
