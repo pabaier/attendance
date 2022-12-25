@@ -1,6 +1,6 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
-import { Assignment, Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post } from '../models';
+import { Assignment, Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, AssignmentGroup } from '../models';
 
 class DbClientPSQLImpl implements DbClient {
   connection: any;
@@ -16,6 +16,25 @@ class DbClientPSQLImpl implements DbClient {
         ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false
       }
     )
+  }
+
+  async createAssignmentGroup(assignmentGroup: AssignmentGroup): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['post_id', 'group_id', 'open_time', 'close_time', 'active_start_time', 'active_end_time'], {table: 'assignment_group'});
+    const values = {
+      post_id: assignmentGroup.postId,
+      group_id: assignmentGroup.groupId,
+      open_time: assignmentGroup.openTime,
+      close_time: assignmentGroup.closeTime,
+      active_start_time: assignmentGroup.activeStartTime,
+      active_end_time: assignmentGroup.activeEndTime,
+    }
+    const query = this.pg.helpers.insert(values, cs);
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    }); 
   }
 
   async updatePost(post: Post): Promise<boolean> {

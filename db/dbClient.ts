@@ -1,4 +1,4 @@
-import { Assignment, Course, CourseDate, User, PostGroup, UserGroups, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post } from "../models";
+import { Assignment, Course, CourseDate, User, PostGroup, UserGroups, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, AssignmentGroup } from "../models";
 
 export interface DbClient {
     connection: any;
@@ -49,4 +49,5 @@ export interface DbClient {
     createPost(post: Post): Promise<number>;
     updatePost(post: Post): Promise<boolean>;
     deletePost(postId: number): Promise<boolean>;
+    createAssignmentGroup(assignmentGroup: AssignmentGroup): Promise<boolean>;
 }

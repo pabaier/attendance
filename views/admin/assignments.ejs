@@ -1,28 +1,77 @@
 <!-- requires courses {name, id},  -->
 <div class="jumbotron">
     <h1>Assignments</h1>
-    <textarea class="form-control my-2" name="text" id="bulk-add-area" placeholder="Add Assignments&#10;title, 2022-08-12T00:00, 2022-08-12T00:00, URL" aria-label="dates" aria-describedby="basic-addon1"></textarea>
-
-    <label for="courses">Choose course(s):</label>
-    <select class="form-control my-2" name="courses" id="courses" multiple>
-        <%courses.forEach(course => {%>
-            <option value=<%=course.id%>><%=course.name%></option>
-        <%})%>
-    </select>
-    <button type="submit" id="submit" class="btn btn-primary form-control my-2">Submit</button>
+    <h3>New Assignment</h3>
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                Group
+            </div>
+            <div class="col">
+                Post
+            </div>
+            <div class="col-2">
+                Open
+            </div>
+            <div class="col-2">
+                Close
+            </div>
+            <div class="col-2">
+                Active Start
+            </div>
+            <div class="col-2">
+                Active End
+            </div>
+            <div class="col"></div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <%- groupsDropdown %>
+            </div>
+            <div class="col">
+                <%- postsDropdown %>
+            </div>
+            <div class="col-2">
+                <input class="form-control my-2" type="datetime-local" id="open-time" name="meeting-time">
+            </div>
+            <div class="col-2">
+                <input class="form-control my-2" type="datetime-local" id="close-time" name="meeting-time">
+            </div>
+            <div class="col-2">
+                <input class="form-control my-2" type="datetime-local" id="active-start-time" name="meeting-time">
+            </div>
+            <div class="col-2">
+                <input class="form-control my-2" type="datetime-local" id="active-end-time" name="meeting-time">
+            </div>
+            <div class="col">
+                <button type="submit" id="submit" class="btn btn-primary form-control my-2">Submit</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
     $('#submit').click(e => {
-        var courses = $('select#courses').val()
-        var assignments = $("#bulk-add-area").val().trim().split('\n')
-        $.post(`/admin/assignments`, { courses, assignments }, function( data ) {
-            if (data) {
-                console.log('ok')
-                // window.location.reload();
-            } else {
-                console.log('nope')
-            }
+        var groupId = $('#group-select').val()
+        var postId = $('#post-select').val()
+        var open = new Date($('#open-time').val())
+        var close = new Date($('#close-time').val())
+        var start = new Date($('#active-start-time').val())
+        var end = new Date($('#active-end-time').val())
+
+        console.log(groupId, postId, open.toISOString())
+        $.post(`/admin/assignments`,
+            { groupId, postId, open: open.toISOString(), close: close.toISOString(), start: start.toISOString(), end: end.toISOString() },
+            function( data ) {
+                if (data) {
+                    window.location.reload();
+                    // $('#toastHeader').html("Success");
+                    // $('#toastBody').html("Assignment created successfully");
+                } else {
+                    $('#toastHeader').html("Error");
+                    $('#toastBody').html("Assignment creation error");
+                }
+                $('#liveToast').toast('show');
         })
     })
 </script>

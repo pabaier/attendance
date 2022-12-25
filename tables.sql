@@ -76,7 +76,8 @@ CREATE TABLE assignment_group (
 	open_time timestamptz,
 	close_time timestamptz,
 	active_start_time timestamptz,
-	active_end_time timestamptz
+	active_end_time timestamptz,
+	PRIMARY KEY(post_id, group_id)
 );
 CREATE INDEX assignment_group_post_id_idx ON assignment_group (post_id);
 CREATE INDEX assignment_group_group_id_idx ON assignment_group (group_id);
@@ -93,7 +94,8 @@ CREATE TABLE post_group (
 	group_id integer REFERENCES groups (id) ON DELETE CASCADE,
 	open_time timestamptz,
 	close_time timestamptz,
-	visible boolean DEFAULT TRUE
+	visible boolean DEFAULT TRUE,
+	PRIMARY KEY(post_id, group_id)
 );
 CREATE INDEX post_group_post_id_idx ON post_group (post_id);
 CREATE INDEX post_group_group_id_idx ON post_group (group_id);

@@ -15,7 +15,6 @@ export default function (dbClient: DbClient) {
         const body = req.body.body;
         const link = req.body.link;
         var dbres = await dbClient.createPost({title, body, link})
-        console.log(dbres)
         res.sendStatus(200)
     });
 
