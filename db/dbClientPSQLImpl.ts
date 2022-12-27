@@ -18,6 +18,51 @@ class DbClientPSQLImpl implements DbClient {
     )
   }
 
+  async updateAssignmentGroup(oldIds: {groupId: number, postId: number}, assignmentGroup: AssignmentGroup): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['post_id', 'group_id', 'open_time', 'close_time', 'active_start_time', 'active_end_time']);
+    const data = {
+      post_id: assignmentGroup.postId,
+      group_id: assignmentGroup.groupId,
+      open_time: assignmentGroup.openTime,
+      close_time: assignmentGroup.closeTime,
+      active_start_time: assignmentGroup.activeStartTime,
+      active_end_time: assignmentGroup.activeEndTime,
+    };
+    const condition = pgp.as.format(' WHERE post_id = $1 and group_id = $2', [oldIds.postId, oldIds.groupId]);
+    const query = this.pg.helpers.update(data, cs, 'assignment_group') + condition;
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async deleteAssignment(groupId: number, postId: number): Promise<boolean> {
+    var query = 'delete from assignment_group where group_id = $1 and post_id = $2'
+    return this.connection.none(query, [groupId, postId])
+    .then((data: any) => {
+      return true;
+    })
+    .catch((error: any) => {
+      return false;
+    })
+  }
+
+  async getAssignmentGroups(): Promise<AssignmentGroup[]> {
+    return await this.connection.any({
+      name: 'getAssignmentGroups',
+      text: `SELECT ag.post_id "postId", ag.group_id "groupId", ag.open_time "openTime", ag.close_time "closeTime", ag.active_start_time "activeStartTime", ag.active_end_time "activeEndTime"
+              FROM public.assignment_group ag
+              order by ag.open_time DESC`,
+    }).then((data: AssignmentGroup[]) => {
+      return data;
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
+  }
+
   async createAssignmentGroup(assignmentGroup: AssignmentGroup): Promise<boolean> {
     const cs = new this.pg.helpers.ColumnSet(['post_id', 'group_id', 'open_time', 'close_time', 'active_start_time', 'active_end_time'], {table: 'assignment_group'});
     const values = {
@@ -47,7 +92,7 @@ class DbClientPSQLImpl implements DbClient {
     }).catch((error: any) => {
       console.log(error)
       return false;
-    });  
+    });
   }
 
   async deletePost(postId: number): Promise<boolean> {

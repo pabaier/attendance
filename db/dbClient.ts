@@ -50,4 +50,7 @@ export interface DbClient {
     updatePost(post: Post): Promise<boolean>;
     deletePost(postId: number): Promise<boolean>;
     createAssignmentGroup(assignmentGroup: AssignmentGroup): Promise<boolean>;
+    getAssignmentGroups(): Promise<AssignmentGroup[]>;
+    deleteAssignment(groupId: number, postId: number): Promise<boolean>;
+    updateAssignmentGroup(oldIds: {groupId: number, postId: number}, assignmentGroup: AssignmentGroup): Promise<boolean>;
 }

@@ -24,7 +24,7 @@
             </div>
             <div class="col"></div>
         </div>
-        <div class="row">
+        <div class="row  mb-5">
             <div class="col">
                 <%- groupsDropdown %>
             </div>
@@ -48,30 +48,123 @@
             </div>
         </div>
     </div>
+
+    <h3>Assignments</h3>
+    <div class="container">
+        <% assignmentGroups.forEach(ag => { %>
+            <div class=" mb-5 border-bottom border-5">
+                <div class="row">
+                    <div class="col-3">
+                        <%- include('partials/group-select-dropdown', {groups: groups, selected: ag.groupId, id: `${ag.groupId}-${ag.postId}`}); %>
+                    </div>
+                    <div class="col-3">
+                        <%- include('partials/post-select-dropdown', {posts: posts, selected: ag.postId, id: `${ag.groupId}-${ag.postId}`}); %>
+                    </div>
+                    <div class="col-1">
+                        <button type="button" id="save-<%=ag.groupId%>-<%=ag.postId%>" class="btn-save btn btn-primary btn-sm my-2">&#x2713</button>
+                        <button type="button" id="del-<%=ag.groupId%>-<%=ag.postId%>" class="btn-del btn btn-primary btn-sm my-2">&#x2715</button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-3">
+                        Open
+                    </div>
+                    <div class="col-3">
+                        Close
+                    </div>
+                    <div class="col-3">
+                        Active Start
+                    </div>
+                    <div class="col-3">
+                        Active End
+                    </div>
+                </div>
+                <div class="row mb-5">
+                    <div class="col-3">
+                        <input class="form-control my-2" type="datetime-local" id="open-time-<%=ag.groupId%>-<%=ag.postId%>" value="<%=ag.openTime%>" name="meeting-time">
+                    </div>
+                    <div class="col-3">
+                        <input class="form-control my-2" type="datetime-local" id="close-time-<%=ag.groupId%>-<%=ag.postId%>" value="<%=ag.closeTime%>" name="meeting-time">
+                    </div>
+                    <div class="col-3">
+                        <input class="form-control my-2" type="datetime-local" id="active-start-time-<%=ag.groupId%>-<%=ag.postId%>" value="<%=ag.activeStartTime%>" name="meeting-time">
+                    </div>
+                    <div class="col-3">
+                        <input class="form-control my-2" type="datetime-local" id="active-end-time-<%=ag.groupId%>-<%=ag.postId%>" value="<%=ag.activeEndTime%>" name="meeting-time">
+                    </div>
+                </div>
+            </div>
+        <% }) %>
+    </div>
 </div>
 
 <script>
     $('#submit').click(e => {
-        var groupId = $('#group-select').val()
-        var postId = $('#post-select').val()
+        var groupId = $('#group-select-0').val()
+        var postId = $('#post-select-0').val()
         var open = new Date($('#open-time').val())
         var close = new Date($('#close-time').val())
         var start = new Date($('#active-start-time').val())
         var end = new Date($('#active-end-time').val())
-
-        console.log(groupId, postId, open.toISOString())
         $.post(`/admin/assignments`,
             { groupId, postId, open: open.toISOString(), close: close.toISOString(), start: start.toISOString(), end: end.toISOString() },
             function( data ) {
-                if (data) {
-                    window.location.reload();
-                    // $('#toastHeader').html("Success");
-                    // $('#toastBody').html("Assignment created successfully");
-                } else {
-                    $('#toastHeader').html("Error");
-                    $('#toastBody').html("Assignment creation error");
-                }
-                $('#liveToast').toast('show');
-        })
+                window.location.reload();
+            }
+        ).fail( function(data) {
+            $('#toastHeader').html("Error");
+            $('#toastBody').html("Assignment creation error");
+            $('#liveToast').toast('show');
+        });
     })
+
+    $('.btn-del').click(e => {
+        var ids = e.target.id.split('-');
+        var groupId = ids[1];
+        var postId = ids[2]
+        res = confirm("delete assignment?");
+        if (!res) return;
+        $.ajax({
+            url: `/admin/assignments/`,
+            type: 'DELETE',
+            contentType: 'application/json',
+            data: JSON.stringify({ groupId, postId }),
+            success: function(response) {
+                location.reload();
+            },
+            error: function(response) {
+                $('#toastHeader').html("Error");
+                $('#toastBody').html(response);
+                $('#liveToast').toast('show');
+            }
+        });
+    })
+
+    $('.btn-save').click(e => {
+        var ids = e.target.id.split('-');
+        var groupId = ids[1];
+        var postId = ids[2]
+
+        var newGroupId = $(`#group-select-${groupId}-${postId}`).val()
+        var newPostId = $(`#post-select-${groupId}-${postId}`).val()
+        var open = new Date($(`#open-time-${groupId}-${postId}`).val())
+        var close = new Date($(`#close-time-${groupId}-${postId}`).val())
+        var start = new Date($(`#active-start-time-${groupId}-${postId}`).val())
+        var end = new Date($(`#active-end-time-${groupId}-${postId}`).val())
+        $.ajax({
+            url: `/admin/assignments/`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({ groupId, postId, newGroupId, newPostId, open: open.toISOString(), close: close.toISOString(), start: start.toISOString(), end: end.toISOString() }),
+            success: function(response) {
+                window.location.reload();
+            },
+            error: function(response) {
+                $('#toastHeader').html("Error");
+                $('#toastBody').html("Unable to update record");
+                $('#liveToast').toast('show');
+            }
+        });
+    })
+
 </script>
