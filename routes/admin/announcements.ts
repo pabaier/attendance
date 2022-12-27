@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import { DbClient } from '../../db/dbClient';
-import { AssignmentGroup, Post } from '../../models';
+import { AnnouncementGroup, Post } from '../../models';
 import { renderFile } from '../../views/helper';
 import { makeUTCDateString } from '../helpers';
 
@@ -12,9 +12,9 @@ export default function (dbClient: DbClient) {
         var posts = await dbClient.getAllPosts();
         const groupsDropdown = renderFile('./views/admin/partials/group-select-dropdown.ejs', { groups, selected: 0, id: 0 });
         const postsDropdown = renderFile('./views/admin/partials/post-select-dropdown.ejs', { posts, selected: 0, id: 0 });
-        const ags = await dbClient.getAssignmentGroups();
+        const ags = await dbClient.getAnnouncementGroups();
 
-        const assignmentGroups = ags.map((ag: AssignmentGroup) => { 
+        var announcementGroups = ags.map((ag: AnnouncementGroup) => { 
             return {
                 ...ag,
                 openTime: makeUTCDateString(ag.openTime as Date),
@@ -22,9 +22,9 @@ export default function (dbClient: DbClient) {
                 activeStartTime: makeUTCDateString(ag.activeStartTime as Date),
                 activeEndTime: makeUTCDateString(ag.activeEndTime as Date)
             }
-          });
+        });
 
-        res.render('admin/assignments', { groupsDropdown, postsDropdown, assignmentGroups, groups, posts });
+        res.render('admin/announcements', { groupsDropdown, postsDropdown, announcementGroups, groups, posts });
     });
 
     router.post('/', async (req: Request, res: Response) => {
@@ -34,7 +34,7 @@ export default function (dbClient: DbClient) {
         var close = req.body.close ? new Date(req.body.close) : undefined;
         var start = req.body.start ? new Date(req.body.start) : undefined;
         var end = req.body.end ? new Date(req.body.end) : undefined;
-        var assignmentGroup: AssignmentGroup = {
+        var announcementGroup: AnnouncementGroup = {
             postId,
             groupId,
             openTime: open,
@@ -42,14 +42,14 @@ export default function (dbClient: DbClient) {
             activeStartTime: start,
             activeEndTime: end
         }
-        var dbres = await dbClient.createAssignmentGroup(assignmentGroup);
+        var dbres = await dbClient.createAnnouncementGroup(announcementGroup);
         dbres ? res.sendStatus(200) : res.sendStatus(400);
     });
 
     router.delete('/', async (req: Request, res: Response) => {
         var groupId = parseInt(req.body.groupId);
         var postId = parseInt(req.body.postId);
-        var result = await dbClient.deleteAssignment(groupId, postId);
+        var result = await dbClient.deleteAnnouncement(groupId, postId);
         result ? res.sendStatus(200): res.sendStatus(400);
     });
 
@@ -62,7 +62,7 @@ export default function (dbClient: DbClient) {
         var end = req.body.end ? new Date(req.body.end) : undefined;
         var newGroupId = parseInt(req.body.newGroupId);
         var newPostId = parseInt(req.body.newPostId);
-        var assignmentGroup: AssignmentGroup = {
+        var assignmentGroup: AnnouncementGroup = {
             postId: newPostId,
             groupId: newGroupId,
             openTime: open,
@@ -70,7 +70,7 @@ export default function (dbClient: DbClient) {
             activeStartTime: start,
             activeEndTime: end
         }
-        var result = await dbClient.updateAssignmentGroup({groupId, postId}, assignmentGroup);
+        var result = await dbClient.updateAnnouncementGroup({groupId, postId}, assignmentGroup);
         result ? res.sendStatus(200): res.sendStatus(400);
     });
 

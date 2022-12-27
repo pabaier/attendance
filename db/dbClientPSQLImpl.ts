@@ -1,6 +1,7 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
-import { Assignment, Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, AssignmentGroup } from '../models';
+import { Assignment, Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, AssignmentGroup, AnnouncementGroup } from '../models';
+import { makeUTCDateString } from '../routes/helpers';
 
 class DbClientPSQLImpl implements DbClient {
   connection: any;
@@ -16,6 +17,70 @@ class DbClientPSQLImpl implements DbClient {
         ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false
       }
     )
+  }
+
+  async createAnnouncementGroup(announcementGroup: AnnouncementGroup): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['post_id', 'group_id', 'open_time', 'close_time', 'active_start_time', 'active_end_time'], {table: 'announcement_group'});
+    const values = {
+      post_id: announcementGroup.postId,
+      group_id: announcementGroup.groupId,
+      open_time: announcementGroup.openTime,
+      close_time: announcementGroup.closeTime,
+      active_start_time: announcementGroup.activeStartTime,
+      active_end_time: announcementGroup.activeEndTime,
+    }
+    const query = this.pg.helpers.insert(values, cs);
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async deleteAnnouncement(groupId: number, postId: number): Promise<boolean> {
+    var query = 'delete from announcement_group where group_id = $1 and post_id = $2'
+    return this.connection.none(query, [groupId, postId])
+    .then((data: any) => {
+      return true;
+    })
+    .catch((error: any) => {
+      return false;
+    })
+  }
+
+  async updateAnnouncementGroup(oldIds: { groupId: number; postId: number; }, announcementGroup: AnnouncementGroup): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['post_id', 'group_id', 'open_time', 'close_time', 'active_start_time', 'active_end_time']);
+    const data = {
+      post_id: announcementGroup.postId,
+      group_id: announcementGroup.groupId,
+      open_time: announcementGroup.openTime,
+      close_time: announcementGroup.closeTime,
+      active_start_time: announcementGroup.activeStartTime,
+      active_end_time: announcementGroup.activeEndTime,
+    };
+    const condition = pgp.as.format(' WHERE post_id = $1 and group_id = $2', [oldIds.postId, oldIds.groupId]);
+    const query = this.pg.helpers.update(data, cs, 'announcement_group') + condition;
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async getAnnouncementGroups(): Promise<AnnouncementGroup[]> {
+    return await this.connection.any({
+      name: 'getAnnouncementGroups',
+      text: `SELECT ag.post_id "postId", ag.group_id "groupId", ag.open_time "openTime", ag.close_time "closeTime", ag.active_start_time "activeStartTime", ag.active_end_time "activeEndTime"
+              FROM announcement_group ag
+              order by ag.open_time DESC`,
+    }).then((data: AnnouncementGroup[]) => {
+      return data
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
   }
 
   async updateAssignmentGroup(oldIds: {groupId: number, postId: number}, assignmentGroup: AssignmentGroup): Promise<boolean> {
@@ -56,7 +121,7 @@ class DbClientPSQLImpl implements DbClient {
               FROM public.assignment_group ag
               order by ag.open_time DESC`,
     }).then((data: AssignmentGroup[]) => {
-      return data;
+      return data
     }).catch((error: any) => {
       console.log('ERROR:', error);
       return []
@@ -79,7 +144,7 @@ class DbClientPSQLImpl implements DbClient {
     }).catch((error: any) => {
       console.log(error)
       return false;
-    }); 
+    });
   }
 
   async updatePost(post: Post): Promise<boolean> {

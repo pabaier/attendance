@@ -5,8 +5,12 @@ export const makeCourseName = (course: Course) => {
     return `${course.courseNumber} - ${course.startTime}`
 }
 
-export const makeUTCDateString = (original: Date): string => {
-    return (new Date(original.getTime() - original.getTimezoneOffset() * 60000).toISOString()).slice(0, -1);
+export const makeUTCDateString = (original: Date): string | undefined => {
+    try {
+        return (new Date(original.getTime() - original.getTimezoneOffset() * 60000).toISOString()).slice(0, -1);
+    } catch {
+        return undefined
+    }
 }
 
 export const calendarEventColors = [{

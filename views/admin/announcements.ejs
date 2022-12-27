@@ -1,7 +1,7 @@
 <!-- requires courses {name, id},  -->
 <div class="jumbotron">
-    <h1>Assignments</h1>
-    <h3>New Assignment</h3>
+    <h1>Announcements</h1>
+    <h3>New Announcement</h3>
     <div class="container">
         <div class="row">
             <div class="col">
@@ -49,9 +49,9 @@
         </div>
     </div>
 
-    <h3>Assignments</h3>
+    <h3>Announcements</h3>
     <div class="container">
-        <% assignmentGroups.forEach(ag => { %>
+        <% announcementGroups.forEach(ag => { %>
             <div class=" mb-5 border-bottom border-5">
                 <div class="row">
                     <div class="col-3">
@@ -121,14 +121,14 @@
             end: end ? end.toISOString() : undefined,
         }
 
-        $.post(`/admin/assignments`,
+        $.post(`/admin/announcements`,
             data,
             function( data ) {
                 window.location.reload();
             }
         ).fail( function(data) {
             $('#toastHeader').html("Error");
-            $('#toastBody').html("Assignment creation error");
+            $('#toastBody').html("Announcement creation error");
             $('#liveToast').toast('show');
         });
     })
@@ -137,10 +137,10 @@
         var ids = e.target.id.split('-');
         var groupId = ids[1];
         var postId = ids[2]
-        res = confirm("delete assignment?");
+        res = confirm("delete announcement?");
         if (!res) return;
         $.ajax({
-            url: `/admin/assignments/`,
+            url: `/admin/announcements/`,
             type: 'DELETE',
             contentType: 'application/json',
             data: JSON.stringify({ groupId, postId }),
@@ -162,6 +162,7 @@
 
         var newGroupId = $(`#group-select-${groupId}-${postId}`).val()
         var newPostId = $(`#post-select-${groupId}-${postId}`).val()
+
         var openVal = $(`#open-time-${groupId}-${postId}`).val();
         var closeVal = $(`#close-time-${groupId}-${postId}`).val();
         var startVal = $(`#active-start-time-${groupId}-${postId}`).val();
@@ -183,7 +184,7 @@
         }
 
         $.ajax({
-            url: `/admin/assignments/`,
+            url: `/admin/announcements/`,
             type: 'PUT',
             contentType: 'application/json',
             data: JSON.stringify(data),

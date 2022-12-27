@@ -1,4 +1,4 @@
-import { Assignment, Course, CourseDate, User, PostGroup, UserGroups, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, AssignmentGroup } from "../models";
+import { Assignment, Course, CourseDate, User, PostGroup, UserGroups, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, AssignmentGroup, AnnouncementGroup } from "../models";
 
 export interface DbClient {
     connection: any;
@@ -53,4 +53,8 @@ export interface DbClient {
     getAssignmentGroups(): Promise<AssignmentGroup[]>;
     deleteAssignment(groupId: number, postId: number): Promise<boolean>;
     updateAssignmentGroup(oldIds: {groupId: number, postId: number}, assignmentGroup: AssignmentGroup): Promise<boolean>;
+    getAnnouncementGroups(): Promise<AnnouncementGroup[]>;
+    createAnnouncementGroup(announcementGroup: AnnouncementGroup): Promise<boolean>;
+    deleteAnnouncement(groupId: number, postId: number): Promise<boolean>;
+    updateAnnouncementGroup(oldIds: {groupId: number, postId: number}, announcementGroup: AnnouncementGroup): Promise<boolean>;
 }

@@ -9,6 +9,7 @@ import { makeCourseName } from '../helpers';
 import { Assignment } from '../../models';
 import posts from './posts';
 import assignments from './assignments';
+import announcements from './announcements';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
     const router = express.Router()
@@ -26,6 +27,9 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     router.use('/users', users(dbClient));
 
     router.use('/assignments', assignments(dbClient));
+
+    router.use('/announcements', announcements(dbClient));
+
 
     // router.get('/assignments', async (req: Request, res: Response) => {
     //     const courses = await dbClient.getCourses();

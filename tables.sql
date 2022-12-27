@@ -67,6 +67,13 @@ CREATE TABLE assignments (
 	url_link TEXT
 );
 
+CREATE TABLE posts (
+	id SERIAL PRIMARY KEY,	
+	title VARCHAR (50),
+	body TEXT,
+	url_link TEXT
+);
+
 -- open/close - when assignment starts and ends
 -- active start/end - when the link is active/inactive
 -- visible start/end? - when assignment can be seen
@@ -82,12 +89,19 @@ CREATE TABLE assignment_group (
 CREATE INDEX assignment_group_post_id_idx ON assignment_group (post_id);
 CREATE INDEX assignment_group_group_id_idx ON assignment_group (group_id);
 
-CREATE TABLE posts (
-	id SERIAL PRIMARY KEY,	
-	title VARCHAR (50),
-	body TEXT,
-	url_link TEXT
+-- open/close - when assignment starts and ends
+-- active start/end - when the link is active/inactive
+CREATE TABLE announcement_group (
+	post_id integer REFERENCES posts (id) ON DELETE CASCADE,
+	group_id integer REFERENCES groups (id) ON DELETE CASCADE,
+	open_time timestamptz,
+	close_time timestamptz,
+	active_start_time timestamptz,
+	active_end_time timestamptz,
+	PRIMARY KEY(post_id, group_id)
 );
+CREATE INDEX announcement_group_post_id_idx ON announcement_group (post_id);
+CREATE INDEX announcement_group_group_id_idx ON announcement_group (group_id);
 
 CREATE TABLE post_group (
 	post_id integer REFERENCES posts (id) ON DELETE CASCADE,
