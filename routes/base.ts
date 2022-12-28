@@ -1,7 +1,7 @@
 import express, { NextFunction, Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import { DbClient } from '../db/dbClient';
-import { Alert, Assignment, CalendarEvent, Course, CourseDate, User } from '../models';
+import { Alert, Assignment, CalendarEvent, Course, CourseDate, Post, PostGroup, User } from '../models';
 import {  authCheckMiddleware, rollCheckMiddleware } from '../middleware/auth';
 import session from 'express-session';
 import { renderFile } from '../views/helper';
@@ -56,23 +56,34 @@ export default function (dbClient: DbClient) {
 
         // build calendar events
         // course assignments
-        const groupIds = courses.map(course => course.groupId);
-        const userAssignments = await dbClient.getAssignments(groupIds);
-        console.log(groupIds)
+        const groups = await dbClient.getGroups(userId);
+        var userAssignments: (Post & PostGroup)[] = []
+        for (const group of groups) {
+            var fullPosts = await dbClient.getFullPosts(group.id as number, 2);
+            userAssignments = [...userAssignments, ...fullPosts];
+        }
 
         var colorIndex = 0;
         const userAssignmentsEvents: CalendarEvent[] = userAssignments.map((courseAssignment) => {
-            const singleDayAssignment = new Date(courseAssignment.start_time).setHours(0,0,0,0) == new Date(courseAssignment.end_time).setHours(0,0,0,0)
+            const singleDayAssignment = new Date(courseAssignment.openTime as Date).setHours(0,0,0,0) == new Date(courseAssignment.closeTime as Date).setHours(0,0,0,0)
             // choose a different assignment color only for multiday assignments
             if (!singleDayAssignment) {
                 colorIndex += 1;
             }
+
+            const today = new Date();
+            var isActive = false;
+            if (courseAssignment.activeStartTime && courseAssignment.activeEndTime) 
+                isActive = courseAssignment.activeStartTime < today && courseAssignment.activeEndTime > today;
+            else if (courseAssignment.activeStartTime)
+                isActive = true;
+
             return {
-                    title: courseAssignment.title,
-                    start: courseAssignment.start_time.toISOString(),
-                    end: courseAssignment.end_time.toISOString(),
+                    title: courseAssignment.title as string,
+                    start: courseAssignment.openTime?.toISOString(),
+                    end: courseAssignment.closeTime?.toISOString(),
                     color: calendarEventColors[0].assignment[colorIndex%2],
-                    url: courseAssignment.start_time < new Date() ? courseAssignment.url_link : undefined
+                    url: isActive ? courseAssignment.link : undefined
                 }
         })
 

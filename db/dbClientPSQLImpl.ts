@@ -19,17 +19,19 @@ class DbClientPSQLImpl implements DbClient {
     )
   }
 
-  async createAnnouncementGroup(announcementGroup: AnnouncementGroup): Promise<boolean> {
-    const cs = new this.pg.helpers.ColumnSet(['post_id', 'group_id', 'open_time', 'close_time', 'active_start_time', 'active_end_time'], {table: 'announcement_group'});
-    const values = {
-      post_id: announcementGroup.postId,
-      group_id: announcementGroup.groupId,
-      open_time: announcementGroup.openTime,
-      close_time: announcementGroup.closeTime,
-      active_start_time: announcementGroup.activeStartTime,
-      active_end_time: announcementGroup.activeEndTime,
-    }
-    const query = this.pg.helpers.insert(values, cs);
+  async updatePostGroup(oldIds: {groupId: number, postId: number}, postGroup: PostGroup): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['post_id', 'group_id', 'open_time', 'close_time', 'active_start_time', 'active_end_time', 'post_type_id']);
+    const data = {
+      post_id: postGroup.postId,
+      group_id: postGroup.groupId,
+      open_time: postGroup.openTime,
+      close_time: postGroup.closeTime,
+      active_start_time: postGroup.activeStartTime,
+      active_end_time: postGroup.activeEndTime,
+      post_type_id: postGroup.postTypeId
+    };
+    const condition = pgp.as.format(' WHERE post_id = $1 and group_id = $2 and post_type_id = $3', [oldIds.postId, oldIds.groupId, postGroup.postTypeId]);
+    const query = this.pg.helpers.update(data, cs, 'post_group') + condition;
     return this.connection.none(query).then((data: any) => {
       return true;
     }).catch((error: any) => {
@@ -38,9 +40,9 @@ class DbClientPSQLImpl implements DbClient {
     });
   }
 
-  async deleteAnnouncement(groupId: number, postId: number): Promise<boolean> {
-    var query = 'delete from announcement_group where group_id = $1 and post_id = $2'
-    return this.connection.none(query, [groupId, postId])
+  async deletePostGroup(groupId: number, postId: number, postTypeId: number): Promise<boolean> {
+    var query = 'delete from post_group where group_id = $1 and post_id = $2 and post_type_id = $3'
+    return this.connection.none(query, [groupId, postId, postTypeId])
     .then((data: any) => {
       return true;
     })
@@ -49,33 +51,15 @@ class DbClientPSQLImpl implements DbClient {
     })
   }
 
-  async updateAnnouncementGroup(oldIds: { groupId: number; postId: number; }, announcementGroup: AnnouncementGroup): Promise<boolean> {
-    const cs = new this.pg.helpers.ColumnSet(['post_id', 'group_id', 'open_time', 'close_time', 'active_start_time', 'active_end_time']);
-    const data = {
-      post_id: announcementGroup.postId,
-      group_id: announcementGroup.groupId,
-      open_time: announcementGroup.openTime,
-      close_time: announcementGroup.closeTime,
-      active_start_time: announcementGroup.activeStartTime,
-      active_end_time: announcementGroup.activeEndTime,
-    };
-    const condition = pgp.as.format(' WHERE post_id = $1 and group_id = $2', [oldIds.postId, oldIds.groupId]);
-    const query = this.pg.helpers.update(data, cs, 'announcement_group') + condition;
-    return this.connection.none(query).then((data: any) => {
-      return true;
-    }).catch((error: any) => {
-      console.log(error)
-      return false;
-    });
-  }
-
-  async getAnnouncementGroups(): Promise<AnnouncementGroup[]> {
+  async getPostGroups(postTypeId: number): Promise<PostGroup[]> {
     return await this.connection.any({
-      name: 'getAnnouncementGroups',
-      text: `SELECT ag.post_id "postId", ag.group_id "groupId", ag.open_time "openTime", ag.close_time "closeTime", ag.active_start_time "activeStartTime", ag.active_end_time "activeEndTime"
-              FROM announcement_group ag
-              order by ag.open_time DESC`,
-    }).then((data: AnnouncementGroup[]) => {
+      name: 'getPostGroups',
+      text: `SELECT pg.post_id "postId", pg.group_id "groupId", pg.open_time "openTime", pg.close_time "closeTime",
+             pg.active_start_time "activeStartTime", pg.active_end_time "activeEndTime", pg.post_type_id "postTypeId"
+             FROM post_group pg
+             WHERE pg.post_type_id = $1
+             order by pg.open_time DESC`,
+    }, [postTypeId]).then((data: PostGroup[]) => {
       return data
     }).catch((error: any) => {
       console.log('ERROR:', error);
@@ -83,60 +67,16 @@ class DbClientPSQLImpl implements DbClient {
     });
   }
 
-  async updateAssignmentGroup(oldIds: {groupId: number, postId: number}, assignmentGroup: AssignmentGroup): Promise<boolean> {
-    const cs = new this.pg.helpers.ColumnSet(['post_id', 'group_id', 'open_time', 'close_time', 'active_start_time', 'active_end_time']);
-    const data = {
-      post_id: assignmentGroup.postId,
-      group_id: assignmentGroup.groupId,
-      open_time: assignmentGroup.openTime,
-      close_time: assignmentGroup.closeTime,
-      active_start_time: assignmentGroup.activeStartTime,
-      active_end_time: assignmentGroup.activeEndTime,
-    };
-    const condition = pgp.as.format(' WHERE post_id = $1 and group_id = $2', [oldIds.postId, oldIds.groupId]);
-    const query = this.pg.helpers.update(data, cs, 'assignment_group') + condition;
-    return this.connection.none(query).then((data: any) => {
-      return true;
-    }).catch((error: any) => {
-      console.log(error)
-      return false;
-    });
-  }
-
-  async deleteAssignment(groupId: number, postId: number): Promise<boolean> {
-    var query = 'delete from assignment_group where group_id = $1 and post_id = $2'
-    return this.connection.none(query, [groupId, postId])
-    .then((data: any) => {
-      return true;
-    })
-    .catch((error: any) => {
-      return false;
-    })
-  }
-
-  async getAssignmentGroups(): Promise<AssignmentGroup[]> {
-    return await this.connection.any({
-      name: 'getAssignmentGroups',
-      text: `SELECT ag.post_id "postId", ag.group_id "groupId", ag.open_time "openTime", ag.close_time "closeTime", ag.active_start_time "activeStartTime", ag.active_end_time "activeEndTime"
-              FROM public.assignment_group ag
-              order by ag.open_time DESC`,
-    }).then((data: AssignmentGroup[]) => {
-      return data
-    }).catch((error: any) => {
-      console.log('ERROR:', error);
-      return []
-    });
-  }
-
-  async createAssignmentGroup(assignmentGroup: AssignmentGroup): Promise<boolean> {
-    const cs = new this.pg.helpers.ColumnSet(['post_id', 'group_id', 'open_time', 'close_time', 'active_start_time', 'active_end_time'], {table: 'assignment_group'});
+  async createPostGroup(postGroup: PostGroup): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['post_id', 'group_id', 'open_time', 'close_time', 'active_start_time', 'active_end_time', 'post_type_id'], {table: 'post_group'});
     const values = {
-      post_id: assignmentGroup.postId,
-      group_id: assignmentGroup.groupId,
-      open_time: assignmentGroup.openTime,
-      close_time: assignmentGroup.closeTime,
-      active_start_time: assignmentGroup.activeStartTime,
-      active_end_time: assignmentGroup.activeEndTime,
+      post_id: postGroup.postId,
+      group_id: postGroup.groupId,
+      open_time: postGroup.openTime,
+      close_time: postGroup.closeTime,
+      active_start_time: postGroup.activeStartTime,
+      active_end_time: postGroup.activeEndTime,
+      post_type_id: postGroup.postTypeId
     }
     const query = this.pg.helpers.insert(values, cs);
     return this.connection.none(query).then((data: any) => {
@@ -410,20 +350,20 @@ class DbClientPSQLImpl implements DbClient {
     }); 
   }
 
-  async getPosts(groupId: number): Promise<PostGroup[]> {
+  async getFullPosts(groupId: number, postTypeId: number): Promise<(Post & PostGroup)[]> {
     return await this.connection.any({
-      name: 'getPosts',
-      text: `SELECT p.id "postId", pg.group_id "groupId",
-      pg.open_time "openTime", pg.close_time "closeTime",
-      pg.visible, p.title, p.body, p.url_link link
-      FROM post_group pg 
-      inner join posts p
-      on pg.post_id = p.id 
-      where pg.group_id = $1 
-      order by pg.open_time desc, pg.post_id desc`,
-      values: [groupId],
-    }).then((data: PostGroup[][]) => {
-      return data.flat();
+      name: 'getFullPosts',
+      text: `SELECT pg.post_id "postId", pg.group_id "groupId", pg.open_time "openTime", pg.close_time "closeTime",
+             pg.active_start_time "activeStartTime", pg.active_end_time "activeEndTime", pg.post_type_id "postTypeId",
+             p.title, p.body, p.url_link "link"
+             FROM post_group pg
+             join posts p 
+             on p.id = pg.post_id
+             where pg.group_id = $1 and pg.post_type_id = $2
+             order by pg.open_time DESC`,
+      values: [groupId, postTypeId],
+    }).then((data: (Post & PostGroup)[]) => {
+      return data;
     }).catch((error: any) => {
       console.log('ERROR:', error);
       return []

@@ -32,8 +32,6 @@ export interface DbClient {
     getTotalCourseDays(courseId: number, until?: Date): Promise<number>;
     getTotalUserSignIns(userId: number, courseId: number): Promise<number>;
     getUserSignInDates(userId: number, courseId: number): Promise<Date[]>;
-    getAllPosts(): Promise<Post[]>;
-    getPosts(groupId: number): Promise<PostGroup[]>;
     getCourseIds(userId: number, semesterId?: number): Promise<number[]>;
     createGroup(groupName: string): Promise<number>;
     getTests(): Promise<Test[]>;
@@ -46,15 +44,14 @@ export interface DbClient {
     getSemesters(semesterId?: number): Promise<Semester[]>;
     createUsers(users: any, ): Promise<number[]>;
     updateUserSettings(userSettings: (UserSettings & {userId: number})[]): Promise<boolean>;
+    
+    getAllPosts(): Promise<Post[]>;
+    getFullPosts(groupId: number, postTypeId: number): Promise<(Post & PostGroup)[]>
     createPost(post: Post): Promise<number>;
     updatePost(post: Post): Promise<boolean>;
     deletePost(postId: number): Promise<boolean>;
-    createAssignmentGroup(assignmentGroup: AssignmentGroup): Promise<boolean>;
-    getAssignmentGroups(): Promise<AssignmentGroup[]>;
-    deleteAssignment(groupId: number, postId: number): Promise<boolean>;
-    updateAssignmentGroup(oldIds: {groupId: number, postId: number}, assignmentGroup: AssignmentGroup): Promise<boolean>;
-    getAnnouncementGroups(): Promise<AnnouncementGroup[]>;
-    createAnnouncementGroup(announcementGroup: AnnouncementGroup): Promise<boolean>;
-    deleteAnnouncement(groupId: number, postId: number): Promise<boolean>;
-    updateAnnouncementGroup(oldIds: {groupId: number, postId: number}, announcementGroup: AnnouncementGroup): Promise<boolean>;
+    createPostGroup(postGroup: PostGroup): Promise<boolean>;
+    getPostGroups(postTypeId: number): Promise<PostGroup[]>;
+    deletePostGroup(groupId: number, postId: number, postTypeId: number): Promise<boolean>;
+    updatePostGroup(oldIds: {groupId: number, postId: number}, postGroup: PostGroup): Promise<boolean>;
 }
