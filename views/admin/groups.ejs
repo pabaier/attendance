@@ -41,7 +41,7 @@
     const addGroup = () => {
         var groupName = $("#groupName").val()
         $.ajax({
-            url: "/admin/users/groups",
+            url: "/admin/groups",
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({ groupName }),
@@ -56,7 +56,7 @@
 
     const deleteGroup = (e) => {
         $.ajax({
-            url: `/admin/users/groups/${e.target.value}`,
+            url: `/admin/groups/${e.target.value}`,
             type: 'DELETE',
             success: function(response) {
                 location.reload();
