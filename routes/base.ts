@@ -59,7 +59,7 @@ export default function (dbClient: DbClient) {
         const groups = await dbClient.getGroups(userId);
         var userAssignments: (Post & PostGroup)[] = []
         for (const group of groups) {
-            var fullPosts = await dbClient.getFullPosts(group.id as number, 2);
+            var fullPosts = await dbClient.getFullPosts([group.id as number], [2]);
             userAssignments = [...userAssignments, ...fullPosts];
         }
 

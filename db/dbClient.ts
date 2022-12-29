@@ -46,7 +46,7 @@ export interface DbClient {
     updateUserSettings(userSettings: (UserSettings & {userId: number})[]): Promise<boolean>;
     
     getAllPosts(): Promise<Post[]>;
-    getFullPosts(groupId: number, postTypeId: number): Promise<(Post & PostGroup)[]>
+    getFullPosts(groupIds: number[], postTypeIds: number[]): Promise<(Post & PostGroup)[]>
     createPost(post: Post): Promise<number>;
     updatePost(post: Post): Promise<boolean>;
     deletePost(postId: number): Promise<boolean>;

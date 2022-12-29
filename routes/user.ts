@@ -2,7 +2,7 @@ import express, { NextFunction, Request, Response } from 'express';
 import NodeCache from 'node-cache';
 import { authCheckMiddleware, resourceAccessMiddleware } from '../middleware/auth';
 import { DbClient } from '../db/dbClient';
-import { Alert, Course, Group, PostGroup, User } from '../models';
+import { Alert, Course, Group, Post, PostGroup, User } from '../models';
 import { signIn } from './helpers';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
@@ -30,34 +30,22 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
 
     router.get('/announcements', async (req: Request, res: Response) => {
         const userGroupIds = req.session.user?.groups as number[];
-        var posts: PostGroup[] = []
-        const today = new Date();
-        for (const id of userGroupIds) {
-            const unfilteredPosts: PostGroup[] = await dbClient.getPosts(id);
-            posts = posts.concat(unfilteredPosts.filter(post => post.visible).map(post => {
-                post.visible = post.openTime < today;
-                post.link =  post.visible ? post.link : '';
-                return post
-            }))
-        }
-
-        // earlier items in the list will show higher, which is what we want
-        // so they need to register as "less than" (-1) during the sort
-        // closed items always show lower in the list
-        const p = posts.sort((a: PostGroup, b:PostGroup) => {
-            const aIsEarlier = a.openTime < b.openTime;
-            const aIsOpen = a.openTime < today;
-            const bIsOpen = b.openTime < today;
-            if (aIsOpen && bIsOpen && aIsEarlier) return 1 // b shows up earlier/higher
-            if (aIsOpen && bIsOpen && !aIsEarlier) return -1 // a shows up earlier/higher
-            if (aIsOpen && !bIsOpen) return -1; // a shows up earlier/higher
-            if (!aIsOpen && bIsOpen) return 1; //b shows up earlier/hight
-            if (!aIsOpen && !bIsOpen && aIsEarlier) return 1
-            if (!aIsOpen && !bIsOpen && !aIsEarlier) return -1 
-            return 0
-        })
-        res.render('user/posts', { posts: p })
+        var announcements: (Post & PostGroup)[] = await dbClient.getFullPosts(userGroupIds, [1]);
+        var pinnedAnnouncements: (Post & PostGroup)[] = await dbClient.getFullPosts(userGroupIds, [3]);
+        announcements = filterPosts(announcements);
+        pinnedAnnouncements = filterPosts(pinnedAnnouncements);
+        res.render('user/posts', { pinnedAnnouncements, announcements })
     });
+
+    const filterPosts = (posts : (Post & PostGroup)[]) : (Post & PostGroup)[] => {
+        const today = new Date();
+        return posts.filter(post => post.openTime ? post.openTime < today : false).map(post => {
+            if ((post.activeStartTime && post.activeStartTime > today) || (post.activeEndTime && post.activeEndTime < today)) {
+                post.link = ''
+            }
+            return post
+        });
+    }
 
     router.post('/attendance', async (req: Request, res: Response) => {
         const result = parseInt(req.body.code) == myCache.get('code') as number

@@ -52,7 +52,7 @@
     <h3>Assignments</h3>
     <div class="container">
         <% assignmentGroups.forEach(ag => { %>
-            <div class=" mb-5 border-bottom border-5">
+            <div class="mb-5 border-bottom border-5">
                 <div class="row">
                     <div class="col-3">
                         <%- include('partials/group-select-dropdown', {groups: groups, selected: ag.groupId, id: `${ag.groupId}-${ag.postId}`}); %>

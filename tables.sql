@@ -79,7 +79,7 @@ CREATE TABLE post_types (
 	post_type VARCHAR (50)
 );
 INSERT INTO post_types(post_type)
-VALUES ("announcement"), ("assignment");
+VALUES ("announcement"), ("assignment"), ("pinned announcement");
 
 CREATE TABLE post_group (
 	post_id integer REFERENCES posts (id) ON DELETE CASCADE,

@@ -1,8 +1,18 @@
 <div class="jumbotron">
     <h1>Announcements</h1>
+    <div class="container posts mb-5 border-bottom border-5" id="posts">
+        <ul style="list-style-type: '📌 '";>
+            <% pinnedAnnouncements.forEach(post => { %>
+                <li>
+                    <%- include('post.ejs', {post: post}); %>
+                </li>
+            <% }) %>
+        </ul>
+    </div>
+
     <div class="container posts" id="posts">
         <ul>
-            <% posts.forEach(post => { %>
+            <% announcements.forEach(post => { %>
                 <li>
                     <%- include('post.ejs', {post: post}); %>
                 </li>

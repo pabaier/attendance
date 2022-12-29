@@ -1,7 +1,6 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
-import { Assignment, Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, AssignmentGroup, AnnouncementGroup } from '../models';
-import { makeUTCDateString } from '../routes/helpers';
+import { Assignment, Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post } from '../models';
 
 class DbClientPSQLImpl implements DbClient {
   connection: any;
@@ -350,19 +349,16 @@ class DbClientPSQLImpl implements DbClient {
     }); 
   }
 
-  async getFullPosts(groupId: number, postTypeId: number): Promise<(Post & PostGroup)[]> {
-    return await this.connection.any({
-      name: 'getFullPosts',
-      text: `SELECT pg.post_id "postId", pg.group_id "groupId", pg.open_time "openTime", pg.close_time "closeTime",
+  async getFullPosts(groupIds: number[], postTypeIds: number[]): Promise<(Post & PostGroup)[]> {
+    return await this.connection.any(`SELECT pg.post_id "postId", pg.group_id "groupId", pg.open_time "openTime", pg.close_time "closeTime",
              pg.active_start_time "activeStartTime", pg.active_end_time "activeEndTime", pg.post_type_id "postTypeId",
              p.title, p.body, p.url_link "link"
              FROM post_group pg
              join posts p 
              on p.id = pg.post_id
-             where pg.group_id = $1 and pg.post_type_id = $2
-             order by pg.open_time DESC`,
-      values: [groupId, postTypeId],
-    }).then((data: (Post & PostGroup)[]) => {
+             where pg.group_id in ($1:csv) and pg.post_type_id in ($2:csv)
+             order by pg.open_time DESC`, [groupIds, postTypeIds]
+    ).then((data: (Post & PostGroup)[]) => {
       return data;
     }).catch((error: any) => {
       console.log('ERROR:', error);
