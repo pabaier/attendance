@@ -450,19 +450,18 @@ class DbClientPSQLImpl implements DbClient {
   }
 
   async getTotalCourseDays(courseId: number, until?: Date): Promise<number> {
-    var values: (number | Date)[] = [courseId];
-    var text: string = 'SELECT * FROM course_dates where course_id = $1'
+    var values: any[] = [courseId];
+    var text: string = 'SELECT COUNT(course_id) FROM course_dates where course_id = $1'
     if (until) {
-      values.push(until.getTime());
-      text += ' and meeting <= to_timestamp(cast($2/1000 as bigint))'
+      values.push(Math.floor(until.getTime()/1000));
+      text += ' and meeting <= to_timestamp($2)'
     }
-    return await this.connection.any({
+    return await this.connection.one({
       name: 'getTotalCourseDays',
       text,
       values,
-      rowMode: 'array'
-    }).then((data: any) => {
-      return data.length;
+    }).then((data: {count: string}) => {
+      return parseInt(data.count);
     }).catch((error: any) => {
       console.log('ERROR:', error);
       return 0
