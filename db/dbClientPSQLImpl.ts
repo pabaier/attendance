@@ -1,6 +1,6 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
-import { Assignment, Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post } from '../models';
+import { Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post } from '../models';
 
 class DbClientPSQLImpl implements DbClient {
   connection: any;
@@ -292,31 +292,6 @@ class DbClientPSQLImpl implements DbClient {
       }) 
   }
 
-  async getUserAssignments(userId: number, groupIds?: number[]): Promise<Assignment[]> {
-    var query = `select a.id, a.title, a.start_time, a.end_time, a.url_link
-    from assignments a 
-    join assignment_group ag
-    on a.id = ag.assignment_id
-    join user_group ug
-    on ag.group_id = ug.group_id
-    where ug.user_id = $1`;
-
-    if (groupIds) {
-      query += ` and ug.group_id in (${groupIds.join(',')})`
-    }
-
-    query += ` ORDER BY a.start_time`;
-
-    return this.connection.any(query, [userId])
-      .then((data: Assignment[]) => {
-        return data
-      })
-      .catch((error: any) => {
-        console.log('ERROR:', error);
-        return [];
-      })  
-  }
-
   async createGroup(groupName: string): Promise<number> {
     const cs = new this.pg.helpers.ColumnSet(['group_name'], {table: 'groups'});
     const query = this.pg.helpers.insert({group_name: groupName}, cs) + ' RETURNING id';
@@ -505,54 +480,6 @@ class DbClientPSQLImpl implements DbClient {
       return []
     }); 
   }
-
-  async addAssignmentToCourse(assignmentCourse: {assignment_id: number, course_id: number}[]): Promise<boolean> {
-    const cs = new this.pg.helpers.ColumnSet(['assignment_id', 'course_id'], {table: 'course_assignments'});
-    const query = this.pg.helpers.insert(assignmentCourse, cs);
-    await this.connection.any(query);
-    return true;
-  }
-
-  async addAssignments(assignments: Assignment[]): Promise<{id: number}[]> {
-    const cs = new this.pg.helpers.ColumnSet(['title', 'start_time', 'end_time', 'url_link'], {table: 'assignments'});
-    const query = this.pg.helpers.insert(assignments, cs) + ' RETURNING id';
-    const res: {id: number}[] = await this.connection.many(query);
-    return res;
-  }
-
-  async updateAssignment(assignment: Assignment): Promise<boolean> {
-    const a = assignment
-    var query = `
-      UPDATE assignments
-      SET title = $1, start_time = $2, end_time = $3, url_link = $4
-      WHERE id = $5;
-    `
-    return this.connection.none(query, [a.title, a.start_time, a.end_time, a.url_link, a.id])
-    .then((data: any) => {
-      return true;
-    })
-    .catch((error: any) => {
-      return false;
-    })
-  }
-
-  // (Course & Assignment)[]
-  async getAssignments(groupIds: number[]): Promise<Assignment[]> {
-    var query = `select a.id, a.title, a.start_time, a.end_time, a.url_link
-    from assignment_group ga
-    inner join assignments a
-    on ga.assignment_id = a.id
-    where ga.group_id in (${groupIds.join(',')})
-    ORDER BY a.start_time`;
-    
-    return this.connection.any(query)
-      .then((data: Assignment[]) => {
-        return data
-      })
-      .catch((error: any) => {
-        console.log('ERROR:', error);
-        return [];
-      })  }
 
   deleteUserFromGroup(groupName: string, userId: number): boolean {
     return this.connection.none('DELETE FROM user_group WHERE user_id = $1 AND group_name = $2', [userId, groupName])

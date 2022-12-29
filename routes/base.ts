@@ -1,9 +1,8 @@
 import express, { NextFunction, Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import { DbClient } from '../db/dbClient';
-import { Alert, Assignment, CalendarEvent, Course, CourseDate, Post, PostGroup, User } from '../models';
-import {  authCheckMiddleware, rollCheckMiddleware } from '../middleware/auth';
-import session from 'express-session';
+import { CalendarEvent, Post, PostGroup } from '../models';
+import {  authCheckMiddleware } from '../middleware/auth';
 import { renderFile } from '../views/helper';
 import { calendarEventColors } from './helpers';
 

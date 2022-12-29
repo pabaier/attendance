@@ -59,14 +59,6 @@ CREATE TABLE course_dates (
 );
 CREATE INDEX course_dates_course_id_idx ON course_dates (course_id);
 
-CREATE TABLE assignments (
-	id SERIAL PRIMARY KEY,
-	title VARCHAR (50),
-	start_time timestamptz,
-	end_time timestamptz,
-	url_link TEXT
-);
-
 CREATE TABLE posts (
 	id SERIAL PRIMARY KEY,	
 	title VARCHAR (50),
@@ -92,46 +84,6 @@ CREATE TABLE post_group (
 	PRIMARY KEY(post_id, group_id, post_type_id)
 );
 CREATE INDEX post_group_group_id_post_type_id_idx ON post_group (group_id, post_type_id);
-
--- open/close - when assignment starts and ends
--- active start/end - when the link is active/inactive
--- visible start/end? - when assignment can be seen
--- CREATE TABLE assignment_group (
--- 	post_id integer REFERENCES posts (id) ON DELETE CASCADE,
--- 	group_id integer REFERENCES groups (id) ON DELETE CASCADE,
--- 	open_time timestamptz,
--- 	close_time timestamptz,
--- 	active_start_time timestamptz,
--- 	active_end_time timestamptz,
--- 	PRIMARY KEY(post_id, group_id)
--- );
--- CREATE INDEX assignment_group_post_id_idx ON assignment_group (post_id);
--- CREATE INDEX assignment_group_group_id_idx ON assignment_group (group_id);
-
--- open/close - when assignment starts and ends
--- active start/end - when the link is active/inactive
--- CREATE TABLE announcement_group (
--- 	post_id integer REFERENCES posts (id) ON DELETE CASCADE,
--- 	group_id integer REFERENCES groups (id) ON DELETE CASCADE,
--- 	open_time timestamptz,
--- 	close_time timestamptz,
--- 	active_start_time timestamptz,
--- 	active_end_time timestamptz,
--- 	PRIMARY KEY(post_id, group_id)
--- );
--- CREATE INDEX announcement_group_post_id_idx ON announcement_group (post_id);
--- CREATE INDEX announcement_group_group_id_idx ON announcement_group (group_id);
-
--- CREATE TABLE post_group (
--- 	post_id integer REFERENCES posts (id) ON DELETE CASCADE,
--- 	group_id integer REFERENCES groups (id) ON DELETE CASCADE,
--- 	open_time timestamptz,
--- 	close_time timestamptz,
--- 	visible boolean DEFAULT TRUE,
--- 	PRIMARY KEY(post_id, group_id)
--- );
--- CREATE INDEX post_group_post_id_idx ON post_group (post_id);
--- CREATE INDEX post_group_group_id_idx ON post_group (group_id);
 
 CREATE TABLE test_questions (
 	id SERIAL PRIMARY KEY,

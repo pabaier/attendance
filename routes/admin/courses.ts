@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import { DbClient } from '../../db/dbClient';
 import { renderFile } from '../../views/helper';
-import { Course, CourseDate, UserGroups, CalendarEvent, Assignment, User } from '../../models';
+import { Course, UserGroups, CalendarEvent, User } from '../../models';
 import { makeCourseName, makeUTCDateString, getPresentAbsentDates } from '../helpers';
 import dbClientPSQLImpl from '../../db/dbClientPSQLImpl';
 

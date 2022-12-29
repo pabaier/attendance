@@ -1,7 +1,4 @@
 import Alert from './Alert';
-import AnnouncementGroup from './AnnouncementGroup';
-import Assignment from './Assignment';
-import AssignmentGroup from './AssignmentGroup';
 import CalendarEvent from './CalendarEvent';
 import Course from './Course';
 import CourseAssignment from './CourseAssignment';
@@ -20,9 +17,6 @@ import UserTest from './UserTest';
 
 export {
     Alert,
-    AnnouncementGroup,
-    Assignment,
-    AssignmentGroup,
     CalendarEvent,
     Course,
     CourseAssignment,

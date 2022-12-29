@@ -5,8 +5,6 @@ import { authCheckMiddleware, rollCheckMiddleware } from '../../middleware/auth'
 import courses from './courses';
 import users from './users';
 import dates from './dates';
-import { makeCourseName } from '../helpers';
-import { Assignment } from '../../models';
 import posts from './posts';
 import assignments from './assignments';
 import announcements from './announcements';
