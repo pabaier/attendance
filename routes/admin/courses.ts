@@ -1,9 +1,8 @@
 import express, { Request, Response } from 'express';
 import { DbClient } from '../../db/dbClient';
 import { renderFile } from '../../views/helper';
-import { Course, UserGroups, CalendarEvent, User } from '../../models';
-import { makeCourseName, makeUTCDateString, getPresentAbsentDates } from '../helpers';
-import dbClientPSQLImpl from '../../db/dbClientPSQLImpl';
+import { Course, User } from '../../models';
+import { makeCourseName, getPresentAbsentDates } from '../helpers';
 
 export default function (dbClient: DbClient) {
     const router = express.Router()
@@ -72,71 +71,9 @@ export default function (dbClient: DbClient) {
         } 
 
         const usersList = renderFile('./views/admin/partials/users-list.ejs', { users: userWithAbsences })
-        const dates: Date[] = await dbClientPSQLImpl.getCourseDates(courseId);
-        const courseDateEvents = dates.map((date: Date) => {
-            const event: CalendarEvent = {
-                title: 'Class',
-                start: date.toISOString().split('T')[0]
-            }
-            return event
-        })
-        const calendar = renderFile('./views/partials/calendar.ejs', {events: courseDateEvents});
 
-        const assignmentsList = await dbClientPSQLImpl.getAssignments([course.groupId]);
-        const assignmentItems = assignmentsList.map(assignment => {
-            const startTime = makeUTCDateString(assignment.start_time);
-            const endTime = makeUTCDateString(assignment.end_time);
-            var assignmentAdjustedDates = {
-                ...assignment,
-                start_time: startTime,
-                end_time: endTime
-            }
-            return renderFile('./views/admin/partials/assignment-item.ejs', {assignment: assignmentAdjustedDates})
-        })
-        const assignments = renderFile('./views/admin/partials/assignment-list.ejs', {assignmentItems})
-
-        res.render('admin/course', { courseId, courseName: makeCourseName(course), usersList, calendar, assignments, alert: req.session.alert });
+        res.render('admin/course', { courseId, courseName: makeCourseName(course), usersList });
     })
-
-    router.post('/:courseId/users', async (req: Request, res: Response) => {
-        const courseId: number = parseInt(req.params.courseId);
-        const course: Course = await dbClient.getCourse(courseId)
-        const userIds: number[] = req.body.userIds;
-        const userGroups: UserGroups[] = userIds.map(userId => {
-            return {userId, groupIds: [course.groupId]}
-        })
-        const outcome = await dbClient.addUsersToGroups(userGroups);
-        if (outcome)
-            return res.send('ok')
-        else
-            return res.send('fail') // this should be a 500
-    })
-
-    router.put('/:courseId/assignments', async (req: Request, res: Response) => {
-        const assignment: Assignment = {
-            id: parseInt(req.params.courseId),
-            title: req.body.title,
-            start_time: new Date(req.body.start),
-            end_time: new Date(req.body.end),
-            url_link: req.body.url,
-        }
-        const outcome = await dbClient.updateAssignment(assignment)
-        if (outcome)
-            return res.send('ok')
-        else
-            return res.send('fail') // this should be a 500
-    })
-
-    router.get('/:courseId/assignments', async (req: Request, res: Response) => {
-        const courseId = parseInt(req.params.courseId);
-        const course = await dbClient.getCourse(courseId);
-        const assignments = await dbClientPSQLImpl.getAssignments([course.groupId]);
-        const assignmentItems = assignments.map(assignment => {
-            renderFile('./views/admin/partials/assignment-item.ejs', {assignment})
-        })
-        const assignmentList = renderFile('./views/admin/partials/assignment-list.ejs', {assignmentItems})
-        res.render('admin/assignments');
-    });
 
     router.delete('/:courseId', async (req: Request, res: Response) => {
         const courseId = parseInt(req.params.courseId)
@@ -144,12 +81,6 @@ export default function (dbClient: DbClient) {
         const groupDel = await dbClient.deleteGroup(course.groupId);
         const result: boolean = await dbClient.deleteCourse(courseId)
 
-        res.send('ok')
-    })
-
-    router.delete('/:courseId/:userId', (req: Request, res: Response) => {
-        const groupName = `course-${req.params.courseId}`;
-        const result: boolean= dbClient.deleteUserFromGroup(groupName, parseInt(req.params.userId))
         res.send('ok')
     })
 

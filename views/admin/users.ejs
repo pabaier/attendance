@@ -54,19 +54,6 @@
         }
     });
 
-    $('#add-class-btn').click(function() {
-        var courseId = $('#course-select').val()
-        var userIds = []
-        $('.userc:checkbox:checked').each(function() {userIds.push(this.value)})
-        $.post(`/admin/courses/${courseId}/users`, { userIds }, function( data ) {
-            if (data) {
-                window.location.href=`/admin/courses/${courseId}`;
-            } else {
-                console.log('nope')
-            }
-        })
-    })
-
     $('#group-select').change(function(e) {
         const group = e.target.value;
         if (group == '-1') {

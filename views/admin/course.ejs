@@ -5,38 +5,12 @@
     <a class="btn btn-primary" data-bs-toggle="collapse" href="#users-collapse" role="button" aria-expanded="false" aria-controls="collapseExample">
         Users
     </a>
-    <a class="btn btn-primary" data-bs-toggle="collapse" href="#assignments-collapse" role="button" aria-expanded="false" aria-controls="collapseExample">
-        Assignments
-    </a>
-    <a class="btn btn-primary" data-bs-toggle="collapse" href="#calendar-collapse" role="button" aria-expanded="false" aria-controls="collapseExample">
-        Calendar
-    </a>
     <div class="collapse show" id="users-collapse">
         <%- usersList %>
 
         <div class="my-3">
             <h5>Sign In User(s)</h5>
             <button type="submit" id="bulk-sign-in-btn" value="<%=courseId%>" class="btn btn-primary my-2">Sign In</button>
-        </div>
-
-        <div class="my-5">
-            <h5>Add User(s)</h5>
-            <form id="bulk-add-form" action="/admin/users/add" method="POST">
-                <textarea class="form-control my-2" name="text" id="bulk-add-area" placeholder="Add Users&#10;Email|FirstName|LastName|Role1,Role2|Group1,Group2" aria-label="Email" aria-describedby="basic-addon1"></textarea>
-                <button type="submit" id="bulk-add-btn" class="btn btn-primary my-2">Submit</button>
-            </form>
-        </div>
-    </div>
-    <div class="collapse" id="assignments-collapse">
-        <%-assignments%>
-    </div>
-    <div class="collapse show" id="calendar-collapse">
-        <div class="container text-center" id='calendar-container'>
-            <div class="row justify-content-lg-center">
-                <div class="col col-lg-7">
-                    <%-calendar%>
-                  </div>
-            </div>
         </div>
     </div>
 </div>
@@ -47,41 +21,14 @@
         $('.userc:checkbox:checked').each(function() {userIds.push(this.value)})
 
         $.post(`/admin/courses/${e.target.value}/signin`, {userIds}, function( data ) {
-            if (data) {
-                console.log(data);
-            }
-            else
-                console.log('no')
-        })
+            $('#toastHeader').html("Success");
+            $('#toastBody').html("Users Signed In Successfully");
+            $('#liveToast').toast('show');
+        }).fail( function(data) {
+            $('#toastHeader').html("Sign in Error");
+            $('#toastBody').html(data);
+            $('#liveToast').toast('show');
+        });
     })
-
-    const editField = (e) => {
-        e.target.readOnly = false;
-        // e.target.removeAttribute('readonly')
-    }
-
-    const doneEditField = (e) => {
-        e.target.readOnly = true;
-    }
-
-    const saveChanges = (e, id) => {
-        const title = $(`#assignment-title-${id}`).val();
-        const start = $(`#assignment-start-${id}`).val();
-        const end = $(`#assignment-end-${id}`).val();
-        const url = $(`#assignment-url-${id}`).val();
-        $.ajax({
-            url: `/admin/courses/${id}/assignments`,
-            type: 'PUT',
-            contentType: 'application/json',
-            data: JSON.stringify({ title, start, end, url }),
-            success: function( data ) {
-            if (data) {
-                console.log('ok')
-                // window.location.reload();
-            } else {
-                console.log('nope')
-            }}
-        })
-    }
 
 </script>
