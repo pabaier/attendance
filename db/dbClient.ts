@@ -1,4 +1,4 @@
-import { Course, CourseDate, User, PostGroup, UserGroups, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post } from "../models";
+import { Course, CourseDate, User, PostGroup, UserGroups, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, PostType } from "../models";
 
 export interface DbClient {
     connection: any;
@@ -53,7 +53,8 @@ export interface DbClient {
     updatePost(post: Post): Promise<boolean>;
     deletePost(postId: number): Promise<boolean>;
     createPostGroup(postGroup: PostGroup): Promise<boolean>;
-    getPostGroups(postTypeId: number): Promise<PostGroup[]>;
+    getPostGroups(postTypeIds: number[]): Promise<PostGroup[]>;
     deletePostGroup(groupId: number, postId: number, postTypeId: number): Promise<boolean>;
-    updatePostGroup(oldIds: {groupId: number, postId: number}, postGroup: PostGroup): Promise<boolean>;
+    updatePostGroup(oldIds: {groupId: number, postId: number, postTypeId: number}, postGroup: PostGroup): Promise<boolean>;
+    getPostTypes(): Promise<PostType[]>;
 }

@@ -3,13 +3,18 @@
     <h1>Announcements</h1>
     <h3>New Announcement</h3>
     <div class="container">
-        <div class="row">
-            <div class="col">
-                Group
+        <div class="row  my-2">
+            <div class="col-3">
+                <%- groupsDropdown %>
             </div>
-            <div class="col">
-                Post
+            <div class="col-3">
+                <%- postsDropdown %>
             </div>
+            <div class="col-3">
+                <%- postTypesDropdown %>
+            </div>
+        </div>
+        <div class="row  my-2">
             <div class="col-2">
                 Open
             </div>
@@ -25,12 +30,6 @@
             <div class="col"></div>
         </div>
         <div class="row  mb-5">
-            <div class="col">
-                <%- groupsDropdown %>
-            </div>
-            <div class="col">
-                <%- postsDropdown %>
-            </div>
             <div class="col-2">
                 <input class="form-control my-2" type="datetime-local" id="open-time" name="meeting-time">
             </div>
@@ -43,7 +42,7 @@
             <div class="col-2">
                 <input class="form-control my-2" type="datetime-local" id="active-end-time" name="meeting-time">
             </div>
-            <div class="col">
+            <div class="col-2">
                 <button type="submit" id="submit" class="btn btn-primary form-control my-2">Submit</button>
             </div>
         </div>
@@ -55,14 +54,17 @@
             <div class="mb-5 border-bottom border-5">
                 <div class="row">
                     <div class="col-3">
-                        <%- include('partials/group-select-dropdown', {groups: groups, selected: ag.groupId, id: `${ag.groupId}-${ag.postId}`}); %>
+                        <%- include('partials/group-select-dropdown', {groups: groups, selected: ag.groupId, id: `${ag.groupId}-${ag.postId}-${ag.postTypeId}`}); %>
                     </div>
                     <div class="col-3">
-                        <%- include('partials/post-select-dropdown', {posts: posts, selected: ag.postId, id: `${ag.groupId}-${ag.postId}`}); %>
+                        <%- include('partials/post-select-dropdown', {posts: posts, selected: ag.postId, id: `${ag.groupId}-${ag.postId}-${ag.postTypeId}`}); %>
+                    </div>
+                    <div class="col-3">
+                        <%- include('partials/post-type-select-dropdown', {postTypes: postTypes, selected: ag.postTypeId, id: `${ag.groupId}-${ag.postId}-${ag.postTypeId}`}); %>
                     </div>
                     <div class="col-1">
-                        <button type="button" id="save-<%=ag.groupId%>-<%=ag.postId%>" class="btn-save btn btn-primary btn-sm my-2">&#x2713</button>
-                        <button type="button" id="del-<%=ag.groupId%>-<%=ag.postId%>" class="btn-del btn btn-primary btn-sm my-2">&#x2715</button>
+                        <button type="button" id="save-<%=ag.groupId%>-<%=ag.postId%>-<%=ag.postTypeId%>" class="btn-save btn btn-primary btn-sm my-2">&#x2713</button>
+                        <button type="button" id="del-<%=ag.groupId%>-<%=ag.postId%>-<%=ag.postTypeId%>" class="btn-del btn btn-primary btn-sm my-2">&#x2715</button>
                     </div>
                 </div>
                 <div class="row">
@@ -81,16 +83,16 @@
                 </div>
                 <div class="row mb-5">
                     <div class="col-3">
-                        <input class="form-control my-2" type="datetime-local" id="open-time-<%=ag.groupId%>-<%=ag.postId%>" value="<%=ag.openTime%>" name="meeting-time">
+                        <input class="form-control my-2" type="datetime-local" id="open-time-<%=ag.groupId%>-<%=ag.postId%>-<%=ag.postTypeId%>" value="<%=ag.openTime%>" name="meeting-time">
                     </div>
                     <div class="col-3">
-                        <input class="form-control my-2" type="datetime-local" id="close-time-<%=ag.groupId%>-<%=ag.postId%>" value="<%=ag.closeTime%>" name="meeting-time">
+                        <input class="form-control my-2" type="datetime-local" id="close-time-<%=ag.groupId%>-<%=ag.postId%>-<%=ag.postTypeId%>" value="<%=ag.closeTime%>" name="meeting-time">
                     </div>
                     <div class="col-3">
-                        <input class="form-control my-2" type="datetime-local" id="active-start-time-<%=ag.groupId%>-<%=ag.postId%>" value="<%=ag.activeStartTime%>" name="meeting-time">
+                        <input class="form-control my-2" type="datetime-local" id="active-start-time-<%=ag.groupId%>-<%=ag.postId%>-<%=ag.postTypeId%>" value="<%=ag.activeStartTime%>" name="meeting-time">
                     </div>
                     <div class="col-3">
-                        <input class="form-control my-2" type="datetime-local" id="active-end-time-<%=ag.groupId%>-<%=ag.postId%>" value="<%=ag.activeEndTime%>" name="meeting-time">
+                        <input class="form-control my-2" type="datetime-local" id="active-end-time-<%=ag.groupId%>-<%=ag.postId%>-<%=ag.postTypeId%>" value="<%=ag.activeEndTime%>" name="meeting-time">
                     </div>
                 </div>
             </div>
@@ -102,6 +104,7 @@
     $('#submit').click(e => {
         var groupId = $('#group-select-0').val()
         var postId = $('#post-select-0').val()
+        var postTypeId = $('#post-type-select-0').val()
 
         var openVal = $(`#open-time`).val();
         var closeVal = $(`#close-time`).val();
@@ -115,6 +118,7 @@
         var data = {
             groupId,
             postId,
+            postTypeId,
             open: open ? open.toISOString() : undefined,
             close: close?  close.toISOString() : undefined,
             start: start ? start.toISOString() : undefined,
@@ -137,13 +141,15 @@
         var ids = e.target.id.split('-');
         var groupId = ids[1];
         var postId = ids[2]
+        var postTypeId = ids[3]
+
         res = confirm("delete announcement?");
         if (!res) return;
         $.ajax({
             url: `/admin/announcements/`,
             type: 'DELETE',
             contentType: 'application/json',
-            data: JSON.stringify({ groupId, postId }),
+            data: JSON.stringify({ groupId, postId, postTypeId }),
             success: function(response) {
                 location.reload();
             },
@@ -159,14 +165,16 @@
         var ids = e.target.id.split('-');
         var groupId = ids[1];
         var postId = ids[2]
+        var postTypeId = ids[3]
 
-        var newGroupId = $(`#group-select-${groupId}-${postId}`).val()
-        var newPostId = $(`#post-select-${groupId}-${postId}`).val()
+        var newGroupId = $(`#group-select-${groupId}-${postId}-${postTypeId}`).val()
+        var newPostId = $(`#post-select-${groupId}-${postId}-${postTypeId}`).val()
+        var newPostTypeId = $(`#post-type-select-${groupId}-${postId}-${postTypeId}`).val()
 
-        var openVal = $(`#open-time-${groupId}-${postId}`).val();
-        var closeVal = $(`#close-time-${groupId}-${postId}`).val();
-        var startVal = $(`#active-start-time-${groupId}-${postId}`).val();
-        var endVal = $(`#active-end-time-${groupId}-${postId}`).val()
+        var openVal = $(`#open-time-${groupId}-${postId}-${postTypeId}`).val();
+        var closeVal = $(`#close-time-${groupId}-${postId}-${postTypeId}`).val();
+        var startVal = $(`#active-start-time-${groupId}-${postId}-${postTypeId}`).val();
+        var endVal = $(`#active-end-time-${groupId}-${postId}-${postTypeId}`).val()
         var open = openVal ? new Date(openVal) : undefined;
         var close = closeVal ? new Date(closeVal) : undefined;
         var start = startVal ? new Date(startVal) : undefined;
@@ -175,8 +183,10 @@
         var data = {
             groupId,
             postId,
+            postTypeId,
             newGroupId,
             newPostId,
+            newPostTypeId,
             open: open ? open.toISOString() : undefined,
             close: close?  close.toISOString() : undefined,
             start: start ? start.toISOString() : undefined,

@@ -14,7 +14,7 @@ export default function (dbClient: DbClient) {
         var posts = await dbClient.getAllPosts();
         const groupsDropdown = renderFile('./views/admin/partials/group-select-dropdown.ejs', { groups, selected: 0, id: 0 });
         const postsDropdown = renderFile('./views/admin/partials/post-select-dropdown.ejs', { posts, selected: 0, id: 0 });
-        const ags = await dbClient.getPostGroups(POST_TYPE_ID);
+        const ags = await dbClient.getPostGroups([POST_TYPE_ID]);
 
         const assignmentGroups = ags.map((ag: PostGroup) => { 
             return {
@@ -74,7 +74,7 @@ export default function (dbClient: DbClient) {
             activeEndTime: end,
             postTypeId: POST_TYPE_ID
         }
-        var result = await dbClient.updatePostGroup({groupId, postId}, assignmentGroup);
+        var result = await dbClient.updatePostGroup({groupId, postId, postTypeId: POST_TYPE_ID}, assignmentGroup);
         result ? res.sendStatus(200): res.sendStatus(400);
     });
 

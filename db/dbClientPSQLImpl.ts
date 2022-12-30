@@ -1,6 +1,6 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
-import { Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post } from '../models';
+import { Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, PostType } from '../models';
 
 class DbClientPSQLImpl implements DbClient {
   connection: any;
@@ -18,7 +18,20 @@ class DbClientPSQLImpl implements DbClient {
     )
   }
 
-  async updatePostGroup(oldIds: {groupId: number, postId: number}, postGroup: PostGroup): Promise<boolean> {
+  async getPostTypes(): Promise<PostType[]> {
+    return await this.connection.any({
+      name: 'getPostTypes',
+      text: `SELECT pt.id, pt.post_type "postType"
+             FROM post_types pt`,
+    }).then((data: PostType[]) => {
+      return data
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
+  }
+
+  async updatePostGroup(oldIds: {groupId: number, postId: number, postTypeId: number}, postGroup: PostGroup): Promise<boolean> {
     const cs = new this.pg.helpers.ColumnSet(['post_id', 'group_id', 'open_time', 'close_time', 'active_start_time', 'active_end_time', 'post_type_id']);
     const data = {
       post_id: postGroup.postId,
@@ -29,7 +42,7 @@ class DbClientPSQLImpl implements DbClient {
       active_end_time: postGroup.activeEndTime,
       post_type_id: postGroup.postTypeId
     };
-    const condition = pgp.as.format(' WHERE post_id = $1 and group_id = $2 and post_type_id = $3', [oldIds.postId, oldIds.groupId, postGroup.postTypeId]);
+    const condition = pgp.as.format(' WHERE post_id = $1 and group_id = $2 and post_type_id = $3', [oldIds.postId, oldIds.groupId, oldIds.postTypeId]);
     const query = this.pg.helpers.update(data, cs, 'post_group') + condition;
     return this.connection.none(query).then((data: any) => {
       return true;
@@ -50,15 +63,14 @@ class DbClientPSQLImpl implements DbClient {
     })
   }
 
-  async getPostGroups(postTypeId: number): Promise<PostGroup[]> {
-    return await this.connection.any({
-      name: 'getPostGroups',
-      text: `SELECT pg.post_id "postId", pg.group_id "groupId", pg.open_time "openTime", pg.close_time "closeTime",
-             pg.active_start_time "activeStartTime", pg.active_end_time "activeEndTime", pg.post_type_id "postTypeId"
-             FROM post_group pg
-             WHERE pg.post_type_id = $1
-             order by pg.open_time DESC`,
-    }, [postTypeId]).then((data: PostGroup[]) => {
+  async getPostGroups(postTypeIds: number[]): Promise<PostGroup[]> {
+    return await this.connection.any(
+      `SELECT pg.post_id "postId", pg.group_id "groupId", pg.open_time "openTime", pg.close_time "closeTime",
+      pg.active_start_time "activeStartTime", pg.active_end_time "activeEndTime", pg.post_type_id "postTypeId"
+      FROM post_group pg
+      WHERE pg.post_type_id in ($1:csv)
+      order by pg.open_time DESC`, [postTypeIds]
+    ).then((data: PostGroup[]) => {
       return data
     }).catch((error: any) => {
       console.log('ERROR:', error);

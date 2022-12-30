@@ -6,6 +6,7 @@ import CourseDate from './CourseDate';
 import Group from './Group';
 import Post from './Post';
 import PostGroup from './PostGroup';
+import PostType from './PostType';
 import Semester from './Semester';
 import Test from './Test';
 import TestUserData from './TestUserData';
@@ -24,6 +25,7 @@ export {
     Group,
     Post,
     PostGroup,
+    PostType,
     Semester,
     Test,
     TestUserData,
