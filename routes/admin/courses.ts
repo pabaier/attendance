@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import { DbClient } from '../../db/dbClient';
 import { renderFile } from '../../views/helper';
-import { Course, User } from '../../models';
+import { Course, CourseDate, User } from '../../models';
 import { makeCourseName, getPresentAbsentDates } from '../helpers';
 
 export default function (dbClient: DbClient) {
@@ -17,71 +17,116 @@ export default function (dbClient: DbClient) {
     });
 
     router.post('/add', async (req: Request, res: Response) => {
-        if (Object.keys(req.body).length == 0) {
-            if (!req.session.alert)
-                req.session.alert = [{type: 'success', message: 'success'}]
+        try {
+            const courseNumber = req.body.number;
+            const semesterId = parseInt(req.body.semesterId);
+            const startTime = req.body.startTime;
+            const endTime = req.body.endTime;
+            const days = req.body.days;
+            const startDate = new Date(req.body.startDate);
+            const endDate = new Date(req.body.endDate);
+
+            const semester = (await dbClient.getSemesters(semesterId))[0];
+            const groupName = `${semester.year}-${semester.season}-${courseNumber}-${startTime}`;
+            const groupId = await dbClient.createGroup(groupName);
+
+            var courseName;
+            if(req.body.name)
+                courseName = req.body.name;
             else
-                req.session.alert.push({type: 'success', message: 'success'})
+                courseName = groupName
 
-            res.redirect('/admin/courses')
-            return
+            const course: Course = {
+                courseNumber,
+                courseName,
+                semesterId,
+                startTime,
+                endTime,
+                groupId
+            }
+
+            const courseId = await dbClient.createCourse(course)
+
+            const dayMap = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            var courseDates: CourseDate[] = []
+
+            var classDate = new Date(startDate);
+            const times = startTime.split(':')
+            const hours = parseInt(times[0])
+            const minutes = parseInt(times[1])
+            classDate.setHours(hours);
+            classDate.setMinutes(minutes);
+            var day = dayMap[classDate.getDay()];
+            if (days.includes(day))
+                courseDates.push({courseId, meeting: new Date(classDate)})
+
+            while(classDate <= endDate ) {
+                classDate = new Date(classDate);
+                classDate.setDate(classDate.getDate() + 1)
+                var day = dayMap[classDate.getDay()];
+                if (days.includes(day))
+                    courseDates.push({courseId, meeting: new Date(classDate)})
+            }
+
+            await dbClient.setCourseDates(courseDates);
+
+            return res.status(200).send({message: 'success'});
+        } catch(error) {
+            return res.status(500).send({message: error});
         }
-
-        const courseNumber = req.body.number;
-        const semesterId = parseInt(req.body.semesterId);
-        const startTime = req.body.startTime;
-        const endTime = req.body.endTime;
-
-        const semester = (await dbClient.getSemesters(semesterId))[0];
-        const groupName = `${semester.year}-${semester.season}-${courseNumber}-${startTime}`;
-        const groupId = await dbClient.createGroup(groupName);
-
-        var courseName;
-        if(req.body.name)
-            courseName = req.body.name;
-        else
-            courseName = groupName
-
-        const course: Course = {
-            courseNumber,
-            courseName,
-            semesterId,
-            startTime,
-            endTime,
-            groupId
-        }
-
-        const r = await dbClient.createCourse(course)
-
-        res.redirect('/admin/courses')
     })
 
     router.get('/:courseId', async (req: Request, res: Response) => {
         const courseId = parseInt(req.params.courseId)
-        const course = await dbClient.getCourse(courseId);
-        const users = await dbClient.getUsers([course.groupId]);
+        const course: Course = await dbClient.getCourse(courseId);
+        const group = await dbClient.getGroup(course.groupId);
+        const semester = await dbClient.getSemesters(course.semesterId);
         const courseDates = await dbClient.getCourseDates(courseId);
-        const userWithAbsences = [];
-        const today = new Date()
-        const courseDatesUpToToday = courseDates.filter(date => date < today)
-        for (const user of users as User[]) {
-            const signInDates = await dbClient.getUserSignInDates(user.id as number, courseId);
-            const pAndADates = getPresentAbsentDates(signInDates, courseDatesUpToToday)
-            userWithAbsences.push({...user, absences: pAndADates.absent.length})
-        } 
 
-        const usersList = renderFile('./views/admin/partials/users-list.ejs', { users: userWithAbsences })
+        const data = {
+            courseId,
+            courseName: makeCourseName(course),
+            groupName: group.name,
+            courseDates, course,
+            semester: semester[0]
+        }
 
-        res.render('admin/course', { courseId, courseName: makeCourseName(course), usersList });
+        res.render('admin/course', data);
     })
 
     router.delete('/:courseId', async (req: Request, res: Response) => {
         const courseId = parseInt(req.params.courseId)
         const course = await dbClient.getCourse(courseId);
-        const groupDel = await dbClient.deleteGroup(course.groupId);
+        await dbClient.deleteCourseDates(courseId);
         const result: boolean = await dbClient.deleteCourse(courseId)
+        const groupDel = await dbClient.deleteGroup(course.groupId);
 
         res.send('ok')
+    })
+
+    router.delete('/:courseId/date', async (req: Request, res: Response) => {
+        try {
+            const courseId = parseInt(req.params.courseId)
+            const date = new Date(parseInt(req.body.date));
+            await dbClient.deleteCourseDate(courseId, date);
+
+            return res.status(200).send({message: 'success'});
+        } catch (error) {
+            return res.status(500).send({message: error});
+        }
+    })
+
+    router.post('/:courseId/date', async (req: Request, res: Response) => {
+        try {
+            const courseId = parseInt(req.params.courseId)
+            const meeting = new Date(parseInt(req.body.date));
+            const courseDate: CourseDate = { courseId, meeting }
+            await dbClient.setCourseDates([courseDate]);
+
+            return res.status(200).send({message: 'success'});
+        } catch (error) {
+            return res.status(500).send({message: error});
+        }
     })
 
     router.post('/:courseId/signin', async (req: Request, res: Response) => {

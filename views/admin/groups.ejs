@@ -55,6 +55,8 @@
     }
 
     const deleteGroup = (e) => {
+        res = confirm("delete group?");
+        if (!res) return;
         $.ajax({
             url: `/admin/groups/${e.target.value}`,
             type: 'DELETE',

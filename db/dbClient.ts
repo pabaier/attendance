@@ -10,26 +10,32 @@ export interface DbClient {
     addUsers(users: User[]): Promise<User[]>;
     deleteUser(userId: number): Promise<boolean>;
     getLatestSignIn(userId: number): Promise<number | null>;
-    getCourses(semesterId?: number): Promise<Course[]>;
     getUserCourses(userId: number, semesterId?: number): Promise<Course[]>;
-    getCourse(courseId: number): Promise<Course>;
-    createCourse(course: Course): Promise<number>;
-    deleteCourse(courseId: number): Promise<boolean>;
     deleteGroup(groupId: number): Promise<boolean>;
     addUsersToGroups(userGroups: UserGroups[]): Promise<boolean>;
     setUserGroups(userGroups: UserGroups): Promise<boolean>;
     deleteUserFromGroup(groupName: string, userId: number): boolean;
+    
+    getCourses(semesterId?: number): Promise<Course[]>;
+    getCourse(courseId: number): Promise<Course>;
+    createCourse(course: Course): Promise<number>;
+    deleteCourse(courseId: number): Promise<boolean>;
+    
     getCourseDates(courseId: number): Promise<Date[]>
     setCourseDates(courseDates: CourseDate[]): Promise<void>
+    deleteCourseDates(courseId: number): Promise<boolean>;
+    deleteCourseDate(courseId: number, date: Date): Promise<boolean>;
 
-    getGroups(userId?: number): Promise<Group[]>
+    getGroups(userId?: number): Promise<Group[]>;
+    createGroup(groupName: string): Promise<number>;
+    getGroup(groupId: number): Promise<Group>;
+    
     getTodaySignIn(userId: number, courseId: number): Promise<Date[]>;
     getTodaySignIns(courseId: number): Promise<User[]>;
     getTotalCourseDays(courseId: number, until?: Date): Promise<number>;
     getTotalUserSignIns(userId: number, courseId: number): Promise<number>;
     getUserSignInDates(userId: number, courseId: number): Promise<Date[]>;
     getCourseIds(userId: number, semesterId?: number): Promise<number[]>;
-    createGroup(groupName: string): Promise<number>;
     getTests(): Promise<Test[]>;
     getTestUserData(groupId: number, testDate: Date): Promise<TestUserData[]>;
     setUserQuestionGrade(userQuestionGrade: UserQuestionGrade): Promise<boolean>;

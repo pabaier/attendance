@@ -157,7 +157,7 @@ class DbClientPSQLImpl implements DbClient {
     return res.map((obj: { id: any; }) => obj.id);
   }
 
-  getSemesters(semesterId?: number): Promise<Semester[]> {
+  async getSemesters(semesterId?: number): Promise<Semester[]> {
     var query = 'SELECT s.id, s.season, s.semester_year "year" FROM public.semester s'
     if (semesterId)
       query += ' WHERE s.id = $1'
@@ -481,6 +481,19 @@ class DbClientPSQLImpl implements DbClient {
     }); 
   }
 
+  async getGroup(groupId: number): Promise<Group> {
+    return this.connection.one(`
+      SELECT id, group_name "name"
+      FROM groups
+      WHERE id = $1`, [groupId])
+    .then((data: Group) => {
+      return data;
+    })
+    .catch((error: any) => {
+      return null
+    })
+  }
+
   deleteUserFromGroup(groupName: string, userId: number): boolean {
     return this.connection.none('DELETE FROM user_group WHERE user_id = $1 AND group_name = $2', [userId, groupName])
     .then((data: any) => { return true;})
@@ -676,7 +689,7 @@ class DbClientPSQLImpl implements DbClient {
   };
 
   async deleteGroup(groupId: number): Promise<boolean> {
-    return this.connection.none('DELETE FROM groups WHERE id = $1', groupId)
+    return this.connection.none('DELETE FROM groups WHERE id = $1', [groupId])
     .then((data: any) => { return true;})
     .catch((error: any) => {
       console.log('ERROR:', error);
@@ -707,7 +720,7 @@ class DbClientPSQLImpl implements DbClient {
   async getCourseDates(courseId: number): Promise<Date[]> {
     return await this.connection.any({
       name: 'getCourseDates',
-      text: 'SELECT meeting FROM course_dates WHERE course_id = $1',
+      text: 'SELECT meeting FROM course_dates WHERE course_id = $1 ORDER BY meeting',
       values: [courseId],
       rowMode: 'array'
     }).then((data: Date[]) => {
@@ -720,9 +733,33 @@ class DbClientPSQLImpl implements DbClient {
 
   async setCourseDates(courses: CourseDate[]): Promise<void> {
     const cs = new this.pg.helpers.ColumnSet(['course_id', 'meeting'], {table: 'course_dates'});
-    const query = this.pg.helpers.insert(courses, cs) + ' RETURNING course_id, meeting';
-    await this.connection.many(query);
+    courses = courses.map((x:CourseDate) => {return {...x, course_id: x.courseId} })
+    const query = this.pg.helpers.insert(courses, cs);
+    await this.connection.none(query);
   }
+
+  async deleteCourseDates(courseId: number): Promise<boolean> {
+    var query = 'delete from course_dates where course_id = $1'
+    return this.connection.none(query, [courseId])
+    .then((data: any) => {
+      return true;
+    })
+    .catch((error: any) => {
+      return false;
+    })
+  }
+
+  async deleteCourseDate(courseId: number, date: Date): Promise<boolean> {
+    var query = 'delete from course_dates where course_id = $1 and meeting = $2'
+    return this.connection.none(query, [courseId, date])
+    .then((data: any) => {
+      return true;
+    })
+    .catch((error: any) => {
+      return false;
+    })
+  }
+
 }
 
 export default new DbClientPSQLImpl();

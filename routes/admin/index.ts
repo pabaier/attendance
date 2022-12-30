@@ -31,35 +31,6 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
 
     router.use('/groups', groups(dbClient));
 
-
-    // router.get('/assignments', async (req: Request, res: Response) => {
-    //     const courses = await dbClient.getCourses();
-    //     const courseNameId = courses.map(course => { return {name: makeCourseName(course), id: course.id}})
-    //     res.render('admin/assignments.ejs', { courses: courseNameId });
-    // });
-
-    // router.post('/assignments', async (req: Request, res: Response) => {
-    //     const courseIds: string[] = req.body.courses;
-    //     const assignments: Assignment[] = req.body.assignments.map((assignmentString: string) => {
-    //         const fieldStrings = assignmentString.split(',');
-    //         return {
-    //             title: fieldStrings[0].trim(),
-    //             start_time: new Date(fieldStrings[1].trim()),
-    //             end_time: new Date(fieldStrings[2].trim()),
-    //             url_link: fieldStrings[3].trim()
-    //         }
-    //     });
-    //     var assignmentIds: {id: number}[] = await dbClient.addAssignments(assignments)
-    //     var assignmentCourseIds: {assignment_id: number, course_id: number}[] = [];
-    //     courseIds.forEach((courseId: string) => {
-    //         assignmentIds.forEach(async (assignment: { id: number }) => {
-    //             assignmentCourseIds.push({assignment_id: assignment.id, course_id: parseInt(courseId)})
-    //         })
-    //     })
-    //     await dbClient.addAssignmentToCourse(assignmentCourseIds)
-    //     res.send('ok')
-    // });
-
     router.get('/', (req: Request, res: Response) => {
         res.render('admin/index')
     });
