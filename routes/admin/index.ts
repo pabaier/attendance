@@ -4,7 +4,6 @@ import { DbClient } from '../../db/dbClient';
 import { authCheckMiddleware, rollCheckMiddleware } from '../../middleware/auth';
 import courses from './courses';
 import users from './users';
-import dates from './dates';
 import posts from './posts';
 import assignments from './assignments';
 import announcements from './announcements';
@@ -18,8 +17,6 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     router.use(authCheckMiddleware, rollCheckMiddleware(['admin']))
 
     router.use('/posts', posts(dbClient));
-
-    router.use('/dates', dates(dbClient));
 
     router.use('/courses', courses(dbClient));
 
