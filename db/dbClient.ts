@@ -43,10 +43,12 @@ export interface DbClient {
     getGroupTests(groupId: number, testDate: Date): Promise<UserTest[]>;
     updateUserPassword(userId: number, password: string, salt?: string): Promise<boolean>;
     getUserSettings(userId: number): Promise<UserSettings>;
-    getSemesters(semesterId?: number): Promise<Semester[]>;
     createUsers(users: any, ): Promise<number[]>;
     updateUserSettings(userSettings: (UserSettings & {userId: number})[]): Promise<boolean>;
     
+    getSemesters(semesterId?: number): Promise<Semester[]>;
+    updateSemester(userId: number, semesterId:number): Promise<boolean>;
+
     getAllPosts(): Promise<Post[]>;
     getFullPosts(groupIds: number[], postTypeIds: number[]): Promise<(Post & PostGroup)[]>
     createPost(post: Post): Promise<number>;

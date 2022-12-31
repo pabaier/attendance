@@ -1,9 +1,10 @@
 import express, { NextFunction, Request, Response } from 'express';
 import NodeCache from 'node-cache';
-import { authCheckMiddleware, resourceAccessMiddleware } from '../middleware/auth';
+import { authCheckMiddleware, resourceAccessMiddleware, rollCheckMiddleware } from '../middleware/auth';
 import { DbClient } from '../db/dbClient';
-import { Alert, Course, Group, Post, PostGroup, User } from '../models';
+import { Alert, Course, Group, Post, PostGroup, Semester, User, UserSettings } from '../models';
 import { signIn } from './helpers';
+import { renderFile } from '../views/helper';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
     const router = express.Router();
@@ -74,8 +75,19 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
 
     router.get('/:userId/settings', resourceAccessMiddleware, async (req: Request, res: Response) => {
         const userId = parseInt(req.params.userId)
+        const isAdmin = (<string[]>req.session.user?.roles)?.some(role => role == 'admin')
+        let settings: UserSettings;
+        let semesters: Semester[];
+        let semestersDropdown;
+
+        if (isAdmin) {
+            settings = await dbClient.getUserSettings(req.session.user?.id as number)
+            semesters = await dbClient.getSemesters();
+            semestersDropdown = renderFile('./views/partials/semester-select-dropdown.ejs', { semesters, selected: settings.semesterId, id: 0 });
+
+        }
         var user: User = await dbClient.getUser(userId) as User;
-        res.render('user/settings', { user })
+        res.render('user/settings', { user, isAdmin, semestersDropdown })
     });
 
     router.patch('/:userId/settings', resourceAccessMiddleware, async (req: Request, res: Response) => {
@@ -94,6 +106,19 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         }
         else
             res.status(500).send({status: 500, message: 'error saving user info'});
+    })
+
+    router.patch('/:userId/settings/semester', rollCheckMiddleware(['admin']), async (req: Request, res: Response) => {
+        const userId = parseInt(req.params.userId)
+        var user: User = await dbClient.getUser(userId) as User;
+
+        let semesterId = parseInt(req.body.semesterId);
+        let response = await dbClient.updateSemester(userId, semesterId)
+        
+        if (response) {
+            req.session.userSettings = { ...req.session.userSettings, semesterId };
+        }
+        res.status(200).send({status: 200, message: 'success!'});
     })
 
     router.use((req: Request, res: Response) => {

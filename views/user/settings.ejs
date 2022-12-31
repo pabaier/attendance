@@ -2,23 +2,71 @@
     <h1>Settings</h1>
 
     <h3>User Info</h3>
-    <div class="w-25 mb-4 start-0">
-        <input type="text" class="form-control border border-1 border-success" id="firstName" name="firstName" value="<%= user.firstName ?? '' %>" placeholder="first name"><br>
-        <input type="text" class="form-control border border-1 border-success" id="lastName" name="lastName" value="<%= user.lastName ?? '' %>" placeholder="last name"><br>
+    <div class="container mb-5">
+        <div class="row">
+            <div class="col-3 my-2">
+                <input type="text" class="form-control border border-1 border-success" id="firstName" name="firstName" value="<%= user.firstName ?? '' %>" placeholder="first name">
+            </div>
+            <div class="col-3 my-2">
+                <input type="text" class="form-control border border-1 border-success" id="lastName" name="lastName" value="<%= user.lastName ?? '' %>" placeholder="last name">
+            </div>
+            <% if (isAdmin) { %>
+                <div class="col-3">
+                    <%- semestersDropdown %>
+                </div>
+            <% } %>
+        </div>
     </div>
 
 
     <h3>Change Password</h3>
-    <div class="w-25 start-0">
-        <input type="password" class="form-control" id="password" name="password" placeholder="current password"><br><br>
-        <input type="password" class="form-control" id="newPassword" name="newPassword" placeholder="new password"><br>
-        <input type="password" class="form-control" id="confirmedPassword" name="confirmedPassword" placeholder="confirm new password"><br>
-        <button type="submit" class="btn btn-primary" id="submit">Submit</button>
+    <div class="container">
+        <div class="row my-4">
+            <div class="col-3">
+                <input type="password" class="form-control" id="password" name="password" placeholder="current password">
+            </div>
+        </div>
+        <div class="row my-4">
+            <div class="col-3">
+                <input type="password" class="form-control" id="newPassword" name="newPassword" placeholder="new password">
+            </div>
+        </div>
+        <div class="row my-4">
+            <div class="col-3">
+                <input type="password" class="form-control" id="confirmedPassword" name="confirmedPassword" placeholder="confirm new password">
+            </div>
+        </div>
+        <div class="row my-4">
+            <div class="col-3">
+                <button type="submit" class="btn btn-primary" id="submit">Submit</button>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
     var user = <%-JSON.stringify(user)%>
+
+    $('#semester-select-0').change(e => {
+        var semesterId = e.target.value;
+        if (semesterId == 'Select Semester') return;
+        $.ajax({
+            url: `/user/${user.id}/settings/semester`,
+            type: 'PATCH',
+            contentType: 'application/json',
+            data: JSON.stringify({ semesterId }),
+            success: function( data ) {
+                $('#toastHeader').html('Success');
+                $('#toastBody').html('Data updated!');
+                $('#liveToast').toast('show');
+            },
+            fail: function( data ) {
+                $('#toastHeader').html('Fail');
+                $('#toastBody').html(data.message);
+                $('#liveToast').toast('show');
+            }
+        })
+    })
     
     $('#firstName').focusout(e => {
         buttonFocusOut('firstName')

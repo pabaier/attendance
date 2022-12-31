@@ -18,6 +18,20 @@ class DbClientPSQLImpl implements DbClient {
     )
   }
 
+  async updateSemester(userId: number, semesterId: number): Promise<boolean> {
+    const columns = ['semester_id'];
+    const cs = new this.pg.helpers.ColumnSet(columns);
+    const data = {semester_id: semesterId}
+    const condition = pgp.as.format(' WHERE user_id = $1', userId);
+    const query = this.pg.helpers.update(data, cs, 'user_settings') + condition;
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });  
+  }
+
   async getPostTypes(): Promise<PostType[]> {
     return await this.connection.any({
       name: 'getPostTypes',
