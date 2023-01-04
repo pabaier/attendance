@@ -1,0 +1,50 @@
+<div class="jumbotron">
+    <h1>Tests</h1>
+    <%- text %>
+
+    <div class="my-5">
+        <iframe
+            src="https://jupyterlite.github.io/demo/repl/index.html?kernel=python&toolbar=1&theme=JupyterLab Dark"
+            width="100%"
+            height="500px"
+        ></iframe>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-3">
+                <input class="form-control my-2" name="number" id="number" placeholder="answer"></input>
+            </div>
+            <div class="col-1">
+                <button type="submit" id="check" class="btn btn-primary form-control my-2">Check</button>
+            </div>
+
+        </div>
+        <div class="col-10">
+            <textarea class="form-control my-2" id="w3review" name="w3review" rows="7" cols="50" placeholder="code"></textarea>
+        </div>
+        <div class="col-2">
+            <button type="submit" id="submit" class="btn btn-primary form-control my-2">Submit</button>
+        </div>
+
+    </div>
+
+
+
+    <!-- <iframe src="https://trinket.io/embed/python3/050a6c1569?runOption=run" width="100%" height="356" frameborder="0" marginwidth="0" marginheight="0" allowfullscreen></iframe> -->
+
+    <!-- <iframe frameborder="0" width="100%" height="500px" src="https://replit.com/@PaulBaier/220?embed=true"></iframe> -->
+
+
+    
+
+
+</div>
+
+<script>
+
+    $("#check").click(e => {
+        console.log('checking...')
+    })
+
+</script>

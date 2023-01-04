@@ -1,4 +1,7 @@
 import Alert from './Alert';
+import Assessment from './Assessment';
+import AssessmentQuestion from './AssessmentQuestion';
+import AssessmentSettings from './AssessmentSettings';
 import CalendarEvent from './CalendarEvent';
 import Course from './Course';
 import CourseAssignment from './CourseAssignment';
@@ -18,6 +21,9 @@ import UserTest from './UserTest';
 
 export {
     Alert,
+    Assessment,
+    AssessmentQuestion,
+    AssessmentSettings,
     CalendarEvent,
     Course,
     CourseAssignment,

@@ -8,6 +8,7 @@ import posts from './posts';
 import assignments from './assignments';
 import announcements from './announcements';
 import groups from './groups';
+import assessments from './assessments';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
     const router = express.Router()
@@ -25,6 +26,8 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     router.use('/assignments', assignments(dbClient));
 
     router.use('/announcements', announcements(dbClient));
+
+    router.use('/assessments', assessments(dbClient));
 
     router.use('/groups', groups(dbClient));
 

@@ -85,6 +85,51 @@ CREATE TABLE post_group (
 );
 CREATE INDEX post_group_group_id_post_type_id_idx ON post_group (group_id, post_type_id);
 
+CREATE TABLE user_settings (
+	user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
+	semester_id INTEGER REFERENCES semester (id) ON DELETE CASCADE,
+	UNIQUE (user_id)
+);
+
+CREATE TABLE assessment (
+	id SERIAL PRIMARY KEY,
+  	assessment_name VARCHAR(50) 
+);
+
+CREATE TABLE question (
+	id SERIAL PRIMARY KEY
+);
+
+CREATE TABLE assessment_settings (
+	assessment_id INTEGER REFERENCES assessment (id) ON DELETE CASCADE,
+	group_id INTEGER REFERENCES groups (id) ON DELETE CASCADE,
+	start_time timestamptz,
+	end_time timestamptz,
+	PRIMARY KEY(assessment_id, group_id)
+);
+
+CREATE TABLE assessment_question (
+	assessment_id INTEGER REFERENCES assessment (id) ON DELETE CASCADE,
+	question_id INTEGER REFERENCES question (id) ON DELETE CASCADE,
+	attempts INTEGER
+);
+CREATE INDEX assessment_question_assessment_id_idx ON assessment_question (assessment_id);
+
+CREATE TABLE user_question (
+	assessment_id INTEGER REFERENCES assessment (id) ON DELETE CASCADE,
+	question_id INTEGER REFERENCES assessment (id) ON DELETE CASCADE,
+	user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
+	user_answer TEXT,
+	variables TEXT,
+	question_answer TEXT,
+	code TEXT,
+	attempts INTEGER,
+	PRIMARY KEY(assessment_id, question_id, user_id)
+);
+
+-- -------------------------------------------------
+
+
 CREATE TABLE test_questions (
 	id SERIAL PRIMARY KEY,
 	group_id INTEGER REFERENCES groups (id) ON DELETE CASCADE,
@@ -117,9 +162,3 @@ CREATE TABLE user_question_grades (
 CREATE INDEX user_question_grades_user_id_idx ON user_question_grades (user_id);
 CREATE INDEX user_question_grades_question_id_idx ON user_question_grades (question_id);
 CREATE INDEX user_question_grades_user_id_question_id_idx ON user_question_grades (user_id, question_id);
-
-CREATE TABLE user_settings (
-	user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
-	semester_id INTEGER REFERENCES semester (id) ON DELETE CASCADE,
-	UNIQUE (user_id)
-);
