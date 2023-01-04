@@ -20,6 +20,18 @@ export default function (dbClient: DbClient) {
     });
 
 
+    router.get('/questions', async (req: Request, res: Response) => {
+        const questions = await dbClient.getQuestions();
+        res.render('admin/assessments/questions', { questions });
+    });
+
+    router.post('/questions', async (req: Request, res: Response) => {
+        const success = await dbClient.createQuestion();
+        success ? res.status(200).send({message: 'success!'}) : res.status(500).send({message: 'error'});
+        
+    });
+
+
     router.get('/:assessmentId', async (req: Request, res: Response) => {
         var assessmentId = parseInt(req.params.assessmentId)
         const assessment: Assessment = (await dbClient.getAssessments(assessmentId))[0];
@@ -110,18 +122,6 @@ export default function (dbClient: DbClient) {
 
         const success = await dbClient.deleteAssessmentQuestion(assessmentId, questionId)
         success ? res.status(200).send({message: `Assessment Deleted`}) : res.status(500).send({message: 'error'});
-    });
-    
-
-    router.get('/questions', async (req: Request, res: Response) => {
-        const questions = await dbClient.getQuestions();
-        res.render('admin/assessments/questions', { questions });
-    });
-
-    router.post('/questions', async (req: Request, res: Response) => {
-        const success = await dbClient.createQuestion();
-        success ? res.status(200).send({message: 'success!'}) : res.status(500).send({message: 'error'});
-        
     });
 
     return router;
