@@ -18,6 +18,71 @@ class DbClientPSQLImpl implements DbClient {
     )
   }
 
+  async updateAssessmentSettings(assessmentSettings: AssessmentSettings): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['start_time', 'end_time']);
+    const data = {
+      start_time: assessmentSettings.startTime,
+      end_time: assessmentSettings.endTime,
+    };
+    const condition = pgp.as.format(' WHERE assessment_id = $1 and group_id = $2', [assessmentSettings.assessmentId, assessmentSettings.groupId]);
+    const query = this.pg.helpers.update(data, cs, 'assessment_settings') + condition;
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async deleteAssessmentSettings(assessmentId: number, groupId: number): Promise<boolean> {
+    var query = 'delete from assessment_settings where assessment_id = $1 and group_id = $2'
+    return this.connection.none(query, [assessmentId, groupId])
+    .then((data: any) => {
+      return true;
+    })
+    .catch((error: any) => {
+      console.log(error)
+      return false;
+    })
+  }
+
+  async createAssessmentSettings(assessmentSettings: AssessmentSettings): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['assessment_id', 'group_id', 'start_time', 'end_time'], {table: 'assessment_settings'});
+    const data = {
+        assessment_id: assessmentSettings.assessmentId,
+        group_id: assessmentSettings.groupId,
+        start_time: assessmentSettings.startTime,
+        end_time: assessmentSettings.endTime,
+    };
+    const query = this.pg.helpers.insert(data, cs);
+    return this.connection.none(query)
+    .then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async getGroupsNotPartOfAssessment(assessmentId: number): Promise<Group[]> {
+    var query = `SELECT g.id, g.group_name "name"
+                 FROM "groups" g
+                 WHERE g.id NOT IN (
+                  SELECT as2.group_id 
+                  FROM assessment_settings as2 
+                  WHERE as2.assessment_id = $1
+                 )
+                 ORDER BY g.id DESC`
+    return this.connection.any(query, [assessmentId])
+    .then((data: Group[]) => {
+      return data;
+    })
+    .catch((error: any) => {
+      console.log(error)
+      return [];
+    })
+  }
+
   async updateAssessmentQuestion(assessmentQuestion: AssessmentQuestion): Promise<boolean> {
     const cs = new this.pg.helpers.ColumnSet(['attempts']);
     const data = {
@@ -34,7 +99,6 @@ class DbClientPSQLImpl implements DbClient {
   }
   async addAssessmentQuestions(assessmentId: number, questions: number[]): Promise<boolean> {
     const cs = new this.pg.helpers.ColumnSet(['assessment_id', 'question_id'], {table: 'assessment_question'});
-    console.log(questions);
     const values = questions.map(question_id => {
       return {
         assessment_id: assessmentId,
