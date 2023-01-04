@@ -20,6 +20,7 @@ export interface DbClient {
     getCourse(courseId: number): Promise<Course>;
     createCourse(course: Course): Promise<number>;
     deleteCourse(courseId: number): Promise<boolean>;
+    getCourseByGroupId(groupId: number): Promise<Course | undefined>;
     
     getCourseDates(courseId: number): Promise<Date[]>
     setCourseDates(courseDates: CourseDate[]): Promise<void>

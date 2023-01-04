@@ -17,6 +17,21 @@ class DbClientPSQLImpl implements DbClient {
       }
     )
   }
+  
+  async getCourseByGroupId(groupId: number): Promise<Course | undefined> {
+    var query = `SELECT c.id, c.semester_id "semesterId", c.start_time "startTime", c.end_time "endTime",
+                 c.course_number "courseNumber", c.course_name "courseName", c.group_id "groupId"
+                 FROM courses c
+                 WHERE c.group_id = $1`
+    return this.connection.any(query, [groupId])
+      .then((data: Course[]) => {
+        return data.length ? data[0] : undefined
+      })
+      .catch((error: any) => {
+        console.log('ERROR:', error);
+        return undefined;
+      });
+  }
 
   async deleteAssessmentQuestion(assessmentId: number, questionId: number): Promise<boolean> {
     var query = 'delete from assessment_question where assessment_id = $1 and question_id = $2'

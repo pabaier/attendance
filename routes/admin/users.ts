@@ -19,7 +19,23 @@ export default function (dbClient: DbClient) {
         if (groupQuery) {
             const groupId = parseInt(groupQuery as string)
             var selected = groupId;
-            users = await dbClient.getUsers([groupId]);
+            var allUsers = await dbClient.getUsers([groupId]);
+            
+            var course = await dbClient.getCourseByGroupId(groupId);
+            if (course) {
+                var today = new Date();
+                for (const user of allUsers) {
+                    var totalDays = await dbClient.getTotalCourseDays(course?.id as number, today )
+                    var totalSignIns = await dbClient.getTotalUserSignIns(user.id as number, course?.id as number)
+                    var absences = totalDays - totalSignIns;
+                    users.push({
+                        ...user,
+                        absences,
+                    })
+                }
+            } else {
+                users = [...allUsers]
+            }
 
         } else {
             const semesterId = req.session.userSettings?.semesterId;
