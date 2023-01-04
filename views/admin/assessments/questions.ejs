@@ -1,0 +1,41 @@
+<!-- requires courses {name, id},  -->
+<div class="jumbotron">
+    <h1>Questions</h1>
+    <h3>New Question</h3>
+    <div class="container">
+        <div class="row  mb-5">
+            <div class="col-2">
+                <button type="submit" id="new-question-submit" class="btn btn-primary form-control my-2">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <h3>Questions</h3>
+    <div class="container">
+        <% questions.forEach(q => { %>
+            <div class="col-4">
+                <div class="mb-2 border-bottom border-2">
+                    <div class="row my-2">
+                        <div class="col-3">
+                            <%=q.id%>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+</div>
+
+<script>
+    $('#new-question-submit').click(e => {
+        $.post(`/admin/assessments/questions`,
+            function( data ) {
+                window.location.reload();
+            }
+        ).fail( function(data) {
+            $('#toastHeader').html("Question Creation Error");
+            $('#toastBody').html(data.responseJSON.message);
+            $('#liveToast').toast('show');
+        });
+    })
+</script>

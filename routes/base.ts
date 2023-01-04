@@ -14,11 +14,11 @@ export default function (dbClient: DbClient) {
     // GOOGLE AUTH
     const client = new OAuth2Client(clientId);
 
-    router.get('/test', async (req: Request, res: Response) => {
-        var a = await dbClient.getTodaySignIns(2)
-        console.log(a)
-        res.render('base/test')
-    })
+    // router.get('/test', async (req: Request, res: Response) => {
+    //     var a = await dbClient.getTodaySignIns(2)
+    //     console.log(a)
+    //     res.render('base/test')
+    // })
 
     router.get('/', authCheckMiddleware, async (req: Request, res: Response) => {
         // get courseIds

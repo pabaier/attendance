@@ -1,0 +1,145 @@
+<!-- requires courses {name, id},  -->
+<div class="jumbotron">
+    <div class="row my-5">
+        <h3>Name</h3>
+        <div class="col-3">
+            <input class="form-control" value="<%= assessment.name %>" id="edit-title">
+        </div>
+    </div>
+
+    <h3>Add Questions</h3>
+    <div class="container mb-5">
+        <div class="row my-2">
+            <div class="col-4">
+                <select class="form-select" id="questions" multiple aria-label="multiple select example">
+                    <% questions.forEach(q => { %>
+                        <% if (q.selected) { %>
+                            <option selected value="<%- q.id %>"><%- q.id %></option>
+                        <% } else { %>
+                            <option value="<%- q.id %>"><%- q.id %></option>
+                        <% } %>
+                    <% }) %>
+                </select>
+            </div>
+        </div>
+        <div class="row  my-2">
+            <div class="col-2">
+                Question Id
+            </div>
+            <div class="col-1">
+                Attempts
+            </div>
+        </div>
+        <% testQuestions.forEach(q => { %>
+            <div class="row  my-2">
+                <div class="col-2">
+                    <%- q.questionId %>
+                </div>
+                <div class="col-1">
+                    <input type="number" class="form-control attempts" id="attempts-<%- q.questionId %>" value="<%- q.attempts %>">
+                </div>
+            </div>
+        <% }) %>
+    </div>
+
+    <h3>Assigned Groups</h3>
+    <div class="container">
+        <div class="col-12">
+            <% settings.forEach(q => { %>
+                <div class="mb-2 border-bottom border-2">
+                    <div class="row my-2">
+                        <div class="col-3">
+                            <%=q.groupName%>
+                        </div>
+                        <div class="col-9">
+                            <%=q.startTime%> - <%=q.endTime%> 
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    </div>
+</div>
+
+<script>
+    $('.attempts').focusout(e => {
+        questionId = e.target.id.split('-')[1]
+        attempts = e.target.value
+        $.ajax({
+            url: `/admin/assessments/<%= assessment.id %>/question`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({ questionId, attempts }),
+            success: function(data) {
+                $('#toastHeader').html("Success");
+                $('#toastBody').html(data.message);
+                $('#liveToast').toast('show');
+            },
+            error: function(data) {
+                $('#toastHeader').html("Error");
+                $('#toastBody').html(data.message);
+                $('#liveToast').toast('show');
+            }
+        });
+    })
+
+    $('#edit-title').change(e => {
+        var name = e.target.value;
+        $.ajax({
+            url: `/admin/assessments/<%= assessment.id %>`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({ name }),
+            success: function(data) {
+                $('#toastHeader').html("Success");
+                $('#toastBody').html(data.message);
+                $('#liveToast').toast('show');
+            },
+            error: function(data) {
+                $('#toastHeader').html("Error");
+                $('#toastBody').html(data.message);
+                $('#liveToast').toast('show');
+            }
+        });
+    })
+
+    $('#questions').focusout(e => {
+        const questionIds = $('#questions').val()
+        $.ajax({
+            url: `/admin/assessments/<%= assessment.id %>/questions`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({ ids: questionIds }),
+            success: function(data) {
+                window.location.reload();
+                // $('#toastHeader').html("Success");
+                // $('#toastBody').html(data.message);
+                // $('#liveToast').toast('show');
+            },
+            error: function(data) {
+                $('#toastHeader').html("Error");
+                $('#toastBody').html(data.message);
+                $('#liveToast').toast('show');
+            }
+        });
+    })
+
+    $('#new-assignment-submit').click(e => {
+        var name = $('#new-name').val()
+
+        var data = {
+            name,
+        }
+
+        $.post(`/admin/assessments`,
+            data,
+            function( data ) {
+                window.location.reload();
+            }
+        ).fail( function(data) {
+            $('#toastHeader').html("Assessment Creation Error");
+            $('#toastBody').html(data.responseJSON.message);
+            $('#liveToast').toast('show');
+        });
+    })
+</script>

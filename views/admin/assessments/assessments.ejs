@@ -1,0 +1,60 @@
+<!-- requires courses {name, id},  -->
+<div class="jumbotron">
+    <h1>Assessments</h1>
+    <nav style="--bs-breadcrumb-divider: '|';" aria-label="breadcrumb">
+        <div class="container-fluid admin-breadcrumb" hidden>
+            <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin/assessments/questions">Questions</a></li>
+            </ol>
+        </div>
+    </nav>
+    <h3>New Assessment</h3>
+    <div class="container">
+        <div class="row  mb-5">
+            <div class="col-4">
+                <input class="form-control my-2" id="new-name" placeholder="name">
+            </div>
+            <div class="col-2">
+                <button type="submit" id="new-assignment-submit" class="btn btn-primary form-control my-2">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <h3>Assessments</h3>
+    <div class="container">
+        <% assessments.forEach(asst => { %>
+            <div class="col-4">
+                <div class="mb-2 border-bottom border-2">
+                    <div class="row my-2">
+                        <a href="/admin/assessments/<%=asst.id%>">
+                            <div class="col-3">
+                                <%=asst.id%> - <%=asst.name%>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+</div>
+
+<script>
+    $('#new-assignment-submit').click(e => {
+        var name = $('#new-name').val()
+
+        var data = {
+            name,
+        }
+
+        $.post(`/admin/assessments`,
+            data,
+            function( data ) {
+                window.location.reload();
+            }
+        ).fail( function(data) {
+            $('#toastHeader').html("Assessment Creation Error");
+            $('#toastBody').html(data.responseJSON.message);
+            $('#liveToast').toast('show');
+        });
+    })
+</script>

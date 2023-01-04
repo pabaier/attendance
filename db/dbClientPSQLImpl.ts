@@ -1,6 +1,6 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
-import { Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, PostType } from '../models';
+import { Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, PostType, Assessment, AssessmentQuestion, AssessmentSettings } from '../models';
 
 class DbClientPSQLImpl implements DbClient {
   connection: any;
@@ -16,6 +16,154 @@ class DbClientPSQLImpl implements DbClient {
         ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false
       }
     )
+  }
+
+  async updateAssessmentQuestion(assessmentQuestion: AssessmentQuestion): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['attempts']);
+    const data = {
+      attempts: assessmentQuestion.attempts
+    };
+    const condition = pgp.as.format(' WHERE assessment_id = $1 and question_id = $2', [assessmentQuestion.assessmentId, assessmentQuestion.questionId]);
+    const query = this.pg.helpers.update(data, cs, 'assessment_question') + condition;
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+  async addAssessmentQuestions(assessmentId: number, questions: number[]): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['assessment_id', 'question_id'], {table: 'assessment_question'});
+    console.log(questions);
+    const values = questions.map(question_id => {
+      return {
+        assessment_id: assessmentId,
+        question_id
+      }
+    });
+    const query = this.pg.helpers.insert(values, cs);
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async setAssessmentQuestions(assessmentId: number, questions: number[]): Promise<boolean> {
+    var query = 'delete from assessment_question where assessment_id = $1'
+    return this.connection.none(query, [assessmentId])
+    .then((data: any) => {
+      return this.addAssessmentQuestions(assessmentId, questions);
+    })
+    .catch((error: any) => {
+      console.log(error)
+      return false;
+    })
+  }
+
+  async updateAssessment(assessment: Assessment): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['id', 'assessment_name']);
+    const data = {
+      id: assessment.id,
+      assessment_name: assessment.name
+    };
+    const condition = pgp.as.format(' WHERE id = $1', [assessment.id]);
+    const query = this.pg.helpers.update(data, cs, 'assessment') + condition;
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async getAssessmentSettings(assessmentId: number): Promise<(AssessmentSettings & {groupName: string})[]> {
+    var text = `SELECT a.assessment_id "assessmentId", a.group_id "groupId", a.start_time "startTime", a.end_time "endTime", g.group_name "groupName"
+                FROM assessment_settings a
+                JOIN "groups" g
+                ON g.id = a.group_id
+                WHERE a.assessment_id = $1
+                ORDER BY a.start_time DESC
+                `;
+    var data = [assessmentId]
+    return await this.connection.any(text, data).then((data: (AssessmentSettings  & {groupName: string})[]) => {
+      return data
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
+  }
+
+  async getAssessmentQuestions(assessmentId: number): Promise<AssessmentQuestion[]> {
+    return await this.connection.any({
+      name: 'getAssessmentQuestions',
+      text: `SELECT aq.assessment_id "assessmentId", aq.question_id "questionId", aq.attempts "attempts"
+             FROM assessment_question aq
+             WHERE aq.assessment_id = $1
+             ORDER BY aq.question_id`
+    }, [assessmentId]).then((data: any[]) => {
+      return data
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
+  }
+
+  async createQuestion(): Promise<boolean> {
+    const query = `INSERT INTO question DEFAULT VALUES`;
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async getQuestions(): Promise<{ id: number; }[]> {
+    return await this.connection.any({
+      name: 'getQuestions',
+      text: `SELECT q.id
+             FROM question q
+             ORDER BY q.id DESC`,
+    }).then((data: any[]) => {
+      return data
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
+  }
+
+  async createAssessment(assessment: Assessment): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['assessment_name'], {table: 'assessment'});
+    const values = {
+      assessment_name: assessment.name,
+    }
+    const query = this.pg.helpers.insert(values, cs);
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async getAssessments(assessmentId? : number): Promise<Assessment[]> {
+    var text = `SELECT a.id, a.assessment_name "name"
+                FROM assessment a`
+    var data: any[] = []
+    if (assessmentId) {
+      text += ` where a.id = ${assessmentId}`
+      data = [assessmentId]
+    }
+    else
+      text += ' ORDER BY a.id DESC'
+    return await this.connection.any(text, data).then((data: Assessment[]) => {
+      return data
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
   }
 
   async updateSemester(userId: number, semesterId: number): Promise<boolean> {
