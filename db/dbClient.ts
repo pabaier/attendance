@@ -61,18 +61,20 @@ export interface DbClient {
     getPostTypes(): Promise<PostType[]>;
 
     getAssessments(assessmentId?: number): Promise<Assessment[]>;
-    getAssessmentQuestions(assessmentId: number): Promise<AssessmentQuestion[]>;
-    getAssessmentSettings(assessmentId: number): Promise<(AssessmentSettings  & {groupName: string})[]>;
-    setAssessmentQuestions(assessmentId: number, questions: number[]): Promise<boolean>; // deletes the old and adds the new
-    addAssessmentQuestions(assessmentId: number, questions: number[]): Promise<boolean>; // just adds the new
-    updateAssessmentQuestion(assessmentQuestion: AssessmentQuestion): Promise<boolean>;
     createAssessment(assessment: Assessment): Promise<boolean>;
     updateAssessment(assessment: Assessment): Promise<boolean>;
-    getGroupsNotPartOfAssessment(assessmentId: number): Promise<Group[]>;
+    
+    getAssessmentSettings(assessmentId: number): Promise<(AssessmentSettings  & {groupName: string})[]>;
     createAssessmentSettings(assessmentSettings: AssessmentSettings): Promise<boolean>;
     updateAssessmentSettings(assessmentSettings: AssessmentSettings): Promise<boolean>;
     deleteAssessmentSettings(assessmentId: number, groupId: number): Promise<boolean>;
+    getGroupsNotPartOfAssessment(assessmentId: number): Promise<Group[]>;
     
+    getAssessmentQuestions(assessmentId: number): Promise<AssessmentQuestion[]>;
+    createAssessmentQuestion(assessmentQuestion: AssessmentQuestion): Promise<boolean>;
+    updateAssessmentQuestion(assessmentQuestion: AssessmentQuestion): Promise<boolean>;
+    deleteAssessmentQuestion(assessmentId: number, questionId: number): Promise<boolean>;
+
     getQuestions(): Promise<{id: number}[]>;
     createQuestion(): Promise<boolean>;
 }

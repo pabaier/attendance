@@ -8,35 +8,41 @@
     </div>
 
     <h3>Questions</h3>
+    <div class="container">
+        <div class="mb-3 border-bottom border-2">
+            <div class="row">
+                <div class="col-3"></div>
+                <div class="col-3">
+                    Attempts
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-3">
+                    <%- questionsDropdown %>
+                </div>
+                <div class="col-1 my-2">
+                    <input type="number" class="form-control" id="new-question-attempts">
+                </div>
+                <div class="col-1 my-2">
+                    <button type="button" id="new-question-save" class="btn btn-primary btn-sm">New</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <div class="container mb-5">
-        <div class="row my-2">
-            <div class="col-4">
-                <select class="form-select" id="questions" multiple aria-label="multiple select example">
-                    <% questions.forEach(q => { %>
-                        <% if (q.selected) { %>
-                            <option selected value="<%- q.id %>"><%- q.id %></option>
-                        <% } else { %>
-                            <option value="<%- q.id %>"><%- q.id %></option>
-                        <% } %>
-                    <% }) %>
-                </select>
-            </div>
-        </div>
-        <div class="row  my-2">
-            <div class="col-2">
-                Question Id
-            </div>
-            <div class="col-1">
-                Attempts
-            </div>
-        </div>
         <% testQuestions.forEach(q => { %>
             <div class="row  my-2">
-                <div class="col-2">
+                <div class="col-3">
                     <%- q.questionId %>
                 </div>
                 <div class="col-1">
-                    <input type="number" class="form-control attempts" id="attempts-<%- q.questionId %>" value="<%- q.attempts %>">
+                    <input type="number" class="form-control" id="attempts-<%- q.questionId %>" value="<%- q.attempts %>">
+                </div>
+                <div class="col-1">
+                    <button type="button" id="save-<%=q.assessmentId%>-<%=q.questionId%>" class="btn-question-save btn btn-primary btn-sm my-2">&#x2713</button>
+                    <button type="button" id="del-<%=q.assessmentId%>-<%=q.questionId%>" class="btn-question-del btn btn-primary btn-sm my-2">&#x2715</button>
                 </div>
             </div>
         <% }) %>
@@ -65,7 +71,7 @@
                     <input class="form-control my-2" type="datetime-local" id="end-time" name="meeting-time">
                 </div>
                 <div class="col-1">
-                    <button type="button" id="save-new" class="btn-new-settings-save btn btn-primary btn-sm my-2">New</button>
+                    <button type="button" id="new-settings-save" class="btn btn-primary btn-sm my-2">New</button>
                 </div>
             </div>
         </div>
@@ -74,21 +80,19 @@
 
     <div class="container">
         <% settings.forEach(q => { %>
-            <div class="mb-2 border-bottom border-2">
-                <div class="row my-2">
-                    <div class="col-3">
-                        <%=q.groupName%>
-                    </div>
-                    <div class="col-3">
-                        <input class="form-control my-2" type="datetime-local" id="start-time-<%=q.assessmentId%>-<%=q.groupId%>" value="<%=q.startTime%>" name="meeting-time">
-                    </div>
-                    <div class="col-3">
-                        <input class="form-control my-2" type="datetime-local" id="end-time-<%=q.assessmentId%>-<%=q.groupId%>" value="<%=q.endTime%>" name="meeting-time">
-                    </div>
-                    <div class="col-1">
-                        <button type="button" id="save-<%=q.assessmentId%>-<%=q.groupId%>" class="btn-settings-save btn btn-primary btn-sm my-2">&#x2713</button>
-                        <button type="button" id="del-<%=q.assessmentId%>-<%=q.groupId%>" class="btn-settings-del btn btn-primary btn-sm my-2">&#x2715</button>
-                    </div>
+            <div class="row my-2">
+                <div class="col-3">
+                    <%=q.groupName%>
+                </div>
+                <div class="col-3">
+                    <input class="form-control my-2" type="datetime-local" id="start-time-<%=q.assessmentId%>-<%=q.groupId%>" value="<%=q.startTime%>" name="meeting-time">
+                </div>
+                <div class="col-3">
+                    <input class="form-control my-2" type="datetime-local" id="end-time-<%=q.assessmentId%>-<%=q.groupId%>" value="<%=q.endTime%>" name="meeting-time">
+                </div>
+                <div class="col-1">
+                    <button type="button" id="save-<%=q.assessmentId%>-<%=q.groupId%>" class="btn-settings-save btn btn-primary btn-sm my-2">&#x2713</button>
+                    <button type="button" id="del-<%=q.assessmentId%>-<%=q.groupId%>" class="btn-settings-del btn btn-primary btn-sm my-2">&#x2715</button>
                 </div>
             </div>
         <% }) %>
@@ -96,6 +100,77 @@
 </div>
 
 <script>
+    $('.btn-question-save').click(e => {
+        var ids = e.target.id.split('-');
+        var assessmentId = parseInt(ids[1]);
+        var questionId = parseInt(ids[2])
+        var attempts = parseInt($(`#attempts-${questionId}`).val()) | undefined;
+
+        var data = {
+            attempts
+        }
+
+        $.ajax({
+            url: `/admin/assessments/${assessmentId}/${questionId}`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                $('#toastHeader').html("Success");
+                $('#toastBody').html(response.message);
+                $('#liveToast').toast('show');
+            },
+            error: function(response) {
+                $('#toastHeader').html("Assessment Creation Error");
+                $('#toastBody').html(response.message);
+                $('#liveToast').toast('show');
+            }
+        });
+    })
+
+    $('.btn-question-del').click(e => {
+        var ids = e.target.id.split('-');
+        var assessmentId = parseInt(ids[1]);
+        var questionId = parseInt(ids[2])
+
+        res = confirm("delete question from assessment?");
+        if (!res) return;
+        $.ajax({
+            url: `/admin/assessments/${assessmentId}/${questionId}`,
+            type: 'DELETE',
+            success: function(response) {
+                location.reload();
+            },
+            error: function(response) {
+                $('#toastHeader').html("Error");
+                $('#toastBody').html(response.message);
+                $('#liveToast').toast('show');
+            }
+        });
+    })
+
+    $('#new-question-save').click(e => {
+        var assessmentId = <%= assessment.id %>;
+        var questionId = parseInt($(`#question-select-0`).val())
+        var attempts = parseInt($('#new-question-attempts').val()) || undefined
+
+        var data = {
+            questionId,
+            attempts,
+        }
+
+        $.post(`/admin/assessments/${assessmentId}/question`,
+            data,
+            function(response) {
+                window.location.reload();
+            }
+        ).fail( function(response) {
+            $('#toastHeader').html("Assessment Creation Error");
+            $('#toastBody').html(data.message);
+            $('#liveToast').toast('show');
+        });
+    })
+
     $('.btn-settings-save').click(e => {
         var ids = e.target.id.split('-');
         var assessmentId = parseInt(ids[1]);
@@ -130,8 +205,6 @@
         });
     })
 
-
-
     $('.btn-settings-del').click(e => {
         var ids = e.target.id.split('-');
         var assessmentId = parseInt(ids[1]);
@@ -155,7 +228,7 @@
         });
     })
 
-    $('.btn-new-settings-save').click(e => {
+    $('#new-settings-save').click(e => {
         var assessmentId = <%= assessment.id %>;
         var groupId = parseInt($(`#group-select-0`).val())
         if(!groupId) {
@@ -188,27 +261,6 @@
         });
     })
 
-    $('.attempts').focusout(e => {
-        questionId = e.target.id.split('-')[1]
-        attempts = e.target.value
-        $.ajax({
-            url: `/admin/assessments/<%= assessment.id %>/question`,
-            type: 'PUT',
-            contentType: 'application/json',
-            data: JSON.stringify({ questionId, attempts }),
-            success: function(data) {
-                $('#toastHeader').html("Success");
-                $('#toastBody').html(data.message);
-                $('#liveToast').toast('show');
-            },
-            error: function(data) {
-                $('#toastHeader').html("Error");
-                $('#toastBody').html(data.message);
-                $('#liveToast').toast('show');
-            }
-        });
-    })
-
     $('#edit-title').change(e => {
         var name = e.target.value;
         $.ajax({
@@ -226,46 +278,6 @@
                 $('#toastBody').html(data.message);
                 $('#liveToast').toast('show');
             }
-        });
-    })
-
-    $('#questions').focusout(e => {
-        const questionIds = $('#questions').val()
-        $.ajax({
-            url: `/admin/assessments/<%= assessment.id %>/questions`,
-            type: 'PUT',
-            contentType: 'application/json',
-            data: JSON.stringify({ ids: questionIds }),
-            success: function(data) {
-                window.location.reload();
-                // $('#toastHeader').html("Success");
-                // $('#toastBody').html(data.message);
-                // $('#liveToast').toast('show');
-            },
-            error: function(data) {
-                $('#toastHeader').html("Error");
-                $('#toastBody').html(data.message);
-                $('#liveToast').toast('show');
-            }
-        });
-    })
-
-    $('#new-assignment-submit').click(e => {
-        var name = $('#new-name').val()
-
-        var data = {
-            name,
-        }
-
-        $.post(`/admin/assessments`,
-            data,
-            function( data ) {
-                window.location.reload();
-            }
-        ).fail( function(data) {
-            $('#toastHeader').html("Assessment Creation Error");
-            $('#toastBody').html(data.responseJSON.message);
-            $('#liveToast').toast('show');
         });
     })
 </script>

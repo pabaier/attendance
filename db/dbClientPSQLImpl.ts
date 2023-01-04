@@ -18,6 +18,35 @@ class DbClientPSQLImpl implements DbClient {
     )
   }
 
+  async deleteAssessmentQuestion(assessmentId: number, questionId: number): Promise<boolean> {
+    var query = 'delete from assessment_question where assessment_id = $1 and question_id = $2'
+    return this.connection.none(query, [assessmentId, questionId])
+    .then((data: any) => {
+      return true;
+    })
+    .catch((error: any) => {
+      console.log(error)
+      return false;
+    })
+  }
+
+  async createAssessmentQuestion(assessmentQuestion: AssessmentQuestion): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['assessment_id', 'question_id', 'attempts'], {table: 'assessment_question'});
+    const data = {
+        assessment_id: assessmentQuestion.assessmentId,
+        question_id: assessmentQuestion.questionId,
+        attempts: assessmentQuestion.attempts,
+    };
+    const query = this.pg.helpers.insert(data, cs);
+    return this.connection.none(query)
+    .then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
   async updateAssessmentSettings(assessmentSettings: AssessmentSettings): Promise<boolean> {
     const cs = new this.pg.helpers.ColumnSet(['start_time', 'end_time']);
     const data = {
@@ -96,34 +125,6 @@ class DbClientPSQLImpl implements DbClient {
       console.log(error)
       return false;
     });
-  }
-  async addAssessmentQuestions(assessmentId: number, questions: number[]): Promise<boolean> {
-    const cs = new this.pg.helpers.ColumnSet(['assessment_id', 'question_id'], {table: 'assessment_question'});
-    const values = questions.map(question_id => {
-      return {
-        assessment_id: assessmentId,
-        question_id
-      }
-    });
-    const query = this.pg.helpers.insert(values, cs);
-    return this.connection.none(query).then((data: any) => {
-      return true;
-    }).catch((error: any) => {
-      console.log(error)
-      return false;
-    });
-  }
-
-  async setAssessmentQuestions(assessmentId: number, questions: number[]): Promise<boolean> {
-    var query = 'delete from assessment_question where assessment_id = $1'
-    return this.connection.none(query, [assessmentId])
-    .then((data: any) => {
-      return this.addAssessmentQuestions(assessmentId, questions);
-    })
-    .catch((error: any) => {
-      console.log(error)
-      return false;
-    })
   }
 
   async updateAssessment(assessment: Assessment): Promise<boolean> {
