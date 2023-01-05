@@ -13,8 +13,6 @@ import assessments from './assessments';
 export default function (myCache: NodeCache, dbClient: DbClient) {
     const router = express.Router()
 
-    const codeRefreshRate: number = parseInt(process.env.CODE_REFRESH_RATE || '2');
-
     router.use(authCheckMiddleware, rollCheckMiddleware(['admin']))
 
     router.use('/posts', posts(dbClient));
@@ -36,34 +34,30 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     });
 
     router.get('/code/', async (req: Request, res: Response) => {
+        const userId = req.session.user?.id as number
+
         const courses = await dbClient.getCourses()
-        res.render('admin/code', { courses })
+        const globalSettings = await dbClient.getGlobalSettings(userId);
+
+        res.render('admin/code', { 
+            courses,
+            codeRefreshRate: globalSettings.codeRefreshRate,
+            codeTimeStart: globalSettings.codeTimeStart,
+            codeTimeWindow: globalSettings.codeTimeWindow
+        })
     });
 
     router.get('/code/update', (req: Request, res: Response) => {
-        // var minutes: number = 0;
-        // if (myCache.has('time')) {
-        //     minutes  = myCache.take('time') as number;
-        // }
-        // else {
-        //     minutes = new Date().getMinutes();
-        //     myCache.set('time', minutes, 59)
-        // }
         
-        // if (minutes < 29 || minutes > 35) {
-        //     res.json({ code: null })
-        //     return
-        // }
-        // else {
-            const value: number = myCache.has('code') ? myCache.take('code') as number : 0;
-            const oldNumber: number = value % 10;
-            var newNumber: number = Math.floor(Math.random() * 9) + 1;
-            while (newNumber == oldNumber) {
-                newNumber = Math.floor(Math.random() * 9) + 1;
-            }
-            myCache.set('code', (value * 10 + newNumber) % 100000, codeRefreshRate / 1000 + 0.5);
-            res.json({ code: newNumber })
-        // }
+        const value: number = myCache.has('code') ? myCache.take('code') as number : 0;
+        const oldNumber: number = value % 10;
+        var newNumber: number = Math.floor(Math.random() * 9) + 1;
+        while (newNumber == oldNumber) {
+            newNumber = Math.floor(Math.random() * 9) + 1;
+        }
+        const codeRefreshRate = parseInt(req.query.refresh as string)
+        myCache.set('code', (value * 10 + newNumber) % 100000, codeRefreshRate / 1000 + 0.5);
+        res.json({ code: newNumber })
     });
 
     return router;

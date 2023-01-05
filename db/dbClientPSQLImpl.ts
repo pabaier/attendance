@@ -1,6 +1,6 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
-import { Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, PostType, Assessment, AssessmentQuestion, AssessmentSettings } from '../models';
+import { Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, PostType, Assessment, AssessmentQuestion, AssessmentSettings, GlobalSettings } from '../models';
 
 class DbClientPSQLImpl implements DbClient {
   connection: any;
@@ -16,6 +16,37 @@ class DbClientPSQLImpl implements DbClient {
         ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false
       }
     )
+  }
+
+  async updateGlobalSettings(settings: GlobalSettings): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['code_refresh_rate', 'code_time_window', 'code_time_start']);
+    const data = {
+      code_refresh_rate: settings.codeRefreshRate,
+      code_time_window: settings.codeTimeWindow,
+      code_time_start: settings.codeTimeStart,
+    };
+    const condition = pgp.as.format(' WHERE user_id = $1', [settings.userId]);
+    const query = this.pg.helpers.update(data, cs, 'global_settings') + condition;
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async getGlobalSettings(userId: number): Promise<GlobalSettings> {
+    var query = `SELECT gs.user_id "userId", gs.code_refresh_rate "codeRefreshRate", gs.code_time_window "codeTimeWindow", gs.code_time_start "codeTimeStart"
+                 FROM global_settings gs
+                 WHERE gs.user_id = $1`
+    return this.connection.one(query, [userId])
+      .then((data: GlobalSettings) => {
+        return data
+      })
+      .catch((error: any) => {
+        console.log('ERROR:', error);
+        return undefined;
+      });
   }
   
   async getCourseByGroupId(groupId: number): Promise<Course | undefined> {

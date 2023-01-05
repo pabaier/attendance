@@ -79,15 +79,17 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         let settings: UserSettings;
         let semesters: Semester[];
         let semestersDropdown;
+        let globalSettings;
 
         if (isAdmin) {
             settings = await dbClient.getUserSettings(req.session.user?.id as number)
+            globalSettings = await dbClient.getGlobalSettings(req.session.user?.id as number)
             semesters = await dbClient.getSemesters();
             semestersDropdown = renderFile('./views/partials/semester-select-dropdown.ejs', { semesters, selected: settings.semesterId, id: 0 });
 
         }
         var user: User = await dbClient.getUser(userId) as User;
-        res.render('user/settings', { user, isAdmin, semestersDropdown })
+        res.render('user/settings', { user, isAdmin, semestersDropdown, globalSettings })
     });
 
     router.patch('/:userId/settings', resourceAccessMiddleware, async (req: Request, res: Response) => {
@@ -119,6 +121,17 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
             req.session.userSettings = { ...req.session.userSettings, semesterId };
         }
         res.status(200).send({status: 200, message: 'success!'});
+    })
+
+    router.put('/:userId/settings/global', rollCheckMiddleware(['admin']), async (req: Request, res: Response) => {
+        const userId = parseInt(req.params.userId)
+        const codeRefreshRate = parseInt(req.body.codeRefresh);
+        const codeTimeStart = parseInt(req.body.codeStart);
+        const codeTimeWindow = parseInt(req.body.codeWindow);
+
+        let response = await dbClient.updateGlobalSettings({userId, codeRefreshRate, codeTimeStart, codeTimeWindow})
+
+        response ? res.status(200).send({message: 'global settings updated'}) : res.status(500).send({message: 'error'});
     })
 
     router.use((req: Request, res: Response) => {

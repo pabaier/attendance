@@ -4,15 +4,60 @@
     <h3>User Info</h3>
     <div class="container mb-5">
         <div class="row">
-            <div class="col-3 my-2">
-                <input type="text" class="form-control border border-1 border-success" id="firstName" name="firstName" value="<%= user.firstName ?? '' %>" placeholder="first name">
-            </div>
-            <div class="col-3 my-2">
-                <input type="text" class="form-control border border-1 border-success" id="lastName" name="lastName" value="<%= user.lastName ?? '' %>" placeholder="last name">
+            <div class="col-6">
+                <div class="row">
+                    <div class="col">
+                        First Name
+                    </div>
+                    <div class="col">
+                        Last Name
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col my-2">
+                        <input type="text" class="form-control border border-1 border-success" id="firstName" name="firstName" value="<%= user.firstName ?? '' %>" placeholder="first name">
+                    </div>
+                    <div class="col my-2">
+                        <input type="text" class="form-control border border-1 border-success" id="lastName" name="lastName" value="<%= user.lastName ?? '' %>" placeholder="last name">
+                    </div>
+                </div>
             </div>
             <% if (isAdmin) { %>
-                <div class="col-3">
-                    <%- semestersDropdown %>
+                <div class="col">
+                    <div class="row">
+                        <div class="col-3">
+                            semester
+                        </div>
+                        <div class="col-3">
+                            code refresh rate
+                        </div>
+                        <div class="col-3">
+                            code time start
+                        </div>
+                        <div class="col-3">
+                            code time window
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-3">
+                            <%- semestersDropdown %>
+                        </div>
+                        <div class="col-3">
+                            <input class="form-control my-2" type="number" id="codeRefreshInput" value="<%- globalSettings.codeRefreshRate %>">
+                        </div>
+                        <div class="col-3">
+                            <input class="form-control my-2" type="number" id="codeStartInput" value="<%- globalSettings.codeTimeStart %>">
+                        </div>
+                        <div class="col-3">
+                            <input class="form-control my-2" type="number" id="codeWindowInput" value="<%- globalSettings.codeTimeWindow %>">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-9"></div>
+                        <div class="col">
+                            <button type="button" id="save-admin" class="btn btn-primary btn-sm my-2">save admin</button>
+                        </div>
+                    </div>
                 </div>
             <% } %>
         </div>
@@ -46,6 +91,37 @@
 
 <script>
     var user = <%-JSON.stringify(user)%>
+
+    $('#save-admin').click(e => {
+
+        var codeRefresh = parseInt($('#codeRefreshInput').val());
+        var codeStart = parseInt($('#codeStartInput').val());
+        var codeWindow = parseInt($('#codeWindowInput').val());
+        
+        var data = {
+            codeRefresh,
+            codeStart,
+            codeWindow,
+        }
+
+        $.ajax({
+            url: `/user/${user.id}/settings/global`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                $('#toastHeader').html("Success");
+                $('#toastBody').html(response.message);
+                $('#liveToast').toast('show');
+            },
+            error: function(response) {
+                $('#toastHeader').html("Error");
+                $('#toastBody').html(response.message);
+                $('#liveToast').toast('show');
+            }
+        });
+
+    })
 
     $('#semester-select-0').change(e => {
         var semesterId = e.target.value;
