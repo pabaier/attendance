@@ -44,8 +44,8 @@
         var classStartMinute = startTime[1]
         var today = new Date();
 
-        var codeStartMinutesBeforeClassStarts = parseInt(<%= process.env.CODE_TIME_START %>);
-        var codeOpenMinutes = parseInt(<%= process.env.CODE_TIME_WINDOW %>)
+        var codeStartMinutesBeforeClassStarts = parseInt(<%= codeTimeStart %>);
+        var codeOpenMinutes = parseInt(<%= codeTimeWindow %>)
 
         var timerStart = new Date();
         timerStart.setHours(classStartHour);
@@ -121,12 +121,12 @@
 
     const displayCode = () => {
         setInterval(function () {
-            $.get( "/admin/code/update", function( data ) {
+            $.get( "/admin/code/update?refresh=<%= codeRefreshRate %>", function( data ) {
                 if (data.code) {
                     $("#number").html( data.code )
                 }
             })
-        }, parseInt('<%= process.env.CODE_REFRESH_RATE %>'))
+        }, parseInt('<%= codeRefreshRate %>'))
     }
 
     const displayUsers = (courseId) => {

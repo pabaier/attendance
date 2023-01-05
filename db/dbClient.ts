@@ -1,4 +1,4 @@
-import { Course, CourseDate, User, PostGroup, UserGroups, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, PostType, Assessment, AssessmentQuestion, AssessmentSettings } from "../models";
+import { Course, CourseDate, User, PostGroup, UserGroups, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, PostType, Assessment, AssessmentQuestion, AssessmentSettings, GlobalSettings } from "../models";
 
 export interface DbClient {
     connection: any;
@@ -46,6 +46,9 @@ export interface DbClient {
     getUserSettings(userId: number): Promise<UserSettings>;
     createUsers(users: any, ): Promise<number[]>;
     updateUserSettings(userSettings: (UserSettings & {userId: number})[]): Promise<boolean>;
+
+    getGlobalSettings(userId: number): Promise<GlobalSettings>;
+    updateGlobalSettings(settings: GlobalSettings): Promise<boolean>;
     
     getSemesters(semesterId?: number): Promise<Semester[]>;
     updateSemester(userId: number, semesterId:number): Promise<boolean>;

@@ -9,6 +9,8 @@ CREATE TABLE users (
 	roles TEXT
 );
 CREATE INDEX users_email_idx ON users (email);
+INSERT INTO users(email, first_name, last_name, password_hash, salt, roles)
+VALUES ('baierpa@cofc.edu', 'p', 'b', 'hQl45siunpPrG8qefHw7hNl4h11kgv/ut5tg4+uqCzw=', 'pQtxLEpjEbtK+OESLsCTFw==', 'admin');
 
 CREATE TABLE groups (
 	id SERIAL PRIMARY KEY,
@@ -21,6 +23,9 @@ CREATE TABLE semester (
 	semester_year INTEGER,
 	UNIQUE (season, semester_year)
 );
+INSERT INTO semester(season, semester_year)
+VALUES ('Spring', 2023);
+
 
 CREATE TABLE courses (
 	id SERIAL PRIMARY KEY,
@@ -71,7 +76,7 @@ CREATE TABLE post_types (
 	post_type VARCHAR (50)
 );
 INSERT INTO post_types(post_type)
-VALUES ("announcement"), ("assignment"), ("pinned announcement");
+VALUES ('announcement'), ('assignment'), ('pinned announcement');
 
 CREATE TABLE post_group (
 	post_id integer REFERENCES posts (id) ON DELETE CASCADE,
@@ -90,6 +95,9 @@ CREATE TABLE user_settings (
 	semester_id INTEGER REFERENCES semester (id) ON DELETE CASCADE,
 	UNIQUE (user_id)
 );
+INSERT INTO user_settings(user_id, semester_id)
+VALUES (1, 1);
+
 
 CREATE TABLE assessment (
 	id SERIAL PRIMARY KEY,
@@ -126,6 +134,16 @@ CREATE TABLE user_question (
 	attempts INTEGER,
 	PRIMARY KEY(assessment_id, question_id, user_id)
 );
+
+CREATE TABLE global_settings (
+	user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
+	code_refresh_rate INTEGER,
+	code_time_window INTEGER,
+	code_time_start INTEGER,
+	UNIQUE (user_id)
+);
+INSERT INTO global_settings(user_id, code_refresh_rate, code_time_window, code_time_start)
+VALUES (1, 2000, 10, 5);
 
 -- -------------------------------------------------
 

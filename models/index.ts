@@ -6,6 +6,7 @@ import CalendarEvent from './CalendarEvent';
 import Course from './Course';
 import CourseAssignment from './CourseAssignment';
 import CourseDate from './CourseDate';
+import GlobalSettings from './GlobalSettings';
 import Group from './Group';
 import Post from './Post';
 import PostGroup from './PostGroup';
@@ -28,6 +29,7 @@ export {
     Course,
     CourseAssignment,
     CourseDate,
+    GlobalSettings,
     Group,
     Post,
     PostGroup,
