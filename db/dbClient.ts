@@ -1,4 +1,4 @@
-import { Course, CourseDate, User, PostGroup, UserGroups, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, PostType, Assessment, AssessmentQuestion, AssessmentSettings, GlobalSettings } from "../models";
+import { Course, CourseDate, User, PostGroup, UserGroups, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, PostType, Assessment, AssessmentQuestion, AssessmentSettings, GlobalSettings, Question } from "../models";
 
 export interface DbClient {
     connection: any;
@@ -74,11 +74,13 @@ export interface DbClient {
     deleteAssessmentSettings(assessmentId: number, groupId: number): Promise<boolean>;
     getGroupsNotPartOfAssessment(assessmentId: number): Promise<Group[]>;
     
-    getAssessmentQuestions(assessmentId: number): Promise<AssessmentQuestion[]>;
+    getAssessmentQuestions(assessmentId: number): Promise<(AssessmentQuestion & Question)[]>;
     createAssessmentQuestion(assessmentQuestion: AssessmentQuestion): Promise<boolean>;
     updateAssessmentQuestion(assessmentQuestion: AssessmentQuestion): Promise<boolean>;
     deleteAssessmentQuestion(assessmentId: number, questionId: number): Promise<boolean>;
 
-    getQuestions(): Promise<{id: number}[]>;
-    createQuestion(): Promise<boolean>;
+    getQuestions(): Promise<Question[]>;
+    createQuestion(question: Question): Promise<number | undefined>;
+    updateQuestion(question: Question): Promise<boolean>;
+    deleteQuestion(questionId: number): Promise<boolean>;
 }

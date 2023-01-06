@@ -48,12 +48,12 @@
 
         $.post(`/admin/assessments`,
             data,
-            function( data ) {
+            function(response) {
                 window.location.reload();
             }
-        ).fail( function(data) {
+        ).fail( function(response) {
             $('#toastHeader').html("Assessment Creation Error");
-            $('#toastBody').html(data.responseJSON.message);
+            $('#toastBody').html(response.message);
             $('#liveToast').toast('show');
         });
     })

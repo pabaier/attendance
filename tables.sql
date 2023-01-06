@@ -105,7 +105,9 @@ CREATE TABLE assessment (
 );
 
 CREATE TABLE question (
-	id SERIAL PRIMARY KEY
+	id SERIAL PRIMARY KEY,
+	title VARCHAR(50),
+	question_description TEXT
 );
 
 CREATE TABLE assessment_settings (

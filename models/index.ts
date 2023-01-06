@@ -11,6 +11,7 @@ import Group from './Group';
 import Post from './Post';
 import PostGroup from './PostGroup';
 import PostType from './PostType';
+import Question from './Question';
 import Semester from './Semester';
 import Test from './Test';
 import TestUserData from './TestUserData';
@@ -34,6 +35,7 @@ export {
     Post,
     PostGroup,
     PostType,
+    Question,
     Semester,
     Test,
     TestUserData,

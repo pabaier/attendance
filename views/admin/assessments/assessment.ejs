@@ -35,7 +35,7 @@
         <% testQuestions.forEach(q => { %>
             <div class="row  my-2">
                 <div class="col-3">
-                    <%- q.questionId %>
+                    <%- q.questionId %>-<%- q.title %>
                 </div>
                 <div class="col-1">
                     <input type="number" class="form-control" id="attempts-<%- q.questionId %>" value="<%- q.attempts %>">

@@ -2,10 +2,10 @@
     <option>Select Question</option>
     <% questions.forEach(question => { %>
         <% if (question.id == selected) { %>
-            <option selected value="<%=question.id%>"><%=question.id%></option>
+            <option selected value="<%=question.id%>"><%=question.id%>-<%=question.title%></option>
         
         <% } else { %>
-            <option value="<%=question.id%>"><%=question.id%></option>
+            <option value="<%=question.id%>"><%=question.id%>-<%=question.title%></option>
         <% } %>
     <% }) %>
 </select>
