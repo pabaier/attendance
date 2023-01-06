@@ -68,7 +68,7 @@ export interface DbClient {
     createAssessment(assessment: Assessment): Promise<boolean>;
     updateAssessment(assessment: Assessment): Promise<boolean>;
     
-    getAssessmentSettings(assessmentId: number): Promise<(AssessmentSettings  & {groupName: string})[]>;
+    getAssessmentSettings(assessmentId: number): Promise<(AssessmentSettings  & {name: string, groupName: string})[]>;
     createAssessmentSettings(assessmentSettings: AssessmentSettings): Promise<boolean>;
     updateAssessmentSettings(assessmentSettings: AssessmentSettings): Promise<boolean>;
     deleteAssessmentSettings(assessmentId: number, groupId: number): Promise<boolean>;
