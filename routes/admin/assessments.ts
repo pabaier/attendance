@@ -62,7 +62,7 @@ export default function (dbClient: DbClient) {
         const questionsDropdown = renderFile('./views/admin/partials/question-select-dropdown.ejs', { questions: unusedQuestions, selected: 0, id: 0 });
 
 
-        var assessmentSettings: (AssessmentSettings & { groupName: string} )[] = await dbClient.getAssessmentSettings(assessmentId);
+        var assessmentSettings: (AssessmentSettings & { name: string, groupName: string} )[] = await dbClient.getAssessmentSettings(assessmentId);
         var settings = assessmentSettings.map(as => {
             return {
                 ...as,
@@ -117,8 +117,9 @@ export default function (dbClient: DbClient) {
         var assessmentId = parseInt(req.params.assessmentId)
         var questionId = parseInt(req.body.questionId)
         var attempts = req.body.attempts ? parseInt(req.body.attempts) : undefined;
+        var ordinal = parseInt(req.body.ordinal);
 
-        const success = await dbClient.createAssessmentQuestion({assessmentId, questionId, attempts});
+        const success = await dbClient.createAssessmentQuestion({assessmentId, questionId, attempts, ordinal});
         success ? res.status(200).send({message: `Assessment Question Created`}) : res.status(500).send({message: 'error'});
     });
 
@@ -127,10 +128,9 @@ export default function (dbClient: DbClient) {
         var questionId = parseInt(req.params.questionId)
 
         var attempts = parseInt(req.body.attempts) || undefined;
+        var ordinal = parseInt(req.body.ordinal);
 
-        console.log(attempts);
-
-        const success = await dbClient.updateAssessmentQuestion({assessmentId, questionId, attempts});
+        const success = await dbClient.updateAssessmentQuestion({ assessmentId, questionId, attempts, ordinal });
         success ? res.status(200).send({message: `Assessment Question Updated`}) : res.status(500).send({message: 'error'});
     });
 

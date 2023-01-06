@@ -105,11 +105,12 @@ class DbClientPSQLImpl implements DbClient {
   }
 
   async createAssessmentQuestion(assessmentQuestion: AssessmentQuestion): Promise<boolean> {
-    const cs = new this.pg.helpers.ColumnSet(['assessment_id', 'question_id', 'attempts'], {table: 'assessment_question'});
+    const cs = new this.pg.helpers.ColumnSet(['assessment_id', 'question_id', 'attempts', 'ordinal'], {table: 'assessment_question'});
     const data = {
         assessment_id: assessmentQuestion.assessmentId,
         question_id: assessmentQuestion.questionId,
         attempts: assessmentQuestion.attempts,
+        ordinal: assessmentQuestion.ordinal,
     };
     const query = this.pg.helpers.insert(data, cs);
     return this.connection.none(query)
@@ -187,9 +188,10 @@ class DbClientPSQLImpl implements DbClient {
   }
 
   async updateAssessmentQuestion(assessmentQuestion: AssessmentQuestion): Promise<boolean> {
-    const cs = new this.pg.helpers.ColumnSet(['attempts']);
+    const cs = new this.pg.helpers.ColumnSet(['attempts', 'ordinal']);
     const data = {
-      attempts: assessmentQuestion.attempts
+      attempts: assessmentQuestion.attempts,
+      ordinal: assessmentQuestion.ordinal,
     };
     const condition = pgp.as.format(' WHERE assessment_id = $1 and question_id = $2', [assessmentQuestion.assessmentId, assessmentQuestion.questionId]);
     const query = this.pg.helpers.update(data, cs, 'assessment_question') + condition;
@@ -217,11 +219,14 @@ class DbClientPSQLImpl implements DbClient {
     });
   }
 
-  async getAssessmentSettings(assessmentId: number): Promise<(AssessmentSettings & {groupName: string})[]> {
-    var text = `SELECT a.assessment_id "assessmentId", a.group_id "groupId", a.start_time "startTime", a.end_time "endTime", g.group_name "groupName"
+  async getAssessmentSettings(assessmentId: number): Promise<(AssessmentSettings & {name: string, groupName: string})[]> {
+    var text = `SELECT a.assessment_id "assessmentId", a.group_id "groupId", a.start_time "startTime", a.end_time "endTime",
+                g.group_name "groupName", aa.assessment_name "name"
                 FROM assessment_settings a
                 JOIN "groups" g
                 ON g.id = a.group_id
+                JOIN assessment aa
+                ON a.assessment_id = aa.id
                 WHERE a.assessment_id = $1
                 ORDER BY a.start_time DESC
                 `;
@@ -237,12 +242,13 @@ class DbClientPSQLImpl implements DbClient {
   async getAssessmentQuestions(assessmentId: number): Promise<(AssessmentQuestion & Question)[]> {
     return await this.connection.any({
       name: 'getAssessmentQuestions',
-      text: `SELECT aq.assessment_id "assessmentId", aq.question_id "questionId", aq.attempts "attempts", q.title, q.question_description "description"
+      text: `SELECT aq.assessment_id "assessmentId", aq.question_id "questionId", aq.ordinal, aq.attempts "attempts",
+             q.title, q.question_description "description"
              FROM assessment_question aq
              JOIN question q
              ON aq.question_id = q.id
              WHERE aq.assessment_id = $1
-             ORDER BY aq.question_id`
+             ORDER BY aq.ordinal`
     }, [assessmentId]).then((data: any[]) => {
       return data
     }).catch((error: any) => {

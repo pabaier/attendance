@@ -121,7 +121,9 @@ CREATE TABLE assessment_settings (
 CREATE TABLE assessment_question (
 	assessment_id INTEGER REFERENCES assessment (id) ON DELETE CASCADE,
 	question_id INTEGER REFERENCES question (id) ON DELETE CASCADE,
-	attempts INTEGER
+	ordinal INTEGER,
+	attempts INTEGER,
+	UNIQUE(assessment_id, ordinal)
 );
 CREATE INDEX assessment_question_assessment_id_idx ON assessment_question (assessment_id);
 

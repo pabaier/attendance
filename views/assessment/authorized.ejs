@@ -1,0 +1,20 @@
+<div class="jumbotron">
+    <h1><%= assessment.name %></h1>
+
+    <div class="container">
+        <% questions.forEach(question => { %>
+            <div class="row my-4">
+                <div class="col">
+                        <a href="#">
+                            <h5><%= question.title %></h5>
+                        </a>
+                        <div class="ms-4">
+                            <%= question.description %>
+                        </div>
+                    </div>
+            </div>
+        <% }) %>
+    </div>
+</div>
+
+<script></script>
