@@ -4,6 +4,12 @@
     <h3>New Question</h3>
     <div class="container">
         <div class="row  mb-5">
+            <div class="col-4">
+                <input class="form-control my-2" id="new-title" placeholder="title">
+            </div>
+            <div class="col-4">
+                <textarea class="form-control my-2" id="new-description" placeholder="description"></textarea>
+            </div>
             <div class="col-2">
                 <button type="submit" id="new-question-submit" class="btn btn-primary form-control my-2">Create</button>
             </div>
@@ -13,12 +19,20 @@
     <h3>Questions</h3>
     <div class="container">
         <% questions.forEach(q => { %>
-            <div class="col-4">
-                <div class="mb-2 border-bottom border-2">
-                    <div class="row my-2">
-                        <div class="col-3">
-                            <%=q.id%>
-                        </div>
+            <div class="mb-2 border-bottom border-2">
+                <div class="row my-2">
+                    <div class="col-1">
+                        <%=q.id%>
+                    </div>
+                    <div class="col-3">
+                        <input class="form-control my-2" id="title-<%=q.id%>" value="<%=q.title%>">
+                    </div>
+                    <div class="col-4">
+                        <textarea class="form-control my-2" id="description-<%=q.id%>"><%=q.description%></textarea>
+                    </div>
+                    <div class="col-1">
+                        <button type="button" id="save-<%=q.id%>" class="btn-question-save btn btn-primary btn-sm my-2">&#x2713</button>
+                        <button type="button" id="del-<%=q.id%>" class="btn-question-del btn btn-primary btn-sm my-2">&#x2715</button>
                     </div>
                 </div>
             </div>
@@ -27,12 +41,67 @@
 </div>
 
 <script>
+    $('.btn-question-save').click(e => {
+        var ids = e.target.id.split('-');
+        var questionId = parseInt(ids[1]);
+        var title = $(`#title-${questionId}`).val()
+        var description = $(`#description-${questionId}`).val()
+
+        var data = {
+            title,
+            description
+        }
+
+        $.ajax({
+            url: `/admin/assessments/questions/${questionId}`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                $('#toastHeader').html("Success");
+                $('#toastBody').html(response.message);
+                $('#liveToast').toast('show');
+            },
+            error: function(response) {
+                $('#toastHeader').html("Assessment Creation Error");
+                $('#toastBody').html(response.message);
+                $('#liveToast').toast('show');
+            }
+        });
+    })
+
+    $('.btn-question-del').click(e => {
+        var ids = e.target.id.split('-');
+        var questionId = parseInt(ids[1]);
+
+        res = confirm("delete question?");
+        if (!res) return;
+        $.ajax({
+            url: `/admin/assessments/questions/${questionId}`,
+            type: 'DELETE',
+            success: function(response) {
+                location.reload();
+            },
+            error: function(response) {
+                $('#toastHeader').html("Error");
+                $('#toastBody').html(response.message);
+                $('#liveToast').toast('show');
+            }
+        });
+    })
+
     $('#new-question-submit').click(e => {
+        var title = $('#new-title').val();
+        var description = $('#new-description').val();
+
+        var data = {title, description};
+
         $.post(`/admin/assessments/questions`,
-            function( data ) {
+            data,
+            function(response) {
                 window.location.reload();
             }
-        ).fail( function(data) {
+        ).fail( function(response) {
             $('#toastHeader').html("Question Creation Error");
             $('#toastBody').html(data.responseJSON.message);
             $('#liveToast').toast('show');

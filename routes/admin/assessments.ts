@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import { DbClient } from '../../db/dbClient';
-import { Assessment, AssessmentQuestion, AssessmentSettings, Post, PostGroup } from '../../models';
+import { Assessment, AssessmentQuestion, AssessmentSettings, Post, PostGroup, Question } from '../../models';
 import { renderFile } from '../../views/helper';
 import { makeUTCDateString } from '../helpers';
 
@@ -26,18 +26,36 @@ export default function (dbClient: DbClient) {
     });
 
     router.post('/questions', async (req: Request, res: Response) => {
-        const success = await dbClient.createQuestion();
-        success ? res.status(200).send({message: 'success!'}) : res.status(500).send({message: 'error'});
+        var title = req.body.title;
+        var description = req.body.description;
+
+        const questionId = await dbClient.createQuestion({ title, description });
+        questionId ? res.status(200).send({message: 'success!'}) : res.status(500).send({message: 'error'});
         
     });
 
+    router.put('/questions/:questionId', async (req: Request, res: Response) => {
+        const questionId = parseInt(req.params.questionId);
+        const title = req.body.title ?? undefined;
+        const description = req.body.description ?? undefined;
+
+        const success = await dbClient.updateQuestion({ id: questionId, title, description });
+        success ? res.status(200).send({message: 'question updated successfully!'}) : res.status(500).send({message: 'error'});
+    });
+
+    router.delete('/questions/:questionId', async (req: Request, res: Response) => {
+        var questionId = parseInt(req.params.questionId)
+
+        const success = await dbClient.deleteQuestion(questionId);
+        success ? res.status(200).send({message: `Question Deleted`}) : res.status(500).send({message: 'error'});
+    });
 
     router.get('/:assessmentId', async (req: Request, res: Response) => {
         var assessmentId = parseInt(req.params.assessmentId)
         const assessment: Assessment = (await dbClient.getAssessments(assessmentId))[0];
         
-        const testQuestions: AssessmentQuestion[] = await dbClient.getAssessmentQuestions(assessmentId);
-        const allQuestions: {id: number}[] = await dbClient.getQuestions();
+        const testQuestions: (AssessmentQuestion & Question)[] = await dbClient.getAssessmentQuestions(assessmentId);
+        const allQuestions: Question[] = await dbClient.getQuestions();
         const unusedQuestions = allQuestions.filter(q => {
             return !testQuestions.some(x => x.questionId == q.id)
         })

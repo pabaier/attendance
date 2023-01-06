@@ -1,6 +1,6 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
-import { Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, PostType, Assessment, AssessmentQuestion, AssessmentSettings, GlobalSettings } from '../models';
+import { Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, PostType, Assessment, AssessmentQuestion, AssessmentSettings, GlobalSettings, Question } from '../models';
 
 class DbClientPSQLImpl implements DbClient {
   connection: any;
@@ -16,6 +16,34 @@ class DbClientPSQLImpl implements DbClient {
         ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false
       }
     )
+  }
+
+  async updateQuestion(question: Question): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['title', 'question_description']);
+    const data = {
+      title: question.title,
+      question_description: question.description,
+    };
+    const condition = pgp.as.format(' WHERE id = $1', [question.id]);
+    const query = this.pg.helpers.update(data, cs, 'question') + condition;
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async deleteQuestion(questionId: number): Promise<boolean> {
+    var query = 'delete from question where id = $1'
+    return this.connection.none(query, [questionId])
+    .then((data: any) => {
+      return true;
+    })
+    .catch((error: any) => {
+      console.log(error)
+      return false;
+    })
   }
 
   async updateGlobalSettings(settings: GlobalSettings): Promise<boolean> {
@@ -206,11 +234,13 @@ class DbClientPSQLImpl implements DbClient {
     });
   }
 
-  async getAssessmentQuestions(assessmentId: number): Promise<AssessmentQuestion[]> {
+  async getAssessmentQuestions(assessmentId: number): Promise<(AssessmentQuestion & Question)[]> {
     return await this.connection.any({
       name: 'getAssessmentQuestions',
-      text: `SELECT aq.assessment_id "assessmentId", aq.question_id "questionId", aq.attempts "attempts"
+      text: `SELECT aq.assessment_id "assessmentId", aq.question_id "questionId", aq.attempts "attempts", q.title, q.question_description "description"
              FROM assessment_question aq
+             JOIN question q
+             ON aq.question_id = q.id
              WHERE aq.assessment_id = $1
              ORDER BY aq.question_id`
     }, [assessmentId]).then((data: any[]) => {
@@ -221,23 +251,28 @@ class DbClientPSQLImpl implements DbClient {
     });
   }
 
-  async createQuestion(): Promise<boolean> {
-    const query = `INSERT INTO question DEFAULT VALUES`;
-    return this.connection.none(query).then((data: any) => {
-      return true;
+  async createQuestion(question: Question): Promise<number | undefined> {
+    const cs = new this.pg.helpers.ColumnSet(['title', 'question_description'], {table: 'question'});
+    const values = {
+      title: question.title,
+      question_description: question.description
+    }
+    const query = this.pg.helpers.insert(values, cs) + ' RETURNING id';
+    return this.connection.one(query).then((data: number) => {
+      return data;
     }).catch((error: any) => {
       console.log(error)
-      return false;
+      return undefined;
     });
   }
 
-  async getQuestions(): Promise<{ id: number; }[]> {
+  async getQuestions(): Promise<Question[]> {
     return await this.connection.any({
       name: 'getQuestions',
-      text: `SELECT q.id
+      text: `SELECT q.id, q.title, q.question_description "description"
              FROM question q
              ORDER BY q.id DESC`,
-    }).then((data: any[]) => {
+    }).then((data: Question[]) => {
       return data
     }).catch((error: any) => {
       console.log('ERROR:', error);
