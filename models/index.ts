@@ -17,6 +17,7 @@ import Test from './Test';
 import TestUserData from './TestUserData';
 import User from './User';
 import UserGroups from './UserGroups';
+import UserQuestion from './UserQuestion';
 import UserQuestionGrade from './UserQuestionGrade';
 import UserSettings from './UserSettings';
 import UserTest from './UserTest';
@@ -41,6 +42,7 @@ export {
     TestUserData,
     User,
     UserGroups,
+    UserQuestion,
     UserQuestionGrade,
     UserSettings,
     UserTest,
