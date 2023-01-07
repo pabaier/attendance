@@ -12,7 +12,7 @@ import dbClient from './db/dbClientPSQLImpl';
 
 const app = express();
 const port = process.env.PORT;
-const myCache = new NodeCache();
+const myCache = new NodeCache(); // cache for this instance of express js - like a global store, stored locally on server
 
 // EJS
 app.use(expressLayouts)
@@ -31,6 +31,8 @@ declare module "express-session" {
   }
 }
 
+// server side cookie storage
+// users only store a session id in a local cookie
 app.use(session({
   cookie: { maxAge: 86400000, sameSite: 'strict' },
   store: new MemoryStore({

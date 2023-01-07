@@ -5,7 +5,7 @@
         <% questions.forEach(question => { %>
             <div class="row my-4">
                 <div class="col">
-                        <a href="#">
+                        <a href="/assessment/<%= assessment.assessmentId %>/<%= question.questionId %>">
                             <h5><%= question.title %></h5>
                         </a>
                         <div class="ms-4">

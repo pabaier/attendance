@@ -29,3 +29,22 @@ export const resourceAccessMiddleware = (req: Request, res: Response, next: Next
         res.status(403).send({status: 403, message: 'forbidden'});
     }
 };
+
+export const assessmentAccessMiddleware = (req: Request, res: Response, next: NextFunction) => {
+    const assessmentId = parseInt(req.params.assessmentId);
+
+    
+    // verify user has access to this question based on session data
+    // need matching assessment Ids, needs to be verified, expiration needs to be after now.
+    // if the date is undefined (but verified), then the assessment has no end time and they can proceed.
+    var assessmentVerificationData = req.session.userSettings?.assessment;
+    if (!assessmentVerificationData || 
+        !(assessmentVerificationData.id == assessmentId) || 
+        !assessmentVerificationData.verified ||
+        (assessmentVerificationData.expires && (new Date(assessmentVerificationData.expires) < new Date()))
+    ) {
+        res.status(403).send({ message: 'forbidden', verificationError: true });
+    } else {
+        next()
+    }
+};

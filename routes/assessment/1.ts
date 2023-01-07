@@ -1,15 +1,14 @@
-const b = {
+const q1 = {
     vars: () => {
         return [getRandomNumber(50, 100)]
     },
     text: `
-            <h2>B Level Question</h2>
             <div class="col-6">
                 Given the following series:<br>
-                <div class="my-2 d-flex justify-content-center">
-                    (1/2), (3/4), (5/8), (7/16), ...<br>
+                <div class="my-2 ms-3">
+                    (1&frasl;2), (3&frasl;4), (5&frasl;8), (7&frasl;16), ...<br>
                 </div>
-                Where (1/2) is term 1, (3/4) is term 2, etc...<br>
+                Where (1&frasl;2) is term 1, (3&frasl;4) is term 2, etc...<br>
                 What is term {1} as a fraction (write your answer in the format a/b)?
             </div>
             `,
@@ -27,7 +26,7 @@ const b = {
     }
 }
 
-const c = {
+const q2 = {
     vars: () => {
         const num1 = getRandomNumber(1000, 2000);
         const num2 = getRandomNumber(num1 + 500, 3000);
@@ -49,8 +48,8 @@ const c = {
 }
 
 export default {
-    b,
-    c,
+    q1,
+    q2,
 }
 
 const getRandomNumber = (min: number, max: number) => {
