@@ -1,0 +1,30 @@
+<div id="timer"></div>
+
+<%- page %>
+
+<script>
+    var now = new Date('<%- now %>')
+    var end = new Date('<%- end %>')
+    var seconds = (end - now) / 1000
+    var timer = $("#timer");
+
+    console.log(now, end)
+
+    window.onload = (e) => {
+        setInterval(() => {
+            var h = Math.floor(seconds / 3600);
+            var m = Math.floor(seconds % 3600 / 60);
+            var s = Math.floor(seconds % 3600 % 60);
+            var hours = h > 9 ? `${h}` : `0${h}`;
+            var mins = m > 9 ? `${m}` : `0${m}`;
+            var secs = s > 9 ? `${s}` : `0${s}`;
+
+            if (h <= 0)
+                timer.html(`${mins}:${secs}`)
+            else
+                timer.html(`${hours}:${mins}:${secs}`)
+            seconds -= 1;
+        }, 1000)
+        console.log('loaded', e)
+    }
+</script>

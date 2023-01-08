@@ -4,6 +4,7 @@ import questions  from './1';
 import { DbClient } from '../../db/dbClient';
 import { assessmentAccessMiddleware, authCheckMiddleware } from '../../middleware/auth';
 import { AssessmentQuestion, AssessmentSettings, Question, UserQuestion, UserSettings } from '../../models';
+import { renderFile } from '../../views/helper';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
     const router = express.Router();
@@ -54,7 +55,10 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
                 expires: assessment.endTime,
             }
         }
-        res.render('assessment/authorized', { assessment, questions });
+
+        const end = req.session.userSettings?.assessment?.expires ?? undefined
+        var page = renderFile('./views/assessment/authorized.ejs', { assessment, questions });
+        res.render('assessment/wrapper', { page, now, end })
     });
 
     router.get('/:assessmentId/:questionId', assessmentAccessMiddleware, async (req: Request, res: Response) => {
@@ -97,7 +101,11 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
 
         var correct = ans == userQuestion.userAnswer;
 
-        res.render('assessment/question', { vars, text, ans, correct, questionAttempts: assessmentQuestion.attempts, title: assessmentQuestion.title, userQuestion });
+        const now = new Date();
+        const end = req.session.userSettings?.assessment?.expires ?? undefined
+
+        var page = renderFile('./views/assessment/question.ejs', { vars, text, ans, correct, questionAttempts: assessmentQuestion.attempts, title: assessmentQuestion.title, userQuestion });
+        res.render('assessment/wrapper', { page, now, end })
     });
 
     router.post('/:assessmentId/:questionId/answer', assessmentAccessMiddleware, async (req: Request, res: Response) => {
