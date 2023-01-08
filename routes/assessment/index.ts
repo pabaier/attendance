@@ -11,9 +11,13 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
 
     router.use(authCheckMiddleware);
 
+    router.get('/', async (req: Request, res: Response) => {
+        var assessmentId = parseInt(req.query.id as string);
+        res.render('assessment/wrapper', { assessmentId })
+    })
+
     router.get('/:assessmentId', async (req: Request, res: Response) => {
         var assessmentId = parseInt(req.params.assessmentId)
-        const userId: number = req.session.user?.id as number;
         const userGroups: number[] = req.session.user?.groups as number[]
 
         const assessments: (AssessmentSettings & {name: string, groupName: string})[] = await dbClient.getAssessmentSettings(assessmentId)
@@ -34,7 +38,7 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         }, null)
 
         if (!assessment) {
-            res.render('assessment/unauthorized', {});
+            var page = renderFile('./views/assessment/unauthorized.ejs', {});
             req.session.userSettings = {
                 ...req.session.userSettings as UserSettings,
                 assessment: {
@@ -43,6 +47,7 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
                     expires: undefined,
                 }
             }
+            res.status(403).send({ message: 'unauthorized', page });
             return
         }
 
@@ -58,7 +63,8 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
 
         const end = req.session.userSettings?.assessment?.expires ?? undefined
         var page = renderFile('./views/assessment/authorized.ejs', { assessment, questions });
-        res.render('assessment/wrapper', { page, now, end })
+        res.status(200).send({ message: 'correct!', page, now, end });
+        // res.render('assessment/wrapper', { page, now, end })
     });
 
     router.get('/:assessmentId/:questionId', assessmentAccessMiddleware, async (req: Request, res: Response) => {
@@ -105,7 +111,8 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         const end = req.session.userSettings?.assessment?.expires ?? undefined
 
         var page = renderFile('./views/assessment/question.ejs', { vars, text, ans, correct, questionAttempts: assessmentQuestion.attempts, title: assessmentQuestion.title, userQuestion });
-        res.render('assessment/wrapper', { page, now, end })
+        res.status(200).send({message: 'correct!', page });
+        // res.render('assessment/wrapper', { page, now, end })
     });
 
     router.post('/:assessmentId/:questionId/answer', assessmentAccessMiddleware, async (req: Request, res: Response) => {

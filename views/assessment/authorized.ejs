@@ -5,9 +5,9 @@
         <% questions.forEach(question => { %>
             <div class="row my-4">
                 <div class="col">
-                        <a href="/assessment/<%= assessment.assessmentId %>/<%= question.questionId %>">
-                            <h5><%= question.title %></h5>
-                        </a>
+                        <div class='link' id='/assessment/<%= assessment.assessmentId %>/<%= question.questionId %>'>
+                            <h5><span class="text-decoration-underline text-primary" style="cursor: pointer;"><%= question.title %></span></h5>
+                        </div>
                         <div class="ms-4">
                             <%= question.description %>
                         </div>
@@ -17,4 +17,17 @@
     </div>
 </div>
 
-<script></script>
+<script>
+    $('.link').click( (e) => {
+        var url = e.currentTarget.id;
+        $.get(url,
+            function( data ) {
+                $('#page').html(data.page);
+            }
+        ).fail( function(data) {
+            $('#toastHeader').html("Error");
+            $('#toastBody').html("Announcement creation error");
+            $('#liveToast').toast('show');
+        });
+    })
+</script>
