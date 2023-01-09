@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import { DbClient } from '../../db/dbClient';
-import { Assessment, AssessmentQuestion, AssessmentSettings, Post, PostGroup, Question } from '../../models';
+import { Assessment, AssessmentQuestion, AssessmentSettings, Question } from '../../models';
 import { renderFile } from '../../views/helper';
 import { makeUTCDateString } from '../helpers';
 
@@ -79,7 +79,9 @@ export default function (dbClient: DbClient) {
     router.put('/:assessmentId', async (req: Request, res: Response) => {
         var assessmentId = parseInt(req.params.assessmentId)
         var name = req.body.name;
-        const success = await dbClient.updateAssessment({ id: assessmentId, name });
+        var description = req.body.description;
+
+        const success = await dbClient.updateAssessment({ id: assessmentId, name, description });
         success ? res.status(200).send({message: `Assessment ${assessmentId} updated`}) : res.status(500).send({message: 'error'});
     });
 
