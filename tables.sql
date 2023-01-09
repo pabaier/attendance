@@ -140,6 +140,16 @@ CREATE TABLE user_question (
 	PRIMARY KEY(assessment_id, question_id, user_id)
 );
 
+CREATE TABLE user_assessment (
+	user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
+	assessment_id INTEGER REFERENCES assessment (id) ON DELETE CASCADE,
+	grade VARCHAR(5),
+	comment TEXT,
+	start_time timestamptz,
+	end_time timestamptz,
+	PRIMARY KEY(user_id, assessment_id)
+);
+
 CREATE TABLE global_settings (
 	user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
 	code_refresh_rate INTEGER,

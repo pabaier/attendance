@@ -3,7 +3,7 @@ import NodeCache from 'node-cache';
 import questions  from './1';
 import { DbClient } from '../../db/dbClient';
 import { assessmentAccessMiddleware, authCheckMiddleware } from '../../middleware/auth';
-import { AssessmentQuestion, AssessmentSettings, Question, UserQuestion, UserSettings } from '../../models';
+import { AssessmentQuestion, AssessmentSettings, Question, User, UserAssessment, UserQuestion, UserSettings } from '../../models';
 import { renderFile } from '../../views/helper';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
@@ -17,8 +17,10 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     })
 
     router.get('/:assessmentId', async (req: Request, res: Response) => {
-        var assessmentId = parseInt(req.params.assessmentId)
-        const userGroups: number[] = req.session.user?.groups as number[]
+        const assessmentId = parseInt(req.params.assessmentId)
+        const user = req.session.user as User;
+        const userGroups: number[] = user.groups as number[]
+        const userId: number = user.id as number
 
         const assessments: (AssessmentSettings & {name: string, groupName: string})[] = await dbClient.getAssessmentSettings(assessmentId)
         const now = new Date();
@@ -31,14 +33,23 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         
         // if user has multiple tests open for multiple groups, choose the one that is open the longest 
         // (biggest diff between start and end time)
-        const assessment: (AssessmentSettings & {groupName: string}) = filteredAssessments.reduce((acc: any, current: any) => {
+        const assessment: (AssessmentSettings & {name: string, groupName: string}) = filteredAssessments.reduce((acc: any, current: any) => {
             var accDiff = acc ? acc.endTime - acc.startTime : null;
             var currDiff = current.endTime - current.startTime;
             return accDiff ? (currDiff > accDiff ? current : acc) : current;
         }, null)
 
+        // check if the assessment was submitted first
+        var userAssessment: UserAssessment = await dbClient.getUserAssessment(userId, assessmentId);
+        if (userAssessment && userAssessment.end) {
+            var page = renderFile('./views/assessment/unauthorized.ejs', { title: 'Complete', message: `Assessment submitted ${userAssessment.end.toLocaleString()}`});
+            res.status(403).send({ message: 'unauthorized', page });
+            return
+        }
+
+        // then return unauthorized if no assessments are eligible based on user groups and time
         if (!assessment) {
-            var page = renderFile('./views/assessment/unauthorized.ejs', {});
+            var page = renderFile('./views/assessment/unauthorized.ejs', {title: 'Unauthorized', message: 'access forbidden'});
             req.session.userSettings = {
                 ...req.session.userSettings as UserSettings,
                 assessment: {
@@ -49,6 +60,12 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
             }
             res.status(403).send({ message: 'unauthorized', page });
             return
+        }
+
+        // assessment is active and user has access, so create the access record if it doesn't exist
+        if (!userAssessment) {
+            userAssessment = {userId, assessmentId, start: new Date() }
+            await dbClient.createUserAssessment( userAssessment )
         }
 
         const questions: (AssessmentQuestion & Question)[] = await dbClient.getAssessmentQuestions(assessment.assessmentId);
@@ -64,7 +81,37 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         const end = req.session.userSettings?.assessment?.expires ?? undefined
         var page = renderFile('./views/assessment/authorized.ejs', { assessment, questions });
         res.status(200).send({ message: 'correct!', page, now, end });
-        // res.render('assessment/wrapper', { page, now, end })
+    });
+
+    router.post('/:assessmentId/submit', async (req: Request, res: Response) => {
+        const userId: number = req.session.user?.id as number;
+        const assessmentId = parseInt(req.params.assessmentId);
+
+        const userAssessment = await dbClient.getUserAssessment(userId, assessmentId);
+
+        if (!userAssessment) {
+            res.status(400).send({ message: 'cannot submit assessment before starting it' });
+            return;
+        }
+
+        var assessmentVerificationData = req.session.userSettings?.assessment;
+        if (!assessmentVerificationData || 
+            !(assessmentVerificationData.id == assessmentId) || 
+            !assessmentVerificationData.verified
+        ) {
+            res.status(403).send({ message: 'forbidden' });
+        }
+
+        var outcome = await dbClient.updateUserAssessment( {
+            ...userAssessment,
+            end: new Date()
+        })
+
+        if (outcome) {
+            res.status(200).send({message: 'submission received!' });
+        } else {
+            res.status(400).send({message: 'error saving submission' });
+        }
     });
 
     router.get('/:assessmentId/:questionId', assessmentAccessMiddleware, async (req: Request, res: Response) => {

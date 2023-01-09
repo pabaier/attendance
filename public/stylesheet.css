@@ -70,6 +70,27 @@ header {
   border-color: #26547C;
 }
 
+.btn-secondary {
+  background-color: #26547C;
+  border-color: #26547C;
+  border-radius: 0.25ch;
+}
+
+.btn-outline-secondary {
+  color: #26547C;
+  border-color: #26547C;
+}
+
+.btn-secondary:hover, .btn-outline-secondary:hover {
+  background-color: #FF8427;
+  border-color: #FF8427;
+}
+
+.btn-secondary:focus, .btn-outline-secondary:focus {
+  background-color: #2B2D42;
+  border-color: #2B2D42;
+}
+
 .breadcrumb-item a {
   text-decoration: none;
 }
