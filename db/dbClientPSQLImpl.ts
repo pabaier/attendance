@@ -1,6 +1,6 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
-import { Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, PostType, Assessment, AssessmentQuestion, AssessmentSettings, GlobalSettings, Question, UserQuestion } from '../models';
+import { Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, PostType, Assessment, AssessmentQuestion, AssessmentSettings, GlobalSettings, Question, UserQuestion, UserAssessment } from '../models';
 
 class DbClientPSQLImpl implements DbClient {
   connection: any;
@@ -16,6 +16,64 @@ class DbClientPSQLImpl implements DbClient {
         ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false
       }
     )
+  }
+
+  async updateUserAssessment(userAssessment: UserAssessment): Promise<boolean> {
+    const cols = ["user_id", "assessment_id", "grade", "comment", "start_time", "end_time"]
+    const cs = new this.pg.helpers.ColumnSet(cols);
+    const data = {
+      user_id: userAssessment.userId,
+      assessment_id: userAssessment.assessmentId,
+      grade: userAssessment.grade,
+      comment: userAssessment.comment,
+      start_time: userAssessment.start,
+      end_time: userAssessment.end,
+    };
+    const conditionData = [userAssessment.userId, userAssessment.assessmentId]
+    const condition = pgp.as.format(' WHERE user_id = $1 and assessment_id = $2', conditionData);
+    const query = this.pg.helpers.update(data, cs, 'user_assessment') + condition;
+    return this.connection.none(query)
+    .then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async createUserAssessment(userAssessment: UserAssessment): Promise<boolean> {
+    const cols = ["user_id", "assessment_id", "grade", "comment", "start_time", "end_time"]
+    const cs = new this.pg.helpers.ColumnSet(cols, {table: 'user_assessment'});
+    const data = {
+      user_id: userAssessment.userId,
+      assessment_id: userAssessment.assessmentId,
+      grade: userAssessment.grade,
+      comment: userAssessment.comment,
+      start_time: userAssessment.start,
+      end_time: userAssessment.end,
+    };
+    const query = this.pg.helpers.insert(data, cs);
+    return this.connection.none(query)
+    .then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async getUserAssessment(userId: number, assessmentId: number): Promise<UserAssessment> {
+     var query = `SELECT ua.user_id "userId", ua.assessment_id "assessmentId", ua.grade, ua.comment, ua.start_time "start", ua.end_time "end"
+                  FROM user_assessment ua
+                  WHERE ua.user_id = $1 and ua.assessment_id = $2`
+    return this.connection.any(query, [userId, assessmentId])
+      .then((data: UserAssessment[]) => {
+        return data.length ? data[0] : undefined
+      })
+      .catch((error: any) => {
+        console.log('ERROR:', error);
+        return undefined;
+      });
   }
 
   async updateUserQuestion(userQuestion: UserQuestion): Promise<boolean> {

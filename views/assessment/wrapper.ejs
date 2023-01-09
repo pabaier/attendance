@@ -3,8 +3,10 @@
 
 <script>
 
+    var intervalId;
+
     const startTimer = (seconds, timer) => {
-        setInterval(() => {
+        intervalId = setInterval(() => {
             var h = Math.floor(seconds / 3600);
             var m = Math.floor(seconds % 3600 / 60);
             var s = Math.floor(seconds % 3600 % 60);
@@ -13,7 +15,19 @@
             var secs = s > 9 ? `${s}` : `0${s}`;
 
             if (seconds <= 0) {
-                window.location.reload();
+                $.post(`/assessment/<%= assessmentId %>/submit`,
+                    function() {
+                        clearInterval(intervalId);
+                        window.location.reload();
+                    }
+                ).fail( function(data) {
+                    $('#toastHeader').html("Error");
+                    $('#toastBody').html(data.responseJSON.message);
+                    $('#liveToast').toast('show');
+                });
+                clearInterval(intervalId);
+                timer.html('00:00')
+                return;
             }
 
             if (h <= 0)
