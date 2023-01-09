@@ -1,9 +1,20 @@
 <!-- requires courses {name, id},  -->
 <div class="jumbotron">
-    <div class="row my-5">
-        <h3>Name</h3>
-        <div class="col-3">
-            <input class="form-control" value="<%= assessment.name %>" id="edit-title">
+    <div class="container my-5">
+        <div class="row my-2">
+            <div class="col-3">
+                <input class="form-control" value="<%= assessment.name %>" id="edit-name">
+            </div>
+        </div>
+        <div class="row my-2">
+            <div class="col-10">
+                <textarea class="form-control" id="edit-description"><%= assessment.description %></textarea>
+            </div>
+        </div>
+        <div class="row my-2">
+            <div class="col-10">
+                <button type="button" id="edit-save" class="btn btn-primary">Save</button>
+            </div>
         </div>
     </div>
 
@@ -274,13 +285,15 @@
         });
     })
 
-    $('#edit-title').change(e => {
-        var name = e.target.value;
+    $('#edit-save').click(e => {
+        var description = $('#edit-description').val()
+        var name = $('#edit-name').val()
+
         $.ajax({
             url: `/admin/assessments/<%= assessment.id %>`,
             type: 'PUT',
             contentType: 'application/json',
-            data: JSON.stringify({ name }),
+            data: JSON.stringify({ name, description }),
             success: function(data) {
                 $('#toastHeader').html("Success");
                 $('#toastBody').html(data.message);

@@ -267,10 +267,11 @@ class DbClientPSQLImpl implements DbClient {
   }
 
   async updateAssessment(assessment: Assessment): Promise<boolean> {
-    const cs = new this.pg.helpers.ColumnSet(['id', 'assessment_name']);
+    const cs = new this.pg.helpers.ColumnSet(['id', 'assessment_name', 'assessment_description']);
     const data = {
       id: assessment.id,
-      assessment_name: assessment.name
+      assessment_name: assessment.name,
+      assessment_description: assessment.description,
     };
     const condition = pgp.as.format(' WHERE id = $1', [assessment.id]);
     const query = this.pg.helpers.update(data, cs, 'assessment') + condition;
@@ -282,9 +283,9 @@ class DbClientPSQLImpl implements DbClient {
     });
   }
 
-  async getAssessmentSettings(assessmentId: number): Promise<(AssessmentSettings & {name: string, groupName: string})[]> {
+  async getAssessmentSettings(assessmentId: number): Promise<(AssessmentSettings & {name: string, groupName: string, description: string})[]> {
     var text = `SELECT a.assessment_id "assessmentId", a.group_id "groupId", a.start_time "startTime", a.end_time "endTime",
-                g.group_name "groupName", aa.assessment_name "name"
+                g.group_name "groupName", aa.assessment_name "name", aa.assessment_description "description"
                 FROM assessment_settings a
                 JOIN "groups" g
                 ON g.id = a.group_id
@@ -294,7 +295,7 @@ class DbClientPSQLImpl implements DbClient {
                 ORDER BY a.start_time DESC
                 `;
     var data = [assessmentId]
-    return await this.connection.any(text, data).then((data: (AssessmentSettings  & {groupName: string})[]) => {
+    return await this.connection.any(text, data).then((data: (AssessmentSettings  & {name: string, groupName: string, description: string})[]) => {
       return data
     }).catch((error: any) => {
       console.log('ERROR:', error);
@@ -374,7 +375,7 @@ class DbClientPSQLImpl implements DbClient {
   }
 
   async getAssessments(assessmentId? : number): Promise<Assessment[]> {
-    var text = `SELECT a.id, a.assessment_name "name"
+    var text = `SELECT a.id, a.assessment_name "name", a.assessment_description "description"
                 FROM assessment a`
     var data: any[] = []
     if (assessmentId) {

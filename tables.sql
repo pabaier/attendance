@@ -101,7 +101,8 @@ VALUES (1, 1);
 
 CREATE TABLE assessment (
 	id SERIAL PRIMARY KEY,
-  	assessment_name VARCHAR(50) 
+  	assessment_name VARCHAR(50),
+	assessment_description TEXT 
 );
 
 CREATE TABLE question (
