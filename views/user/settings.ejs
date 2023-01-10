@@ -15,15 +15,21 @@
                 </div>
                 <div class="row">
                     <div class="col my-2">
-                        <input type="text" class="form-control border border-1 border-success" id="firstName" name="firstName" value="<%= user.firstName ?? '' %>" placeholder="first name">
+                        <input type="text" class="form-control" id="firstName" name="firstName" value="<%= user.firstName ?? '' %>" placeholder="first name">
                     </div>
                     <div class="col my-2">
-                        <input type="text" class="form-control border border-1 border-success" id="lastName" name="lastName" value="<%= user.lastName ?? '' %>" placeholder="last name">
+                        <input type="text" class="form-control" id="lastName" name="lastName" value="<%= user.lastName ?? '' %>" placeholder="last name">
+                    </div>
+                </div>
+                <div class="row my-4">
+                    <div class="col-4">
+                        <button type="submit" class="btn btn-primary" id="save-name">Save</button>
+                        <button type="submit" class="btn btn-primary" id="cancel-name">Cancel</button>
                     </div>
                 </div>
             </div>
             <% if (isAdmin) { %>
-                <div class="col">
+                <div class="col border-start border-2">
                     <div class="row">
                         <div class="col-3">
                             semester
@@ -146,12 +152,10 @@
     
     $('#firstName').focusout(e => {
         buttonFocusOut('firstName')
-        sendToServer();
     });
     
     $('#lastName').focusout(e => {
         buttonFocusOut('lastName')
-        sendToServer();
     });
 
     $('#firstName').focusin(e => {
@@ -164,28 +168,31 @@
 
 
     var buttonFocusIn = (field) => {
-        $(`#${field}`).removeClass('border-success')
-        $(`#${field}`).removeClass('border-1')
-        $(`#${field}`).addClass('border-warning')
-        $(`#${field}`).addClass('border-3')
+        var fieldEl = $(`#${field}`);
+        fieldEl.addClass('border border-warning-custom border-2')
     }
 
     var buttonFocusOut = (field) => {
-        $(`#${field}`).removeClass('border-warning')
-        $(`#${field}`).removeClass('border-3')
-        $(`#${field}`).addClass('border-success')
-        $(`#${field}`).addClass('border-1')
+        var fieldEl = $(`#${field}`);
+        if (user[field] === fieldEl.val().trim()) {
+            fieldEl.removeClass('bordrer border-warning-custom border-2')
+        }
     }
 
-    var editOutcome = (field) => {
-        $('#toastHeader').html('Success');
-        $('#toastBody').html(`${field} updated!`);
-        $('#liveToast').toast('show');
-    }
+    $('#cancel-name').click( () => {
+        var fn = $("#firstName");
+        var ln = $("#lastName");
+        fn.val(user.firstName);
+        ln.val(user.lastName);
+        fn.removeClass('border border-warning-custom border-2')
+        ln.removeClass('border border-warning-custom border-2')
+    })
 
-    var sendToServer = () => {
-        var firstName = $("#firstName").val().trim();
-        var lastName = $("#lastName").val().trim();
+    $('#save-name').click( () => {
+        var fn = $("#firstName");
+        var ln = $("#lastName");
+        var firstName = fn.val().trim();
+        var lastName = ln.val().trim();
 
         $.ajax({
             url: `/user/${user.id}/settings/`,
@@ -194,6 +201,10 @@
             data: JSON.stringify({ firstName, lastName }),
             success: function( data ) {
                 if (data) {
+                    user.firstName = firstName;
+                    user.lastName = lastName;
+                    fn.removeClass('border border-warning-custom border-2')
+                    ln.removeClass('border border-warning-custom border-2')
                     $('#toastHeader').html('Success');
                     $('#toastBody').html('Data updated!');
                     $('#liveToast').toast('show');
@@ -208,7 +219,7 @@
                 $('#liveToast').toast('show');
             }
         })
-    }
+    })
 
     $('#submit').click(e => {
         var password = $("#password").val().trim();
