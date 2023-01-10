@@ -2,7 +2,7 @@
 <div class="jumbotron">
     <h1>Posts</h1>
     <h3>New Post</h3>
-    <div class="mb-5 border-bottom border-5">
+    <div class="mb-3 border-bottom border-5">
         <div class="w-25 start-0 center">
             <input class="form-control" id="new-post-title" placeholder="title">
         </div>
@@ -19,21 +19,33 @@
 
 
     <h3>All Posts</h3>
+        <div class="row my-3">
+            <div class="col-2 h6">
+                Title
+            </div>
+            <div class="col-3 h6">
+                Link
+            </div>
+            <div class="col-6 h6">
+                Body
+            </div>
+        </div>
     <%posts.forEach(post => {%>
-        <div class="my-5 border-bottom border-5 rounded">
-            <div class="w-50 row start-0 center">
-                <div class="col-auto">
+        <div class="my-3 border-bottom border-1 rounded">
+            <div class="row my-2">
+                <div class="col-2">
                     <input class="form-control post-title" id="post-title-<%= post.id %>" value="<%= post.title %>">
                 </div>
-                <div class="col-auto">
-                    <button type="button" id="del-<%= post.id %>" class="btn-del btn btn-primary btn-sm">x</button>
+                <div class="col-3">
+                    <input class="form-control post-link" id="post-link-<%= post.id %>" value="<%= post.link %>">
                 </div>
-            </div>
-            <div class="w-50 start-0 center">
-                <textarea class="form-control my-2 post-body" id="post-body-<%= post.id %>"><%= post.body %></textarea>
-            </div>
-            <div class="w-25 start-0 center pb-5">
-                <input class="form-control post-link" id="post-link-<%= post.id %>" value="<%= post.link %>">
+                <div class="col-6">
+                    <textarea class="form-control post-body" id="post-body-<%= post.id %>"><%= post.body %></textarea>
+                </div>
+                <div class="col-1">
+                    <button type="button" id="save-<%= post.id %>" class="btn-save btn btn-primary btn-sm" title="Save">&#x2713</button>
+                    <button type="button" id="del-<%= post.id %>" class="btn-del btn btn-primary btn-sm" title="Delete">&#x2715</button>
+                </div>
             </div>
         </div>
     <%})%>
@@ -69,8 +81,8 @@
         });
     })
 
-    $('.post-link').focusout(e => {
-        var id = e.target.id.split('-')[2];
+    $('.btn-save').click(e => {
+        var id = e.target.id.split('-')[1];
         var title = $(`#post-title-${id}`).val()
         var body = $(`#post-body-${id}`).val()
         var link = $(`#post-link-${id}`).val()
