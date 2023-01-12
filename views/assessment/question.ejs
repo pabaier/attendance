@@ -143,4 +143,17 @@
         $('#code').removeClass('border-success-custom border-warning-custom border-change-custom')
         $('#code').addClass('border border-3 border-change-custom')
     })
+
+    $('#code').keydown( e => {
+        if (e.key === 'Tab') {
+            e.preventDefault()
+            var currentLocation = e.target.selectionStart;
+            var fullCode = e.target.value;
+            var startText = fullCode.substring(0, currentLocation)
+            var endText = fullCode.substring(currentLocation);
+            e.target.value = startText + '    ' + endText;
+            e.target.selectionStart = currentLocation + 4;
+            e.target.selectionEnd = e.target.selectionStart;
+        }
+    })
 </script>
