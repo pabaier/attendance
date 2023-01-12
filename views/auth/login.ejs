@@ -6,7 +6,7 @@
 </div>
 
 <script>
-    $('#submit').click(e => {
+    var login = () => {
         var email = $("#email").val().trim();
         var password = $("#password").val().trim();
         $.post(`/auth/login?redirect=<%- redirect %>`, { email, password }, function( data ) {
@@ -19,5 +19,15 @@
             $("#password").val('');
             $("#email").focus();
         })
+    }
+
+    $('#submit').click(e => {
+        login()
     })
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            login()
+        }
+    });
 </script>
