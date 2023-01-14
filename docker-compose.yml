@@ -1,0 +1,41 @@
+# sudo docker compose up -d
+
+version: '3.8'
+
+services:
+  node_backend:
+    container_name: node_backed
+    image: pb/node-web-app
+    restart: always
+    build:
+      # uses the Dockerfile in the current directory (.) to build the image
+      # https://docs.docker.com/compose/compose-file/build/#illustrative-sample
+      context: . 
+    ports:
+      - '80:5000'
+    environment:
+      - PORT=5000
+      - BASEURL=http://localhost:5000/
+      - DB_URL=postgres://postgres:mysecretpassword@db:5432/postgres # host needs to be the service name below (db)
+      - SESSION_SECRET='abc123'
+    depends_on:
+      - db
+  db:
+    container_name: db
+    image: 'postgres:15'
+    restart: always
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=mysecretpassword
+      - POSTGRES_DB=postgres
+    volumes:
+      # this copies a sql script to the image (to the docker-entrypoint-initdb.d directory)
+      # the script only runs once when the image is first created
+      # https://stackoverflow.com/a/51759325
+      - ./db-init.sql:/docker-entrypoint-initdb.d/db-init.sql
+      - pgdata1:/var/lib/postgresql/data
+  
+volumes:
+  pgdata1: {}
