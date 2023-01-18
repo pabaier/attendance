@@ -4,7 +4,7 @@ version: '3.8'
 
 services:
   node_backend:
-    container_name: node_backed
+    container_name: node_backend
     image: pb/node-web-app
     restart: always
     build:
@@ -36,6 +36,17 @@ services:
       # https://stackoverflow.com/a/51759325
       - ./db-init.sql:/docker-entrypoint-initdb.d/db-init.sql
       - pgdata1:/var/lib/postgresql/data
+  nginx:
+    image: nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./server.key:/root/ssl/server.key
+      - ./server.crt:/root/ssl/server.crt
+    ports:
+      - "443:443"
+    depends_on:
+      - node_backend
+
   
 volumes:
   pgdata1: {}
