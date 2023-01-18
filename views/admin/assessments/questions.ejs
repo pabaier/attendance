@@ -30,9 +30,18 @@
                     <div class="col-4">
                         <textarea class="form-control my-2" id="description-<%=q.id%>"><%=q.description%></textarea>
                     </div>
-                    <div class="col-1">
-                        <button type="button" id="save-<%=q.id%>" class="btn-question-save btn btn-primary btn-sm my-2">&#x2713</button>
-                        <button type="button" id="del-<%=q.id%>" class="btn-question-del btn btn-primary btn-sm my-2">&#x2715</button>
+                    <div class="col-2">
+                        <div class="row">
+                            <div class="col">
+                                <button type="button" id="save-<%=q.id%>" class="btn-question-save btn btn-primary btn-sm my-2">&#x2713</button>
+                                <button type="button" id="del-<%=q.id%>" class="btn-question-del btn btn-primary btn-sm my-2">&#x2715</button>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <button type="button" id="preview-<%=q.id%>" class="btn-question-preview btn btn-primary btn-sm">preview</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -106,5 +115,12 @@
             $('#toastBody').html(data.responseJSON.message);
             $('#liveToast').toast('show');
         });
+    })
+
+    $('.btn-question-preview').click(e => {
+        var ids = e.target.id.split('-');
+        var questionId = parseInt(ids[1]);
+        var title = $(`#title-${questionId}`).val()
+        window.location.href = `/admin/assessments/preview/${questionId}?title=${title}`;
     })
 </script>
