@@ -3,6 +3,7 @@ import { DbClient } from '../../db/dbClient';
 import { Assessment, AssessmentQuestion, AssessmentSettings, Question } from '../../models';
 import { renderFile } from '../../views/helper';
 import { makeUTCDateString } from '../helpers';
+import questions  from '../assessment/1';
 
 export default function (dbClient: DbClient) {
 
@@ -49,6 +50,44 @@ export default function (dbClient: DbClient) {
         const success = await dbClient.deleteQuestion(questionId);
         success ? res.status(200).send({message: `Question Deleted`}) : res.status(500).send({message: 'error'});
     });
+
+    router.get('/preview/:questionId', async (req: Request, res: Response) => {
+        var questionId = parseInt(req.params.questionId);
+        var titleText = req.query.title || 'Preview';
+        var title = `${questionId}-${titleText}`
+
+        // question data loaded from file
+        var allQuestionData: any = {...questions};
+        var questionData = allQuestionData[`q${questionId}`];
+        var vars = questionData.vars()
+        var ans = questionData.ans(vars);
+        var text = questionData.text;
+        vars.forEach((v: any, i: number) => {
+            text = text.replaceAll(`{${i + 1}}`, v.toString())
+        });
+
+        var userQuestion = {
+            assessmentId: 0,
+            questionId,
+            userId: 0,
+            variables: JSON.stringify(vars),
+            questionAnswer: ans,
+            attempts: 0,
+        };
+
+        var obj = {
+            vars, 
+            text, 
+            ans, 
+            correct: false, 
+            questionAttempts: 0,
+            title, 
+            userQuestion
+        }
+        console.log(ans);
+        res.render('assessment/question', obj);
+        // res.render('admin/assessments/question-preview', { });
+    })
 
     router.get('/:assessmentId', async (req: Request, res: Response) => {
         var assessmentId = parseInt(req.params.assessmentId)

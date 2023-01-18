@@ -130,7 +130,7 @@ CREATE INDEX assessment_question_assessment_id_idx ON assessment_question (asses
 
 CREATE TABLE user_question (
 	assessment_id INTEGER REFERENCES assessment (id) ON DELETE CASCADE,
-	question_id INTEGER REFERENCES assessment (id) ON DELETE CASCADE,
+	question_id INTEGER REFERENCES question (id) ON DELETE CASCADE,
 	user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
 	user_answer TEXT,
 	variables TEXT,
