@@ -1,6 +1,6 @@
 import express, { NextFunction, Request, Response } from 'express';
 import NodeCache from 'node-cache';
-import questions  from './1';
+import questions  from '../../questionLibrary';
 import { DbClient } from '../../db/dbClient';
 import { assessmentAccessMiddleware, authCheckMiddleware } from '../../middleware/auth';
 import { AssessmentQuestion, AssessmentSettings, Question, User, UserAssessment, UserQuestion, UserSettings } from '../../models';

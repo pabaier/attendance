@@ -3,7 +3,7 @@ import { DbClient } from '../../db/dbClient';
 import { Assessment, AssessmentQuestion, AssessmentSettings, Question } from '../../models';
 import { renderFile } from '../../views/helper';
 import { makeUTCDateString } from '../helpers';
-import questions  from '../assessment/1';
+import questions from '../../questionLibrary';
 
 export default function (dbClient: DbClient) {
 
