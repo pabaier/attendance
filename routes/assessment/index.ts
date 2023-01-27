@@ -188,7 +188,10 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
 
         await dbClient.updateUserQuestion(newUserQuestion);
 
-        const correct = answer === userQuestion.questionAnswer
+        // question data loaded from file
+        var allQuestionData: any = {...questions};
+        var questionData = allQuestionData[`q${questionId}`];
+        const correct = questionData.check(userQuestion.variables, answer)
         if (correct) {
             res.status(200).send({message: 'correct!', correct: true });
         } else {
