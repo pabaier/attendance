@@ -84,8 +84,9 @@ export default function (dbClient: DbClient) {
             title, 
             userQuestion
         }
-        console.log(ans);
-        res.render('assessment/question', obj);
+        const page = renderFile('./views/assessment/question.ejs', obj);
+
+        res.render('admin/assessments/question-preview-wrapper', {answer: obj.ans, page});
         // res.render('admin/assessments/question-preview', { });
     })
 
