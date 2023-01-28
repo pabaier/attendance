@@ -418,10 +418,10 @@ class DbClientPSQLImpl implements DbClient {
     });
   }
 
-  async createAssessment(assessment: Assessment): Promise<boolean> {
+  async createAssessment(name: string): Promise<boolean> {
     const cs = new this.pg.helpers.ColumnSet(['assessment_name'], {table: 'assessment'});
     const values = {
-      assessment_name: assessment.name,
+      assessment_name: name,
     }
     const query = this.pg.helpers.insert(values, cs);
     return this.connection.none(query).then((data: any) => {
@@ -432,8 +432,22 @@ class DbClientPSQLImpl implements DbClient {
     });
   }
 
+  async getAssessment(assessmentSlug: string): Promise<Assessment> {
+    var text = `SELECT a.id, a.slug, a.assessment_name "name", a.assessment_description "description"
+                FROM assessment a
+                where a.slug = $1`
+    var data: any[] = [assessmentSlug]
+    return await this.connection.any(text, data).then((data: Assessment[]) => {
+      if (data.length) return data[0]
+      return []
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
+  }
+
   async getAssessments(assessmentId? : number): Promise<Assessment[]> {
-    var text = `SELECT a.id, a.assessment_name "name", a.assessment_description "description"
+    var text = `SELECT a.id, a.slug, a.assessment_name "name", a.assessment_description "description"
                 FROM assessment a`
     var data: any[] = []
     if (assessmentId) {

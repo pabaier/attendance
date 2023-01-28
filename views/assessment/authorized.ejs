@@ -15,7 +15,7 @@
         <% questions.forEach(question => { %>
             <div class="row my-4">
                 <div class="col">
-                        <div class='link' id='/assessment/<%= assessment.assessmentId %>/<%= question.questionId %>'>
+                        <div class='link' id='/assessment/<%= assessment.slug %>/<%= question.questionId %>'>
                             <h5><span class="text-decoration-underline text-primary" style="cursor: pointer;"><%= question.title %></span></h5>
                         </div>
                         <div class="ms-4">
@@ -66,13 +66,13 @@
             }
         ).fail( function(data) {
             $('#toastHeader').html("Error");
-            $('#toastBody').html("Announcement creation error");
+            $('#toastBody').html("Question not found");
             $('#liveToast').toast('show');
         });
     })
 
     $('#submit').click( (e) => {
-        $.post(`/assessment/<%= assessment.assessmentId %>/submit`,
+        $.post(`/assessment/<%= assessment.slug %>/submit`,
             function() {
                 window.location.reload();
             }

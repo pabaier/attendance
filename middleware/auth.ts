@@ -31,7 +31,8 @@ export const resourceAccessMiddleware = (req: Request, res: Response, next: Next
 };
 
 export const assessmentAccessMiddleware = (req: Request, res: Response, next: NextFunction) => {
-    const assessmentId = parseInt(req.params.assessmentId);
+    
+    const assessmentSlug = req.params.assessmentSlug;
 
     
     // verify user has access to this question based on session data
@@ -39,7 +40,7 @@ export const assessmentAccessMiddleware = (req: Request, res: Response, next: Ne
     // if the date is undefined (but verified), then the assessment has no end time and they can proceed.
     var assessmentVerificationData = req.session.userSettings?.assessment;
     if (!assessmentVerificationData || 
-        !(assessmentVerificationData.id == assessmentId) || 
+        !(assessmentVerificationData.id == assessmentSlug) || 
         !assessmentVerificationData.verified ||
         (assessmentVerificationData.expires && (new Date(assessmentVerificationData.expires) < new Date()))
     ) {

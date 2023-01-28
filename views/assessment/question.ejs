@@ -1,5 +1,5 @@
 <div class="jumbotron">
-    <h1><%- title %> <span style="cursor: pointer;" class="fs-6 back-span text-decoration-underline text-primary" id="/assessment/<%= userQuestion.assessmentId %>">(back)</span></h1>
+    <h1><%- title %> <span style="cursor: pointer;" class="fs-6 back-span text-decoration-underline text-primary" id="/assessment/<%= slug %>">(back)</span></h1>
     <%- text %>
 
     <div class="my-5">
@@ -38,7 +38,7 @@
         <div class="row">
             <div class="col-12">
                 <textarea class="form-control my-2
-                    <%- userQuestion.code ? 'border border-3 border-success-custom' : '' %>"
+                    <%- userQuestion.code ? 'border border-3 border-change-custom' : 'border border-3 border-warning-custom' %>"
                     id="code" rows="7" cols="50"><%= userQuestion.code %></textarea>
             </div>
             <div class="col-2">
@@ -80,7 +80,7 @@
 
         data = { answer }
 
-        $.post(`/assessment/<%= userQuestion.assessmentId %>/<%= userQuestion.questionId %>/answer`,
+        $.post(`/assessment/<%= slug %>/<%= userQuestion.questionId %>/answer`,
             data,
             function( data ) {
                 $('#toastHeader').html("Feedback");
@@ -118,15 +118,15 @@
         $('#toastBody').removeClass('bg-success-custom bg-warning-custom text-white')
         $('#code').removeClass('border-success-custom border-warning-custom border-change-custom')
 
-        $.post(`/assessment/<%= userQuestion.assessmentId %>/<%= userQuestion.questionId %>/code`,
+        $.post(`/assessment/<%= slug %>/<%= userQuestion.questionId %>/code`,
             { code },
             function( data ) {
                 $('#toastHeader').html("Submission");
                 $('#toastBody').html(data.message);
                 $('#liveToast').toast('show');
 
-                $('#toastBody').addClass('text-white bg-success-custom')
-                $('#code').addClass('border border-3 border-success-custom')
+                $('#toastBody').addClass('text-white bg-notify-custom')
+                $('#code').addClass('border border-3 border-change-custom')
             }
         ).fail( function( data ) {
             if (data.responseJSON.verificationError)
@@ -141,7 +141,7 @@
 
     $('#code').bind('input propertychange', e => {
         $('#code').removeClass('border-success-custom border-warning-custom border-change-custom')
-        $('#code').addClass('border border-3 border-change-custom')
+        $('#code').addClass('border border-3 border-warning-custom')
     })
 
     $('#code').keydown( e => {

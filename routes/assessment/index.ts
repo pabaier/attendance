@@ -3,7 +3,7 @@ import NodeCache from 'node-cache';
 import questionLibrary  from '../../questionLibrary';
 import { DbClient } from '../../db/dbClient';
 import { assessmentAccessMiddleware, authCheckMiddleware } from '../../middleware/auth';
-import { AssessmentQuestion, AssessmentSettings, Question, TestQuestion, User, UserAssessment, UserQuestion, UserSettings } from '../../models';
+import { Assessment, AssessmentQuestion, AssessmentSettings, Question, TestQuestion, User, UserAssessment, UserQuestion, UserSettings } from '../../models';
 import { renderFile } from '../../views/helper';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
@@ -12,12 +12,14 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
     router.use(authCheckMiddleware);
 
     router.get('/', async (req: Request, res: Response) => {
-        var assessmentId = parseInt(req.query.id as string);
-        res.render('assessment/wrapper', { assessmentId })
+        var assessmentSlug = req.query.slug;
+        res.render('assessment/wrapper', { assessmentSlug })
     })
 
-    router.get('/:assessmentId', async (req: Request, res: Response) => {
-        const assessmentId = parseInt(req.params.assessmentId)
+    router.get('/:assessmentSlug', async (req: Request, res: Response) => {
+        const assessmentSlug: string = req.params.assessmentSlug
+        const assessmentData: Assessment = await dbClient.getAssessment(assessmentSlug); 
+        const assessmentId = assessmentData.id as number;
         const user = req.session.user as User;
         const userGroups: number[] = user.groups as number[]
         const userId: number = user.id as number
@@ -72,7 +74,7 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         req.session.userSettings = {
             ...req.session.userSettings as UserSettings,
             assessment: {
-                id: assessment.assessmentId,
+                id: assessmentSlug,
                 verified: true,
                 expires: assessment.endTime,
             }
@@ -116,13 +118,15 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         }
 
         const end = req.session.userSettings?.assessment?.expires ?? undefined
-        var page = renderFile('./views/assessment/authorized.ejs', { assessment, questions: questionPreviews });
+        var page = renderFile('./views/assessment/authorized.ejs', { assessment: {...assessment, slug: assessmentSlug}, questions: questionPreviews });
         res.status(200).send({ message: 'correct!', page, now, end });
     });
 
-    router.post('/:assessmentId/submit', async (req: Request, res: Response) => {
+    router.post('/:assessmentSlug/submit', async (req: Request, res: Response) => {
         const userId: number = req.session.user?.id as number;
-        const assessmentId = parseInt(req.params.assessmentId);
+        const assessmentSlug = req.params.assessmentSlug;
+        const assessment: Assessment = await dbClient.getAssessment(assessmentSlug);
+        const assessmentId = assessment.id as number;
 
         const userAssessment = await dbClient.getUserAssessment(userId, assessmentId);
 
@@ -151,10 +155,12 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         }
     });
 
-    router.get('/:assessmentId/:questionId', assessmentAccessMiddleware, async (req: Request, res: Response) => {
+    router.get('/:assessmentSlug/:questionId', assessmentAccessMiddleware, async (req: Request, res: Response) => {
         const userId: number = req.session.user?.id as number;
         const questionId = parseInt(req.params.questionId);
-        const assessmentId = parseInt(req.params.assessmentId);
+        const assessmentSlug = req.params.assessmentSlug;
+        const assessment: Assessment = await dbClient.getAssessment(assessmentSlug);
+        const assessmentId: number = assessment.id as number;
 
         const assessmentQuestion: AssessmentQuestion & Question = (await dbClient.getAssessmentQuestions(assessmentId, questionId))[0];
         var userQuestion: UserQuestion = await dbClient.getUserQuestion(assessmentId, questionId, userId)
@@ -174,15 +180,17 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         const now = new Date();
         const end = req.session.userSettings?.assessment?.expires ?? undefined
 
-        var page = renderFile('./views/assessment/question.ejs', { vars, text, ans, correct, questionAttempts: assessmentQuestion.attempts, title: assessmentQuestion.title, userQuestion });
+        var page = renderFile('./views/assessment/question.ejs', { vars, text, ans, correct, questionAttempts: assessmentQuestion.attempts, title: assessmentQuestion.title, userQuestion, slug: assessmentSlug});
         res.status(200).send({message: 'correct!', page });
         // res.render('assessment/wrapper', { page, now, end })
     });
 
-    router.post('/:assessmentId/:questionId/answer', assessmentAccessMiddleware, async (req: Request, res: Response) => {
+    router.post('/:assessmentSlug/:questionId/answer', assessmentAccessMiddleware, async (req: Request, res: Response) => {
         const userId: number = req.session.user?.id as number;
         const questionId = parseInt(req.params.questionId);
-        const assessmentId = parseInt(req.params.assessmentId);
+        const assessmentSlug = req.params.assessmentSlug;
+        const assessment: Assessment = await dbClient.getAssessment(assessmentSlug);
+        const assessmentId = assessment.id as number;
         const answer = req.body.answer;
 
         const userQuestion = await dbClient.getUserQuestion(assessmentId, questionId, userId)
@@ -216,10 +224,12 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         }
     });
 
-    router.post('/:assessmentId/:questionId/code', assessmentAccessMiddleware, async (req: Request, res: Response) => {
+    router.post('/:assessmentSlug/:questionId/code', assessmentAccessMiddleware, async (req: Request, res: Response) => {
         const userId: number = req.session.user?.id as number;
         const questionId = parseInt(req.params.questionId);
-        const assessmentId = parseInt(req.params.assessmentId);
+        const assessmentSlug = req.params.assessmentSlug;
+        const assessment: Assessment = await dbClient.getAssessment(assessmentSlug);
+        const assessmentId = assessment.id as number;
         const code = req.body.code;
 
         const userQuestion = await dbClient.getUserQuestion(assessmentId, questionId, userId)

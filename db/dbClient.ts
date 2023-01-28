@@ -64,8 +64,9 @@ export interface DbClient {
     updatePostGroup(oldIds: {groupId: number, postId: number, postTypeId: number}, postGroup: PostGroup): Promise<boolean>;
     getPostTypes(): Promise<PostType[]>;
 
+    getAssessment(assessmentSlug: string): Promise<Assessment>;
     getAssessments(assessmentId?: number): Promise<Assessment[]>;
-    createAssessment(assessment: Assessment): Promise<boolean>;
+    createAssessment(name: String): Promise<boolean>;
     updateAssessment(assessment: Assessment): Promise<boolean>;
     
     getAssessmentSettings(assessmentId: number): Promise<(AssessmentSettings  & {name: string, groupName: string, description: string})[]>;

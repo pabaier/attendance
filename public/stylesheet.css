@@ -45,6 +45,10 @@ header {
   background-color: #62A87C;
 }
 
+.bg-notify-custom {
+  background-color: #26547C;
+}
+
 .bg-warning-custom {
   background-color: #FF8427;
 }

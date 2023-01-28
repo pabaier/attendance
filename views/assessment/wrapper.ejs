@@ -15,7 +15,7 @@
             var secs = s > 9 ? `${s}` : `0${s}`;
 
             if (seconds <= 0) {
-                $.post(`/assessment/<%= assessmentId %>/submit`,
+                $.post(`/assessment/<%= assessmentSlug %>/submit`,
                     function() {
                         clearInterval(intervalId);
                         window.location.reload();
@@ -39,7 +39,7 @@
     }
 
     window.onload = (e) => {
-        var url = '/assessment/<%= assessmentId %>';
+        var url = '/assessment/<%= assessmentSlug %>';
         $.get(url,
             function( data ) {
                 $('#page').html(data.page);

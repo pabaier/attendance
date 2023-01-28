@@ -1,7 +1,7 @@
 export default interface UserSettings {
     semesterId: number,
     assessment?: {
-        id?: number,
+        id?: string,
         verified: boolean,
         expires?: Date,
     }

@@ -101,9 +101,12 @@ VALUES (1, 1);
 
 CREATE TABLE assessment (
 	id SERIAL PRIMARY KEY,
+    slug UUID DEFAULT gen_random_uuid (),
   	assessment_name VARCHAR(50),
-	assessment_description TEXT 
+	assessment_description TEXT,
+	UNIQUE(slug)
 );
+CREATE INDEX assessment_slug_idx ON assessment (slug);
 
 CREATE TABLE question (
 	id SERIAL PRIMARY KEY,

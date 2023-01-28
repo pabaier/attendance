@@ -15,8 +15,8 @@ export default function (dbClient: DbClient) {
     });
 
     router.post('/', async (req: Request, res: Response) => {
-        var name = req.body.name;
-        const success = await dbClient.createAssessment({ name });
+        var name: string = req.body.name;
+        const success = await dbClient.createAssessment(name);
         success ? res.status(200).send({message: 'success!'}) : res.status(500).send({message: 'error'});
     });
 
