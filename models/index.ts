@@ -14,6 +14,7 @@ import PostType from './PostType';
 import Question from './Question';
 import Semester from './Semester';
 import Test from './Test';
+import TestQuestion from './TestQuestion';
 import TestUserData from './TestUserData';
 import User from './User';
 import UserAssessment from './UserAssessment';
@@ -40,6 +41,7 @@ export {
     Question,
     Semester,
     Test,
+    TestQuestion,
     TestUserData,
     User,
     UserAssessment,
