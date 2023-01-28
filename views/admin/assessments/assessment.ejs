@@ -16,6 +16,7 @@
                 <button type="button" id="edit-save" class="btn btn-primary">Save</button>
             </div>
         </div>
+        <div class="mt-4" id="link"></div>
     </div>
 
     <h3>Questions</h3>
@@ -114,12 +115,21 @@
                     <button type="button" id="save-<%=q.assessmentId%>-<%=q.groupId%>" class="btn-settings-save btn btn-primary btn-sm my-2">&#x2713</button>
                     <button type="button" id="del-<%=q.assessmentId%>-<%=q.groupId%>" class="btn-settings-del btn btn-primary btn-sm my-2">&#x2715</button>
                 </div>
+                <div class="col-2">
+                    <button type="button" id="add-<%=q.assessmentId%>-<%=q.groupId%>" class="btn-settings-save btn btn-primary btn-sm my-2">&#x2713</button>
+                </div>
             </div>
         <% }) %>
     </div>
 </div>
 
 <script>
+    window.onload = function() {
+        var baseURL = window.location.host
+        var url = `${window.location.protocol}//${baseURL}/assessment?id=<%= assessment.id %>`
+        $('#link').html(`<a href=${url}>${url}</a>`)
+    }
+
     $('.btn-question-save').click(e => {
         var ids = e.target.id.split('-');
         var assessmentId = parseInt(ids[1]);

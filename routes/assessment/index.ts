@@ -1,9 +1,9 @@
 import express, { NextFunction, Request, Response } from 'express';
 import NodeCache from 'node-cache';
-import questions  from '../../questionLibrary';
+import questionLibrary  from '../../questionLibrary';
 import { DbClient } from '../../db/dbClient';
 import { assessmentAccessMiddleware, authCheckMiddleware } from '../../middleware/auth';
-import { AssessmentQuestion, AssessmentSettings, Question, User, UserAssessment, UserQuestion, UserSettings } from '../../models';
+import { AssessmentQuestion, AssessmentSettings, Question, TestQuestion, User, UserAssessment, UserQuestion, UserSettings } from '../../models';
 import { renderFile } from '../../views/helper';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
@@ -78,8 +78,45 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
             }
         }
 
+        // create all questions for user
+
+        // question data loaded from file
+        var allQuestionData: any = {...questionLibrary};
+        var questionPreviews: {}[] = [];
+        for (const question of questions) {
+            const questionId = question.questionId as number;
+            var userQuestion = await dbClient.getUserQuestion(assessmentId, questionId, userId)
+
+            var vars: any[];
+            var ans: string;
+            
+            var questionData = allQuestionData[`q${questionId}`];
+            
+            if (userQuestion) {
+                vars = JSON.parse(userQuestion.variables);
+            } else {
+                vars = questionData.vars()
+                ans = questionData.ans(vars);
+                userQuestion = {
+                    assessmentId,
+                    questionId,
+                    userId,
+                    variables: JSON.stringify(vars),
+                    questionAnswer: ans,
+                    attempts: 0,
+                };
+                await dbClient.createUserQuestion(userQuestion)
+            }
+
+            var text = questionData.text;
+            vars.forEach((v: any, i: number) => {
+                text = text.replaceAll(`{${i + 1}}`, v.toString())
+            });
+            questionPreviews.push({...question, text })
+        }
+
         const end = req.session.userSettings?.assessment?.expires ?? undefined
-        var page = renderFile('./views/assessment/authorized.ejs', { assessment, questions });
+        var page = renderFile('./views/assessment/authorized.ejs', { assessment, questions: questionPreviews });
         res.status(200).send({ message: 'correct!', page, now, end });
     });
 
@@ -119,40 +156,20 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         const questionId = parseInt(req.params.questionId);
         const assessmentId = parseInt(req.params.assessmentId);
 
-        var userQuestion: UserQuestion;
         const assessmentQuestion: AssessmentQuestion & Question = (await dbClient.getAssessmentQuestions(assessmentId, questionId))[0];
-        userQuestion = await dbClient.getUserQuestion(assessmentId, questionId, userId)
-
-        var vars: any[];
-        var ans: string;
+        var userQuestion: UserQuestion = await dbClient.getUserQuestion(assessmentId, questionId, userId)
         
-        // question data loaded from file
-        var allQuestionData: any = {...questions};
-        var questionData = allQuestionData[`q${questionId}`];
-        
-        if (userQuestion) {
-            vars = JSON.parse(userQuestion.variables);
-            ans = userQuestion.questionAnswer
-        } else {
-            vars = questionData.vars()
-            ans = questionData.ans(vars);
-            userQuestion = {
-                assessmentId,
-                questionId,
-                userId,
-                variables: JSON.stringify(vars),
-                questionAnswer: ans,
-                attempts: 0,
-            };
-            await dbClient.createUserQuestion(userQuestion)
-        }
-
+        var allQuestionData: any = {...questionLibrary};
+        var questionData: TestQuestion = allQuestionData[`q${questionId}`];
         var text = questionData.text;
+
+        var vars = JSON.parse(userQuestion.variables);
+        var ans = userQuestion.questionAnswer
         vars.forEach((v: any, i: number) => {
             text = text.replaceAll(`{${i + 1}}`, v.toString())
         });
 
-        var correct = ans == userQuestion.userAnswer;
+        var correct = questionData.check(userQuestion.variables, userQuestion.userAnswer)
 
         const now = new Date();
         const end = req.session.userSettings?.assessment?.expires ?? undefined
@@ -189,8 +206,8 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         await dbClient.updateUserQuestion(newUserQuestion);
 
         // question data loaded from file
-        var allQuestionData: any = {...questions};
-        var questionData = allQuestionData[`q${questionId}`];
+        var allQuestionData: any = {...questionLibrary};
+        var questionData: TestQuestion = allQuestionData[`q${questionId}`];
         const correct = questionData.check(userQuestion.variables, answer)
         if (correct) {
             res.status(200).send({message: 'correct!', correct: true });
