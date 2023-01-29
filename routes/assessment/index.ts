@@ -137,7 +137,7 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
 
         var assessmentVerificationData = req.session.userSettings?.assessment;
         if (!assessmentVerificationData || 
-            !(assessmentVerificationData.id == assessmentId) || 
+            !(assessmentVerificationData.id == assessmentSlug) || 
             !assessmentVerificationData.verified
         ) {
             res.status(403).send({ message: 'forbidden' });
