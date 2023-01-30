@@ -1,0 +1,59 @@
+<div id="timer"></div>
+<div id="page"></div>
+
+<script>
+
+    var intervalId;
+
+    const startTimer = (seconds, timer) => {
+        intervalId = setInterval(() => {
+            var h = Math.floor(seconds / 3600);
+            var m = Math.floor(seconds % 3600 / 60);
+            var s = Math.floor(seconds % 3600 % 60);
+            var hours = h > 9 ? `${h}` : `0${h}`;
+            var mins = m > 9 ? `${m}` : `0${m}`;
+            var secs = s > 9 ? `${s}` : `0${s}`;
+
+            if (seconds <= 0) {
+                $.post(`/assessment/<%= assessmentSlug %>/submit`,
+                    function() {
+                        clearInterval(intervalId);
+                        window.location.reload();
+                    }
+                ).fail( function(data) {
+                    $('#toastHeader').html("Error");
+                    $('#toastBody').html(data.responseJSON.message);
+                    $('#liveToast').toast('show');
+                });
+                clearInterval(intervalId);
+                timer.html('00:00')
+                return;
+            }
+
+            if (h <= 0)
+                timer.html(`${mins}:${secs}`)
+            else
+                timer.html(`${hours}:${mins}:${secs}`)
+            seconds -= 1;
+        }, 1000)
+    }
+
+    window.onload = (e) => {
+        var url = '/assessment/<%= assessmentSlug %>';
+        $.get(url,
+            function( data ) {
+                $('#page').html(data.page);
+
+                var now = new Date(data.now)
+                var end = new Date(data.end)
+                var seconds = (end - now) / 1000
+                var timer = $("#timer");
+                startTimer(seconds, timer)
+
+            }
+        ).fail( function(data) {
+            $('#page').html(data.responseJSON.page);
+        });
+    }
+
+</script>

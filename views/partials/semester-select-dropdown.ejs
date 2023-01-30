@@ -1,0 +1,10 @@
+<select class="form-select my-2" id="semester-select-<%= id %>" aria-label="Default select section">
+    <option>Select Semester</option>
+    <% semesters.forEach(semester => { %>
+        <% if (semester.id == selected) { %>
+            <option selected value="<%=semester.id%>"><%=semester.year%>-<%=semester.season%></option>
+        <% } else { %>
+            <option value="<%=semester.id%>"><%=semester.year%>-<%=semester.season%></option>
+        <% } %>
+    <% }) %>
+</select>

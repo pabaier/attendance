@@ -1,153 +1,132 @@
 import express, { Request, Response } from 'express';
 import { DbClient } from '../../db/dbClient';
 import { renderFile } from '../../views/helper';
-import { Course, CourseDate, UserGroups, CalendarEvent, Assignment, User } from '../../models';
-import { makeCourseName, makeUTCDateString, getPresentAbsentDates } from '../helpers';
-import dbClientPSQLImpl from '../../db/dbClientPSQLImpl';
+import { Course, CourseDate, User } from '../../models';
+import { makeCourseName, getPresentAbsentDates } from '../helpers';
 
 export default function (dbClient: DbClient) {
     const router = express.Router()
 
     router.get('/', async (req: Request, res: Response) => {
-        const courses = await dbClient.getCourses();
+        const courses: Course[] = await dbClient.getCourses(req.session.userSettings?.semesterId);
         const coursesBig = courses.map(course => {
             return renderFile('./views/admin/partials/course-section.ejs', { course })
         })
 
-        // {action: form action, fields: [{id: field id, placeholder, }], }
-        const action = "/admin/courses/add";
-        const fieldNames = ['number', 'semester', 'year', 'startTime', 'endTime']
-        const fields = fieldNames.map(name => {
-            return {id: name, placeholder: name}
-        })
-        const addCoursesForm = renderFile('./views/partials/input-form.ejs', {action, fields});
-        res.render('admin/courses', { courses: coursesBig, addForm: addCoursesForm });
+        res.render('admin/courses', { courses: coursesBig, semesterId: req.session.userSettings?.semesterId });
     });
 
     router.post('/add', async (req: Request, res: Response) => {
-        if (Object.keys(req.body).length == 0) {
-            if (!req.session.alert)
-                req.session.alert = [{type: 'success', message: 'success'}]
+        try {
+            const courseNumber = req.body.number;
+            const semesterId = parseInt(req.body.semesterId);
+            const startTime = req.body.startTime;
+            const endTime = req.body.endTime;
+            const days = req.body.days;
+            const startDate = new Date(req.body.startDate);
+            const endDate = new Date(req.body.endDate);
+
+            const semester = (await dbClient.getSemesters(semesterId))[0];
+            const groupName = `${semester.year}-${semester.season}-${courseNumber}-${startTime}`;
+            const groupId = await dbClient.createGroup(groupName);
+
+            var courseName;
+            if(req.body.name)
+                courseName = req.body.name;
             else
-                req.session.alert.push({type: 'success', message: 'success'})
+                courseName = groupName
 
-            res.redirect('/admin/courses')
-            return
+            const course: Course = {
+                courseNumber,
+                courseName,
+                semesterId,
+                startTime,
+                endTime,
+                groupId
+            }
+
+            const courseId = await dbClient.createCourse(course)
+
+            const dayMap = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            var courseDates: CourseDate[] = []
+
+            var classDate = new Date(startDate);
+            const times = startTime.split(':')
+            const hours = parseInt(times[0])
+            const minutes = parseInt(times[1])
+            classDate.setHours(hours);
+            classDate.setMinutes(minutes);
+            var day = dayMap[classDate.getDay()];
+            if (days.includes(day))
+                courseDates.push({courseId, meeting: new Date(classDate)})
+
+            while(classDate <= endDate ) {
+                classDate = new Date(classDate);
+                classDate.setDate(classDate.getDate() + 1)
+                var day = dayMap[classDate.getDay()];
+                if (days.includes(day))
+                    courseDates.push({courseId, meeting: new Date(classDate)})
+            }
+
+            await dbClient.setCourseDates(courseDates);
+
+            return res.status(200).send({message: 'success'});
+        } catch(error) {
+            return res.status(500).send({message: error});
         }
-
-        const courseNumber = req.body.number;
-        const semester = req.body.semester;
-        const courseYear = parseInt(req.body.year);
-        const startTime = req.body.startTime;
-        const endTime = req.body.endTime;
-        const groupName = `${courseNumber}|${courseYear}-${semester}-${startTime}`;
-
-        const groupId = await dbClient.createGroup(groupName);
-    
-        const course: Course = {
-            courseNumber,
-            semester,
-            courseYear,
-            startTime,
-            endTime,
-            groupId
-        }
-
-        const r = dbClient.createCourse(course)
-
-        res.redirect('/admin/courses')
     })
 
     router.get('/:courseId', async (req: Request, res: Response) => {
         const courseId = parseInt(req.params.courseId)
-        const course = await dbClient.getCourse(courseId);
-        const users = await dbClient.getUsers(course.groupId);
+        const course: Course = await dbClient.getCourse(courseId);
+        const group = await dbClient.getGroup(course.groupId);
+        const semester = await dbClient.getSemesters(course.semesterId);
         const courseDates = await dbClient.getCourseDates(courseId);
-        const userWithAbsences = [];
-        const today = new Date()
-        const courseDatesUpToToday = courseDates.filter(date => date < today)
-        for (const user of users as User[]) {
-            const signInDates = await dbClient.getUserSignInDates(user.id as number, courseId);
-            const pAndADates = getPresentAbsentDates(signInDates, courseDatesUpToToday)
-            userWithAbsences.push({...user, absences: pAndADates.absent.length})
-        } 
 
-        const usersList = renderFile('./views/admin/partials/users-list.ejs', { users: userWithAbsences })
-        const dates: Date[] = await dbClientPSQLImpl.getCourseDates(courseId);
-        const courseDateEvents = dates.map((date: Date) => {
-            const event: CalendarEvent = {
-                title: 'Class',
-                start: date.toISOString().split('T')[0]
-            }
-            return event
-        })
-        const calendar = renderFile('./views/partials/calendar.ejs', {events: courseDateEvents});
-
-        const assignmentsList = await dbClientPSQLImpl.getAssignments(course.groupId);
-        const assignmentItems = assignmentsList.map(assignment => {
-            const startTime = makeUTCDateString(assignment.start_time);
-            const endTime = makeUTCDateString(assignment.end_time);
-            var assignmentAdjustedDates = {
-                ...assignment,
-                start_time: startTime,
-                end_time: endTime
-            }
-            return renderFile('./views/admin/partials/assignment-item.ejs', {assignment: assignmentAdjustedDates})
-        })
-        const assignments = renderFile('./views/admin/partials/assignment-list.ejs', {assignmentItems})
-
-        res.render('admin/course', { courseId, courseName: makeCourseName(course), usersList, calendar, assignments, alert: req.session.alert });
-    })
-
-    router.post('/:courseId/users', async (req: Request, res: Response) => {
-        const courseId: number = parseInt(req.params.courseId);
-        const course: Course = await dbClient.getCourse(courseId)
-        const userIds: number[] = req.body.userIds;
-        const userGroups: UserGroups[] = userIds.map(userId => {
-            return {userId, groupIds: [course.groupId]}
-        })
-        const outcome = await dbClient.addUsersToGroups(userGroups);
-        if (outcome)
-            return res.send('ok')
-        else
-            return res.send('fail') // this should be a 500
-    })
-
-    router.put('/:courseId/assignments', async (req: Request, res: Response) => {
-        const assignment: Assignment = {
-            id: parseInt(req.params.courseId),
-            title: req.body.title,
-            start_time: new Date(req.body.start),
-            end_time: new Date(req.body.end),
-            url_link: req.body.url,
+        const data = {
+            courseId,
+            courseName: makeCourseName(course),
+            groupName: group.name,
+            courseDates, course,
+            semester: semester[0]
         }
-        const outcome = await dbClient.updateAssignment(assignment)
-        if (outcome)
-            return res.send('ok')
-        else
-            return res.send('fail') // this should be a 500
+
+        res.render('admin/course', data);
     })
 
-    router.get('/:courseId/assignments', async (req: Request, res: Response) => {
-        const courseId = parseInt(req.params.courseId);
+    router.delete('/:courseId', async (req: Request, res: Response) => {
+        const courseId = parseInt(req.params.courseId)
         const course = await dbClient.getCourse(courseId);
-        const assignments = await dbClientPSQLImpl.getAssignments(course.groupId);
-        const assignmentItems = assignments.map(assignment => {
-            renderFile('./views/admin/partials/assignment-item.ejs', {assignment})
-        })
-        const assignmentList = renderFile('./views/admin/partials/assignment-list.ejs', {assignmentItems})
-        res.render('admin/assignments');
-    });
+        await dbClient.deleteCourseDates(courseId);
+        const result: boolean = await dbClient.deleteCourse(courseId)
+        const groupDel = await dbClient.deleteGroup(course.groupId);
 
-    router.delete('/:courseId', (req: Request, res: Response) => {
-        const result: boolean= dbClient.deleteCourse(parseInt(req.params.courseId))
         res.send('ok')
     })
 
-    router.delete('/:courseId/:userId', (req: Request, res: Response) => {
-        const groupName = `course-${req.params.courseId}`;
-        const result: boolean= dbClient.deleteUserFromGroup(groupName, parseInt(req.params.userId))
-        res.send('ok')
+    router.delete('/:courseId/date', async (req: Request, res: Response) => {
+        try {
+            const courseId = parseInt(req.params.courseId)
+            const date = new Date(parseInt(req.body.date));
+            await dbClient.deleteCourseDate(courseId, date);
+
+            return res.status(200).send({message: 'success'});
+        } catch (error) {
+            return res.status(500).send({message: error});
+        }
+    })
+
+    router.post('/:courseId/date', async (req: Request, res: Response) => {
+        try {
+            const courseId = parseInt(req.params.courseId)
+            const meeting = new Date(parseInt(req.body.date));
+            const courseDate: CourseDate = { courseId, meeting }
+            await dbClient.setCourseDates([courseDate]);
+
+            return res.status(200).send({message: 'success'});
+        } catch (error) {
+            return res.status(500).send({message: error});
+        }
     })
 
     router.post('/:courseId/signin', async (req: Request, res: Response) => {

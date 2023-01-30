@@ -1,0 +1,170 @@
+<div class="jumbotron">
+    <h1><%- title %> <span style="cursor: pointer;" class="fs-6 back-span text-decoration-underline text-primary" id="/assessment/<%= slug %>">(back)</span></h1>
+    <%- text %>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-xl-7 col-lg-12 border-end border-2" id="resi">
+                <div class="my-2">
+                    <iframe
+                        src="https://jupyterlite.github.io/demo/repl/index.html?kernel=python&toolbar=1&theme=JupyterLab Dark"
+                        width="100%"
+                        height="500px"
+                    ></iframe>
+                </div>
+            </div>
+            <div class="col">
+                <div class="row">
+                    <div class="col-4">
+                        answer:
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-4">
+                        <input class="form-control my-2 
+                            <%- (userQuestion.userAnswer && correct) ? 'border border-3 border-success-custom' : 
+                                (userQuestion.userAnswer) ? 'border border-3 border-warning-custom' : '' %>" 
+                            id="answer" value="<%= userQuestion.userAnswer %>" <%- (questionAttempts - userQuestion.attempts) <= 0 ? 'disabled' : '' %> ></input>
+                    </div>
+                    <div class="col-3">
+                        <button type="submit" id="check" class="btn btn-primary form-control my-2" <%- (questionAttempts - userQuestion.attempts) <= 0 ? 'disabled' : '' %> >Submit</button>
+                    </div>
+                    <div class="col my-3">
+                        <span id="attempts"><%= (questionAttempts - userQuestion.attempts) < 0 ? 0 : (questionAttempts - userQuestion.attempts) %></span> attempt(s) left
+                    </div>
+                </div>
+                <div class="row my-2">
+                    <div class="col-2">
+                        code:
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <textarea class="form-control my-2
+                            <%- userQuestion.code ? 'border border-3 border-change-custom' : 'border border-3 border-warning-custom' %>"
+                            id="code" rows="7" cols="50"><%= userQuestion.code %></textarea>
+                    </div>
+                    <div class="col-3">
+                        <button type="submit" id="submit" class="btn btn-primary form-control my-2">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- <iframe src="https://trinket.io/embed/python3/050a6c1569?runOption=run" width="100%" height="356" frameborder="0" marginwidth="0" marginheight="0" allowfullscreen></iframe> -->
+
+    <!-- <iframe frameborder="0" width="100%" height="500px" src="https://replit.com/@PaulBaier/220?embed=true"></iframe> -->
+</div>
+
+<script>
+    $("#resi").resizable({
+        handles: "e",
+        minWidth: 200
+    });
+    
+    $('.back-span').click( (e) => {
+        var url = e.currentTarget.id;
+        $.get(url,
+            function( data ) {
+                $('#page').html(data.page);
+            }
+        ).fail( function(data) {
+            $('#toastHeader').html("Error");
+            $('#toastBody').html("Announcement creation error");
+            $('#liveToast').toast('show');
+        });
+    })
+
+    $("#check").click(e => {
+        var answer = $("#answer").val();
+        var attemptsElement = $("#attempts");
+        var attemptsLeft = parseInt(attemptsElement.text()) - 1;
+
+        attemptsElement.text(`${attemptsLeft}`)
+
+        if(attemptsLeft <= 0) {
+            $("#check").prop("disabled",true);
+            $("#answer").prop("disabled",true);
+        }
+
+        data = { answer }
+
+        $.post(`/assessment/<%= slug %>/<%= userQuestion.questionId %>/answer`,
+            data,
+            function( data ) {
+                $('#toastHeader').html("Feedback");
+                $('#toastBody').html(data.message);
+                $('#liveToast').toast('show');
+
+                $('#toastBody').removeClass('bg-success-custom bg-warning-custom text-white')
+                $('#answer').removeClass('border-success-custom border-warning-custom')
+
+                if (data.correct) {
+                    $('#toastBody').addClass('text-white bg-success-custom')
+                    $('#answer').addClass('border border-3 border-success-custom')
+                } else {
+                    $('#toastBody').addClass('text-white bg-warning-custom')
+                    $('#answer').addClass('border border-3 border-warning-custom')
+                }
+            }
+        ).fail( function(data) {
+            $('#toastBody').removeClass('bg-success-custom bg-warning-custom text-white')
+
+            $('#toastBody').addClass('text-white bg-warning-custom')
+            $('#toastHeader').html("Check Error");
+            $('#toastBody').html(data.message);
+            $('#liveToast').toast('show');
+
+            if (data.disable) {
+                $("#check").prop("disabled", true);
+                $("#answer").prop("disabled", true);
+            }
+        });
+    })
+
+    $("#submit").click(e => {
+        var code = $("#code").val();
+        $('#toastBody').removeClass('bg-success-custom bg-warning-custom text-white')
+        $('#code').removeClass('border-success-custom border-warning-custom border-change-custom')
+
+        $.post(`/assessment/<%= slug %>/<%= userQuestion.questionId %>/code`,
+            { code },
+            function( data ) {
+                $('#toastHeader').html("Submission");
+                $('#toastBody').html(data.message);
+                $('#liveToast').toast('show');
+
+                $('#toastBody').addClass('text-white bg-notify-custom')
+                $('#code').addClass('border border-3 border-change-custom')
+            }
+        ).fail( function( data ) {
+            if (data.responseJSON.verificationError)
+                window.location.href='/assessment/<%= userQuestion.assessmentId %>';
+            $('#toastBody').addClass('text-white bg-warning-custom')
+            $('#toastHeader').html("Submission Error");
+            $('#toastBody').html(data.responseJSON.message);
+            $('#liveToast').toast('show');
+
+        });
+    })
+
+    $('#code').bind('input propertychange', e => {
+        $('#code').removeClass('border-success-custom border-warning-custom border-change-custom')
+        $('#code').addClass('border border-3 border-warning-custom')
+    })
+
+    $('#code').keydown( e => {
+        if (e.key === 'Tab') {
+            e.preventDefault()
+            var currentLocation = e.target.selectionStart;
+            var fullCode = e.target.value;
+            var startText = fullCode.substring(0, currentLocation)
+            var endText = fullCode.substring(currentLocation);
+            e.target.value = startText + '    ' + endText;
+            e.target.selectionStart = currentLocation + 4;
+            e.target.selectionEnd = e.target.selectionStart;
+        }
+    })
+</script>

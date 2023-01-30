@@ -20,30 +20,21 @@
             <li class="nav-item">
               <a class="nav-link" href="/user/announcements">Announcements</a>
             </li>
+            <% if (user?.roles?.includes('admin') || user?.roles?.includes('assistant') ) { %>
+              <li class="nav-item">
+                <a class="nav-link" href="/grading">Grading</a>
+              </li>
+            <% } %>
+            <% if (user?.roles?.includes('admin')) { %>
+              <li class="nav-item">
+                <a class="nav-link" href="/admin/courses">Admin</a>
+              </li>
+            <% } %>
             <li class="nav-item">
-              <a class="nav-link" href="<%= process.env.SYLLABUS_URL %>" target="_blank">Syllabus</a>
+              <a class="nav-link" href="/user/<%= user.id %>/settings">Settings</a>
             </li>
-          <% } %>
-          <% if (user?.roles?.includes('admin') || user?.roles?.includes('assistant') ) { %>
             <li class="nav-item">
-              <a class="nav-link" href="/grading">Grading</a>
-            </li>
-          <% } %>
-          <% if (user?.roles?.includes('admin')) { %>
-            <li class="nav-item">
-              <a class="nav-link" href="/admin/courses">Admin</a>
-            </li>
-          <% } %>
-          <% if (user) { %>
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="navbarScrollingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                Settings
-              </a>
-              <ul class="dropdown-menu" aria-labelledby="navbarScrollingDropdown">
-                <li><a class="dropdown-item" href="/auth/changePassword">Change Password</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="/auth/logout">Logout</a></li>
-              </ul>
+              <a class="nav-link" href="/auth/logout">Logout</a>
             </li>
           <% } else { %>
             <li class="nav-item">
@@ -59,9 +50,12 @@
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="/admin/code">Code</a></li>
         <li class="breadcrumb-item"><a href="/admin/users">Users</a></li>
+        <li class="breadcrumb-item"><a href="/admin/groups">Groups</a></li>
         <li class="breadcrumb-item"><a href="/admin/courses">Courses</a></li>
-        <li class="breadcrumb-item"><a href="/admin/dates">Dates</a></li>
+        <li class="breadcrumb-item"><a href="/admin/posts">Posts</a></li>
         <li class="breadcrumb-item"><a href="/admin/assignments">Assignments</a></li>
+        <li class="breadcrumb-item"><a href="/admin/announcements">Announcements</a></li>
+        <li class="breadcrumb-item"><a href="/admin/assessments">Assessments</a></li>
       </ol>
     </div>
   </nav>

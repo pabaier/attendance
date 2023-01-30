@@ -1,0 +1,88 @@
+<div class="jumbotron">
+    <h1><%= assessment.name %></h1>
+
+    <a class="" data-bs-toggle="collapse" href="#description-collapse" aria-expanded="false" aria-controls="collapseExample">
+        Instructions
+    </a>
+
+    <div class="collapse" id="description-collapse">
+        <div class="container">
+            <%- assessment.description %>
+        </div>
+    </div>
+
+    <div class="container">
+        <% questions.forEach(question => { %>
+            <div class="row my-4">
+                <div class="col">
+                        <div class='link' id='/assessment/<%= assessment.slug %>/<%= question.questionId %>'>
+                            <h5><span class="text-decoration-underline text-primary" style="cursor: pointer;"><%= question.title %></span></h5>
+                        </div>
+                        <div class="ms-4">
+                            <%- question.text %>
+                        </div>
+                    </div>
+            </div>
+        <% }) %>
+    </div>
+
+    <div class="container">
+        <div class="row my-5">
+            <div class="col-2">
+                <button type="button" class="btn btn-primary form-control" data-bs-toggle="modal" data-bs-target="#submitModal">
+                    Submit
+                </button>
+            </div>
+        </div>
+    </div>
+
+      <!-- Modal -->
+    <div class="modal fade" id="submitModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Confirm Submit</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure?<br><br>This cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="submit">Submit</button>
+            </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    $('.link').click( (e) => {
+        var url = e.currentTarget.id;
+        $.get(url,
+            function( data ) {
+                $('#page').html(data.page);
+            }
+        ).fail( function(data) {
+            $('#toastHeader').html("Error");
+            $('#toastBody').html("Question not found");
+            $('#liveToast').toast('show');
+        });
+    })
+
+    $('#submit').click( (e) => {
+        $.post(`/assessment/<%= assessment.slug %>/submit`,
+            function() {
+                window.location.reload();
+            }
+        ).fail( function(data) {
+            $('#submitModal').modal('toggle');
+            $('#toastHeader').html("Error");
+            $('#toastBody').html(data.responseJSON.message);
+            $('#liveToast').toast('show');
+        });
+        // $('#submitModal').modal('toggle');
+        // window.close();
+    })
+</script>

@@ -6,13 +6,13 @@ const MemoryStore = require('memorystore')(session)
 import expressLayouts from 'express-ejs-layouts';
 import path from 'path';
 import NodeCache from "node-cache";
-import { Alert, User } from './models';
-import { admin, auth, base, grading, user } from './routes';
+import { Alert, User, UserSettings } from './models';
+import { admin, assessment, auth, base, grading, user } from './routes';
 import dbClient from './db/dbClientPSQLImpl';
 
 const app = express();
 const port = process.env.PORT;
-const myCache = new NodeCache();
+const myCache = new NodeCache(); // cache for this instance of express js - like a global store, stored locally on server
 
 // EJS
 app.use(expressLayouts)
@@ -27,9 +27,12 @@ declare module "express-session" {
   interface SessionData {
     user: User,
     alert?: Alert[],
+    userSettings: UserSettings,
   }
 }
 
+// server side cookie storage
+// users only store a session id in a local cookie
 app.use(session({
   cookie: { maxAge: 86400000, sameSite: 'strict' },
   store: new MemoryStore({
@@ -49,6 +52,7 @@ app.use(function(req: Request, res: Response, next: NextFunction) {
   res.locals.user = req.session.user
   next()
 })
+app.use('/assessment', assessment(myCache, dbClient));
 app.use('/grading', grading(myCache, dbClient));
 app.use('/admin', admin(myCache, dbClient));
 app.use('/auth', auth(myCache, dbClient));

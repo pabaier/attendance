@@ -1,28 +1,201 @@
 <!-- requires courses {name, id},  -->
 <div class="jumbotron">
     <h1>Assignments</h1>
-    <textarea class="form-control my-2" name="text" id="bulk-add-area" placeholder="Add Assignments&#10;title, 2022-08-12T00:00, 2022-08-12T00:00, URL" aria-label="dates" aria-describedby="basic-addon1"></textarea>
+    <h3>New Assignment</h3>
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                Group
+            </div>
+            <div class="col">
+                Post
+            </div>
+            <div class="col-2">
+                Open
+            </div>
+            <div class="col-2">
+                Close
+            </div>
+            <div class="col-2">
+                Active Start
+            </div>
+            <div class="col-2">
+                Active End
+            </div>
+            <div class="col"></div>
+        </div>
+        <div class="row  mb-5">
+            <div class="col">
+                <%- groupsDropdown %>
+            </div>
+            <div class="col">
+                <%- postsDropdown %>
+            </div>
+            <div class="col-2">
+                <input class="form-control my-2" type="datetime-local" id="open-time" name="meeting-time">
+            </div>
+            <div class="col-2">
+                <input class="form-control my-2" type="datetime-local" id="close-time" name="meeting-time">
+            </div>
+            <div class="col-2">
+                <input class="form-control my-2" type="datetime-local" id="active-start-time" name="meeting-time">
+            </div>
+            <div class="col-2">
+                <input class="form-control my-2" type="datetime-local" id="active-end-time" name="meeting-time">
+            </div>
+            <div class="col">
+                <button type="submit" id="submit" class="btn btn-primary form-control my-2">Submit</button>
+            </div>
+        </div>
+    </div>
 
-    <label for="courses">Choose course(s):</label>
-    <select class="form-control my-2" name="courses" id="courses" multiple>
-        <%courses.forEach(course => {%>
-            <option value=<%=course.id%>><%=course.name%></option>
-        <%})%>
-    </select>
-    <button type="submit" id="submit" class="btn btn-primary form-control my-2">Submit</button>
+    <h3>Assignments</h3>
+    <div class="container">
+        <% assignmentGroups.forEach(ag => { %>
+            <div class="mb-5 border-bottom border-5">
+                <div class="row">
+                    <div class="col-3">
+                        <%- include('partials/group-select-dropdown', {groups: groups, selected: ag.groupId, id: `${ag.groupId}-${ag.postId}`}); %>
+                    </div>
+                    <div class="col-3">
+                        <%- include('partials/post-select-dropdown', {posts: posts, selected: ag.postId, id: `${ag.groupId}-${ag.postId}`}); %>
+                    </div>
+                    <div class="col-1">
+                        <button type="button" id="save-<%=ag.groupId%>-<%=ag.postId%>" class="btn-save btn btn-primary btn-sm my-2">&#x2713</button>
+                        <button type="button" id="del-<%=ag.groupId%>-<%=ag.postId%>" class="btn-del btn btn-primary btn-sm my-2">&#x2715</button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-3">
+                        Open
+                    </div>
+                    <div class="col-3">
+                        Close
+                    </div>
+                    <div class="col-3">
+                        Active Start
+                    </div>
+                    <div class="col-3">
+                        Active End
+                    </div>
+                </div>
+                <div class="row mb-5">
+                    <div class="col-3">
+                        <input class="form-control my-2" type="datetime-local" id="open-time-<%=ag.groupId%>-<%=ag.postId%>" value="<%=ag.openTime%>" name="meeting-time">
+                    </div>
+                    <div class="col-3">
+                        <input class="form-control my-2" type="datetime-local" id="close-time-<%=ag.groupId%>-<%=ag.postId%>" value="<%=ag.closeTime%>" name="meeting-time">
+                    </div>
+                    <div class="col-3">
+                        <input class="form-control my-2" type="datetime-local" id="active-start-time-<%=ag.groupId%>-<%=ag.postId%>" value="<%=ag.activeStartTime%>" name="meeting-time">
+                    </div>
+                    <div class="col-3">
+                        <input class="form-control my-2" type="datetime-local" id="active-end-time-<%=ag.groupId%>-<%=ag.postId%>" value="<%=ag.activeEndTime%>" name="meeting-time">
+                    </div>
+                </div>
+            </div>
+        <% }) %>
+    </div>
 </div>
 
 <script>
     $('#submit').click(e => {
-        var courses = $('select#courses').val()
-        var assignments = $("#bulk-add-area").val().trim().split('\n')
-        $.post(`/admin/assignments`, { courses, assignments }, function( data ) {
-            if (data) {
-                console.log('ok')
-                // window.location.reload();
-            } else {
-                console.log('nope')
+        var groupId = $('#group-select-0').val()
+        var postId = $('#post-select-0').val()
+
+        var openVal = $(`#open-time`).val();
+        var closeVal = $(`#close-time`).val();
+        var startVal = $(`#active-start-time`).val();
+        var endVal = $(`#active-end-time`).val()
+        var open = openVal ? new Date(openVal) : undefined;
+        var close = closeVal ? new Date(closeVal) : undefined;
+        var start = startVal ? new Date(startVal) : undefined;
+        var end = endVal ? new Date(endVal) : undefined;
+
+        var data = {
+            groupId,
+            postId,
+            open: open ? open.toISOString() : undefined,
+            close: close?  close.toISOString() : undefined,
+            start: start ? start.toISOString() : undefined,
+            end: end ? end.toISOString() : undefined,
+        }
+
+        $.post(`/admin/assignments`,
+            data,
+            function( data ) {
+                window.location.reload();
             }
-        })
+        ).fail( function(data) {
+            $('#toastHeader').html("Error");
+            $('#toastBody').html("Assignment creation error");
+            $('#liveToast').toast('show');
+        });
     })
+
+    $('.btn-del').click(e => {
+        var ids = e.target.id.split('-');
+        var groupId = ids[1];
+        var postId = ids[2]
+        res = confirm("delete assignment?");
+        if (!res) return;
+        $.ajax({
+            url: `/admin/assignments/`,
+            type: 'DELETE',
+            contentType: 'application/json',
+            data: JSON.stringify({ groupId, postId }),
+            success: function(response) {
+                location.reload();
+            },
+            error: function(response) {
+                $('#toastHeader').html("Error");
+                $('#toastBody').html(response);
+                $('#liveToast').toast('show');
+            }
+        });
+    })
+
+    $('.btn-save').click(e => {
+        var ids = e.target.id.split('-');
+        var groupId = ids[1];
+        var postId = ids[2]
+
+        var newGroupId = $(`#group-select-${groupId}-${postId}`).val()
+        var newPostId = $(`#post-select-${groupId}-${postId}`).val()
+        var openVal = $(`#open-time-${groupId}-${postId}`).val();
+        var closeVal = $(`#close-time-${groupId}-${postId}`).val();
+        var startVal = $(`#active-start-time-${groupId}-${postId}`).val();
+        var endVal = $(`#active-end-time-${groupId}-${postId}`).val()
+        var open = openVal ? new Date(openVal) : undefined;
+        var close = closeVal ? new Date(closeVal) : undefined;
+        var start = startVal ? new Date(startVal) : undefined;
+        var end = endVal ? new Date(endVal) : undefined;
+        
+        var data = {
+            groupId,
+            postId,
+            newGroupId,
+            newPostId,
+            open: open ? open.toISOString() : undefined,
+            close: close?  close.toISOString() : undefined,
+            start: start ? start.toISOString() : undefined,
+            end: end ? end.toISOString() : undefined,
+        }
+
+        $.ajax({
+            url: `/admin/assignments/`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                window.location.reload();
+            },
+            error: function(response) {
+                $('#toastHeader').html("Error");
+                $('#toastBody').html("Unable to update record");
+                $('#liveToast').toast('show');
+            }
+        });
+    })
+
 </script>

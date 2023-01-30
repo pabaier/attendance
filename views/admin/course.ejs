@@ -2,86 +2,127 @@
 <div class="jumbotron">
     <h1><%=courseName%></h1>
 
-    <a class="btn btn-primary" data-bs-toggle="collapse" href="#users-collapse" role="button" aria-expanded="false" aria-controls="collapseExample">
-        Users
-    </a>
-    <a class="btn btn-primary" data-bs-toggle="collapse" href="#assignments-collapse" role="button" aria-expanded="false" aria-controls="collapseExample">
-        Assignments
-    </a>
-    <a class="btn btn-primary" data-bs-toggle="collapse" href="#calendar-collapse" role="button" aria-expanded="false" aria-controls="collapseExample">
-        Calendar
-    </a>
-    <div class="collapse show" id="users-collapse">
-        <%- usersList %>
-
-        <div class="my-3">
-            <h5>Sign In User(s)</h5>
-            <button type="submit" id="bulk-sign-in-btn" value="<%=courseId%>" class="btn btn-primary my-2">Sign In</button>
-        </div>
-
-        <div class="my-5">
-            <h5>Add User(s)</h5>
-            <form id="bulk-add-form" action="/admin/users/add" method="POST">
-                <textarea class="form-control my-2" name="text" id="bulk-add-area" placeholder="Add Users&#10;Email|FirstName|LastName|Role1,Role2|Group1,Group2" aria-label="Email" aria-describedby="basic-addon1"></textarea>
-                <button type="submit" id="bulk-add-btn" class="btn btn-primary my-2">Submit</button>
-            </form>
-        </div>
-    </div>
-    <div class="collapse" id="assignments-collapse">
-        <%-assignments%>
-    </div>
-    <div class="collapse show" id="calendar-collapse">
-        <div class="container text-center" id='calendar-container'>
-            <div class="row justify-content-lg-center">
-                <div class="col col-lg-7">
-                    <%-calendar%>
-                  </div>
+    <div class="container">
+        <div class="mb-5 border-bottom border-5">
+            <div class="row">
+                <div class="col-2">
+                    Course Id
+                </div>
+                <div class="col-2">
+                    Group
+                </div>
+                <div class="col-2">
+                    Start
+                </div>
+                <div class="col-2">
+                    End
+                </div>
+            </div>
+            <div class="row my-2 fw-bold">
+                <div class="col-2">
+                    <%- course.id  %>
+                </div>
+                <div class="col-2">
+                    <%- groupName %> (<%- course.groupId %>)
+                </div>
+                <div class="col-2">
+                    <%= course.startTime %>
+                </div>
+                <div class="col-2">
+                    <%= course.endTime %>
+                </div>
+            </div>
+            <div class="row my-2">
+                <div class="col-2">
+                    Course Number
+                </div>
+                <div class="col-2">
+                    Semester
+                </div>
+                <div class="col-2">
+                    Course Name
+                </div>
+            </div>
+            <div class="row mb-5 fw-bold">
+                <div class="col-2">
+                    <%=course.courseNumber%>
+                </div>
+                <div class="col-2">
+                    <%=semester.season%>-<%=semester.year%> (<%- course.semesterId %>)
+                </div>
+                <div class="col-2">
+                    <%=course.courseName%>
+                </div>
             </div>
         </div>
     </div>
+
+
+    <h3>New Date</h3>
+    <div class="container">
+        <div class="row  mb-5">
+            <div class="col-3">
+                <input class="form-control my-2" type="datetime-local" id="new-date" name="new-date">
+            </div>
+            <div class="col-1">
+                <button type="button" id="submit" class="btn btn-primary form-control my-2">Add</button>
+            </div>
+        </div>
+    </div>
+
+
+    <h3>Course Dates</h3>
+    <div class="container">
+        <div class="row">
+            <% courseDates.forEach((courseDate, index) => { %>
+                <div class="col">
+                    <%= courseDate.toDateString() %>
+                    <button type="button" id="del-<%=courseDate.valueOf()%>" class="btn-del btn btn-primary btn-sm my-2">&#x2715</button>
+                </div>
+                <% if ((index + 1) % 3 == 0) { %>
+                    </div>
+                    <div class="row">
+                <% } %>
+            <% }) %>
+        </div>
+    </div>
+    
 </div>
 
 <script>
-    $('#bulk-sign-in-btn').click((e) => {
-        var userIds = []
-        $('.userc:checkbox:checked').each(function() {userIds.push(this.value)})
-
-        $.post(`/admin/courses/${e.target.value}/signin`, {userIds}, function( data ) {
-            if (data) {
-                console.log(data);
+    $('.btn-del').click((e) => {
+        const date = parseInt(e.target.id.split('-')[1])
+        res = confirm("delete date?");
+        if (!res) return;
+        $.ajax({
+            url: `/admin/courses/<%= courseId %>/date`,
+            type: 'DELETE',
+            contentType: 'application/json',
+            data: JSON.stringify({ date }),
+            success: function(response) {
+                location.reload();
+            },
+            error: function(response) {
+                $('#toastHeader').html("Error");
+                $('#toastBody').html(response);
+                $('#liveToast').toast('show');
             }
-            else
-                console.log('no')
-        })
+        });
     })
 
-    const editField = (e) => {
-        e.target.readOnly = false;
-        // e.target.removeAttribute('readonly')
-    }
-
-    const doneEditField = (e) => {
-        e.target.readOnly = true;
-    }
-
-    const saveChanges = (e, id) => {
-        const title = $(`#assignment-title-${id}`).val();
-        const start = $(`#assignment-start-${id}`).val();
-        const end = $(`#assignment-end-${id}`).val();
-        const url = $(`#assignment-url-${id}`).val();
-        $.ajax({
-            url: `/admin/courses/${id}/assignments`,
-            type: 'PUT',
-            contentType: 'application/json',
-            data: JSON.stringify({ title, start, end, url }),
-            success: function( data ) {
-            if (data) {
-                console.log('ok')
-                // window.location.reload();
-            } else {
-                console.log('nope')
-            }}
-        })
-    }
-
+    $('#submit').click(() => {
+        var newDate = $('#new-date').val()
+        var meeting = new Date(newDate);
+        data = { date: meeting.valueOf()}
+        $.post(`/admin/courses/<%= courseId %>/date`,
+            data,
+            function( data ) {
+                window.location.reload();
+            }
+        ).fail( function(data) {
+            $('#toastHeader').html("Error");
+            $('#toastBody').html("Announcement creation error");
+            $('#liveToast').toast('show');
+        });
+    })
 </script>

@@ -1,9 +1,10 @@
 import express, { NextFunction, Request, Response } from 'express';
 import NodeCache from 'node-cache';
-import { authCheckMiddleware } from '../middleware/auth';
+import { authCheckMiddleware, resourceAccessMiddleware, rollCheckMiddleware } from '../middleware/auth';
 import { DbClient } from '../db/dbClient';
-import { Alert, Course, Group, PostGroup } from '../models';
+import { Alert, Course, Group, Post, PostGroup, Semester, User, UserSettings } from '../models';
 import { signIn } from './helpers';
+import { renderFile } from '../views/helper';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
     const router = express.Router();
@@ -30,34 +31,22 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
 
     router.get('/announcements', async (req: Request, res: Response) => {
         const userGroupIds = req.session.user?.groups as number[];
-        var posts: PostGroup[] = []
-        const today = new Date();
-        for (const id of userGroupIds) {
-            const unfilteredPosts: PostGroup[] = await dbClient.getPosts(id);
-            posts = posts.concat(unfilteredPosts.filter(post => post.visible).map(post => {
-                post.visible = post.openTime < today;
-                post.link =  post.visible ? post.link : '';
-                return post
-            }))
-        }
-
-        // earlier items in the list will show higher, which is what we want
-        // so they need to register as "less than" (-1) during the sort
-        // closed items always show lower in the list
-        const p = posts.sort((a: PostGroup, b:PostGroup) => {
-            const aIsEarlier = a.openTime < b.openTime;
-            const aIsOpen = a.openTime < today;
-            const bIsOpen = b.openTime < today;
-            if (aIsOpen && bIsOpen && aIsEarlier) return 1 // b shows up earlier/higher
-            if (aIsOpen && bIsOpen && !aIsEarlier) return -1 // a shows up earlier/higher
-            if (aIsOpen && !bIsOpen) return -1; // a shows up earlier/higher
-            if (!aIsOpen && bIsOpen) return 1; //b shows up earlier/hight
-            if (!aIsOpen && !bIsOpen && aIsEarlier) return 1
-            if (!aIsOpen && !bIsOpen && !aIsEarlier) return -1 
-            return 0
-        })
-        res.render('user/posts', { posts: p })
+        var announcements: (Post & PostGroup)[] = await dbClient.getFullPosts(userGroupIds, [1]);
+        var pinnedAnnouncements: (Post & PostGroup)[] = await dbClient.getFullPosts(userGroupIds, [3]);
+        announcements = filterPosts(announcements);
+        pinnedAnnouncements = filterPosts(pinnedAnnouncements);
+        res.render('user/posts', { pinnedAnnouncements, announcements })
     });
+
+    const filterPosts = (posts : (Post & PostGroup)[]) : (Post & PostGroup)[] => {
+        const today = new Date();
+        return posts.filter(post => post.openTime ? post.openTime < today : false).map(post => {
+            if ((post.activeStartTime && post.activeStartTime > today) || (post.activeEndTime && post.activeEndTime < today)) {
+                post.link = ''
+            }
+            return post
+        });
+    }
 
     router.post('/attendance', async (req: Request, res: Response) => {
         const result = parseInt(req.body.code) == myCache.get('code') as number
@@ -83,6 +72,67 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         }
         res.json({ alert,  success })
     });
+
+    router.get('/:userId/settings', resourceAccessMiddleware, async (req: Request, res: Response) => {
+        const userId = parseInt(req.params.userId)
+        const isAdmin = (<string[]>req.session.user?.roles)?.some(role => role == 'admin')
+        let settings: UserSettings;
+        let semesters: Semester[];
+        let semestersDropdown;
+        let globalSettings;
+
+        if (isAdmin) {
+            settings = await dbClient.getUserSettings(req.session.user?.id as number)
+            globalSettings = await dbClient.getGlobalSettings(req.session.user?.id as number)
+            semesters = await dbClient.getSemesters();
+            semestersDropdown = renderFile('./views/partials/semester-select-dropdown.ejs', { semesters, selected: settings.semesterId, id: 0 });
+
+        }
+        var user: User = await dbClient.getUser(userId) as User;
+        res.render('user/settings', { user, isAdmin, semestersDropdown, globalSettings })
+    });
+
+    router.patch('/:userId/settings', resourceAccessMiddleware, async (req: Request, res: Response) => {
+        const userId = parseInt(req.params.userId)
+        var user: User = await dbClient.getUser(userId) as User;
+
+        let firstName = req.body.firstName;
+        let lastName = req.body.lastName;
+        const newUser = {...user, firstName, lastName}
+        let response = await dbClient.updateUser(newUser)
+        const isAdmin = (<string[]>req.session.user?.roles)?.some(role => role == 'admin')
+        if (response) {
+            if(!isAdmin)
+                req.session.user = newUser;
+            res.status(200).send({status: 200, message: 'success!'});
+        }
+        else
+            res.status(500).send({status: 500, message: 'error saving user info'});
+    })
+
+    router.patch('/:userId/settings/semester', rollCheckMiddleware(['admin']), async (req: Request, res: Response) => {
+        const userId = parseInt(req.params.userId)
+        var user: User = await dbClient.getUser(userId) as User;
+
+        let semesterId = parseInt(req.body.semesterId);
+        let response = await dbClient.updateSemester(userId, semesterId)
+        
+        if (response) {
+            req.session.userSettings = { ...req.session.userSettings, semesterId };
+        }
+        res.status(200).send({status: 200, message: 'success!'});
+    })
+
+    router.put('/:userId/settings/global', rollCheckMiddleware(['admin']), async (req: Request, res: Response) => {
+        const userId = parseInt(req.params.userId)
+        const codeRefreshRate = parseInt(req.body.codeRefresh);
+        const codeTimeStart = parseInt(req.body.codeStart);
+        const codeTimeWindow = parseInt(req.body.codeWindow);
+
+        let response = await dbClient.updateGlobalSettings({userId, codeRefreshRate, codeTimeStart, codeTimeWindow})
+
+        response ? res.status(200).send({message: 'global settings updated'}) : res.status(500).send({message: 'error'});
+    })
 
     router.use((req: Request, res: Response) => {
     })

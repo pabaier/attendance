@@ -1,0 +1,243 @@
+<div class="jumbotron">
+    <h1>Settings</h1>
+
+    <h3>User Info</h3>
+    <div class="container mb-5">
+        <div class="row">
+            <div class="col-6">
+                <div class="row">
+                    <div class="col">
+                        First Name
+                    </div>
+                    <div class="col">
+                        Last Name
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col my-2">
+                        <input type="text" class="form-control" id="firstName" name="firstName" value="<%= user.firstName ?? '' %>" placeholder="first name">
+                    </div>
+                    <div class="col my-2">
+                        <input type="text" class="form-control" id="lastName" name="lastName" value="<%= user.lastName ?? '' %>" placeholder="last name">
+                    </div>
+                </div>
+                <div class="row my-4">
+                    <div class="col-4">
+                        <button type="submit" class="btn btn-primary" id="save-name">Save</button>
+                        <button type="submit" class="btn btn-primary" id="cancel-name">Cancel</button>
+                    </div>
+                </div>
+            </div>
+            <% if (isAdmin) { %>
+                <div class="col border-start border-2">
+                    <div class="row">
+                        <div class="col-3">
+                            semester
+                        </div>
+                        <div class="col-3">
+                            code refresh rate
+                        </div>
+                        <div class="col-3">
+                            code time start
+                        </div>
+                        <div class="col-3">
+                            code time window
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-3">
+                            <%- semestersDropdown %>
+                        </div>
+                        <div class="col-3">
+                            <input class="form-control my-2" type="number" id="codeRefreshInput" value="<%- globalSettings.codeRefreshRate %>">
+                        </div>
+                        <div class="col-3">
+                            <input class="form-control my-2" type="number" id="codeStartInput" value="<%- globalSettings.codeTimeStart %>">
+                        </div>
+                        <div class="col-3">
+                            <input class="form-control my-2" type="number" id="codeWindowInput" value="<%- globalSettings.codeTimeWindow %>">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-9"></div>
+                        <div class="col">
+                            <button type="button" id="save-admin" class="btn btn-primary btn-sm my-2">save admin</button>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+
+    <h3>Change Password</h3>
+    <div class="container">
+        <div class="row my-4">
+            <div class="col-3">
+                <input type="password" class="form-control" id="password" name="password" placeholder="current password">
+            </div>
+        </div>
+        <div class="row my-4">
+            <div class="col-3">
+                <input type="password" class="form-control" id="newPassword" name="newPassword" placeholder="new password">
+            </div>
+        </div>
+        <div class="row my-4">
+            <div class="col-3">
+                <input type="password" class="form-control" id="confirmedPassword" name="confirmedPassword" placeholder="confirm new password">
+            </div>
+        </div>
+        <div class="row my-4">
+            <div class="col-3">
+                <button type="submit" class="btn btn-primary" id="submit">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var user = <%-JSON.stringify(user)%>
+
+    $('#save-admin').click(e => {
+
+        var codeRefresh = parseInt($('#codeRefreshInput').val());
+        var codeStart = parseInt($('#codeStartInput').val());
+        var codeWindow = parseInt($('#codeWindowInput').val());
+        
+        var data = {
+            codeRefresh,
+            codeStart,
+            codeWindow,
+        }
+
+        $.ajax({
+            url: `/user/${user.id}/settings/global`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                $('#toastHeader').html("Success");
+                $('#toastBody').html(response.message);
+                $('#liveToast').toast('show');
+            },
+            error: function(response) {
+                $('#toastHeader').html("Error");
+                $('#toastBody').html(response.message);
+                $('#liveToast').toast('show');
+            }
+        });
+
+    })
+
+    $('#semester-select-0').change(e => {
+        var semesterId = e.target.value;
+        if (semesterId == 'Select Semester') return;
+        $.ajax({
+            url: `/user/${user.id}/settings/semester`,
+            type: 'PATCH',
+            contentType: 'application/json',
+            data: JSON.stringify({ semesterId }),
+            success: function( data ) {
+                $('#toastHeader').html('Success');
+                $('#toastBody').html('Data updated!');
+                $('#liveToast').toast('show');
+            },
+            fail: function( data ) {
+                $('#toastHeader').html('Fail');
+                $('#toastBody').html(data.message);
+                $('#liveToast').toast('show');
+            }
+        })
+    })
+    
+    $('#firstName').focusout(e => {
+        buttonFocusOut('firstName')
+    });
+    
+    $('#lastName').focusout(e => {
+        buttonFocusOut('lastName')
+    });
+
+    $('#firstName').focusin(e => {
+        buttonFocusIn('firstName')
+    });
+
+    $('#lastName').focusin(e => {
+        buttonFocusIn('lastName')
+    });
+
+
+    var buttonFocusIn = (field) => {
+        var fieldEl = $(`#${field}`);
+        fieldEl.addClass('border border-warning-custom border-2')
+    }
+
+    var buttonFocusOut = (field) => {
+        var fieldEl = $(`#${field}`);
+        if (user[field] === fieldEl.val().trim()) {
+            fieldEl.removeClass('bordrer border-warning-custom border-2')
+        }
+    }
+
+    $('#cancel-name').click( () => {
+        var fn = $("#firstName");
+        var ln = $("#lastName");
+        fn.val(user.firstName);
+        ln.val(user.lastName);
+        fn.removeClass('border border-warning-custom border-2')
+        ln.removeClass('border border-warning-custom border-2')
+    })
+
+    $('#save-name').click( () => {
+        var fn = $("#firstName");
+        var ln = $("#lastName");
+        var firstName = fn.val().trim();
+        var lastName = ln.val().trim();
+
+        $.ajax({
+            url: `/user/${user.id}/settings/`,
+            type: 'PATCH',
+            contentType: 'application/json',
+            data: JSON.stringify({ firstName, lastName }),
+            success: function( data ) {
+                if (data) {
+                    user.firstName = firstName;
+                    user.lastName = lastName;
+                    fn.removeClass('border border-warning-custom border-2')
+                    ln.removeClass('border border-warning-custom border-2')
+                    $('#toastHeader').html('Success');
+                    $('#toastBody').html('Data updated!');
+                    $('#liveToast').toast('show');
+                } else {
+                    $('#toastHeader').html('Fail');
+                    $('#toastBody').html('Unable to update profile');
+                    $('#liveToast').toast('show');
+            }},
+            fail: function( data ) {
+                $('#toastHeader').html('Fail');
+                $('#toastBody').html(data.message);
+                $('#liveToast').toast('show');
+            }
+        })
+    })
+
+    $('#submit').click(e => {
+        var password = $("#password").val().trim();
+        var newPassword = $("#newPassword").val().trim();
+        var confirmedPassword = $("#confirmedPassword").val().trim();
+
+        $.post(`/auth/changePassword`, { password, newPassword, confirmedPassword }, function( data, statusCode ) {
+            $('#toastHeader').html(statusCode);
+            $('#toastBody').html(data.message);
+        }).fail((response, textStatus, errorThrown) => {
+            $('#toastHeader').html(textStatus);
+            $('#toastBody').html(`${errorThrown}-${JSON.parse(response.responseText).message}`);
+        }).always(() => {
+            $('#liveToast').toast('show');            
+            $("#password").val('');
+            $("#newPassword").val('');
+            $("#confirmedPassword").val('');
+            $("#password").focus();
+        })
+    })
+</script>

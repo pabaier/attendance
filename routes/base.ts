@@ -1,9 +1,8 @@
 import express, { NextFunction, Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import { DbClient } from '../db/dbClient';
-import { Alert, Assignment, CalendarEvent, Course, CourseDate, User } from '../models';
-import {  authCheckMiddleware, rollCheckMiddleware } from '../middleware/auth';
-import session from 'express-session';
+import { CalendarEvent, Post, PostGroup } from '../models';
+import {  authCheckMiddleware } from '../middleware/auth';
 import { renderFile } from '../views/helper';
 import { calendarEventColors } from './helpers';
 
@@ -15,31 +14,33 @@ export default function (dbClient: DbClient) {
     // GOOGLE AUTH
     const client = new OAuth2Client(clientId);
 
-    router.get('/test', async (req: Request, res: Response) => {
-        var a = await dbClient.getTodaySignIns(2)
-        console.log(a)
-        res.render('base/test')
-    })
+    // router.get('/test', async (req: Request, res: Response) => {
+    //     var a = await dbClient.getTodaySignIns(2)
+    //     console.log(a)
+    //     res.render('base/test')
+    // })
 
     router.get('/', authCheckMiddleware, async (req: Request, res: Response) => {
         // get courseIds
         const userId = req.session.user?.id as number
-        const courseIds: number[] = await dbClient.getCourseIds(userId);
+        const semesterId = req.session.userSettings?.semesterId as number;
+        const courses = await dbClient.getUserCourses(userId, semesterId);
         var calendarEvents: CalendarEvent[] = []
         
         // get dates
         const courseDates: {[courseId: number] : Date[]} = {}
         const courseNumber: {[courseId: number] : string} = {}
 
-        for (const id of courseIds) {
-            const course: Course = await dbClient.getCourse(id);
-            courseNumber[id] = course.courseNumber;
-            courseDates[id] = (await dbClient.getCourseDates(id))
+        for (const course of courses) {
+            const courseId = course.id as number;
+            courseNumber[courseId] = course.courseNumber;
+            courseDates[courseId] = (await dbClient.getCourseDates(courseId))
         }
 
         // build calendar events
         // course dates
-        courseIds.reduce((acc, id, index) => {
+        courses.reduce((acc, course, index) => {
+            const id = course.id as number;
             courseDates[id].forEach(date => {
                 acc.push(
                     {
@@ -54,20 +55,34 @@ export default function (dbClient: DbClient) {
 
         // build calendar events
         // course assignments
-        const userAssignments = (await dbClient.getUserAssignments(userId));
+        const groups = await dbClient.getGroups(userId);
+        var userAssignments: (Post & PostGroup)[] = []
+        for (const group of groups) {
+            var fullPosts = await dbClient.getFullPosts([group.id as number], [2]);
+            userAssignments = [...userAssignments, ...fullPosts];
+        }
+
         var colorIndex = 0;
         const userAssignmentsEvents: CalendarEvent[] = userAssignments.map((courseAssignment) => {
-            const singleDayAssignment = new Date(courseAssignment.start_time).setHours(0,0,0,0) == new Date(courseAssignment.end_time).setHours(0,0,0,0)
+            const singleDayAssignment = new Date(courseAssignment.openTime as Date).setHours(0,0,0,0) == new Date(courseAssignment.closeTime as Date).setHours(0,0,0,0)
             // choose a different assignment color only for multiday assignments
             if (!singleDayAssignment) {
                 colorIndex += 1;
             }
+
+            const today = new Date();
+            var isActive = false;
+            if (courseAssignment.activeStartTime && courseAssignment.activeEndTime) 
+                isActive = courseAssignment.activeStartTime < today && courseAssignment.activeEndTime > today;
+            else if (courseAssignment.activeStartTime)
+                isActive = true;
+
             return {
-                    title: courseAssignment.title,
-                    start: courseAssignment.start_time.toISOString(),
-                    end: courseAssignment.end_time.toISOString(),
+                    title: courseAssignment.title as string,
+                    start: courseAssignment.openTime?.toISOString(),
+                    end: courseAssignment.closeTime?.toISOString(),
                     color: calendarEventColors[0].assignment[colorIndex%2],
-                    url: courseAssignment.start_time < new Date() ? courseAssignment.url_link : undefined
+                    url: isActive ? courseAssignment.link : undefined
                 }
         })
 

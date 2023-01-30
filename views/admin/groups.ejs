@@ -1,0 +1,71 @@
+<div class="jumbotron">
+    <h1>Groups</h1>
+    <div id="add-group-form" action= method="POST">
+        <div class="row justify-content-md-center">
+            <div class="col-3">
+                <input class="form-control my-2" name="groupName" id="groupName" placeholder="Group Name"></input>
+            </div>
+            <div class="col-9">
+                <button type="submit" id="bulk-add-btn" onclick="addGroup()" class="btn btn-primary my-2 col-2">Create Group</button>
+            </div>
+        </div>
+    </form>
+
+
+    <div class="w-75 start-0 center">
+        <div class="container alternating-table groups" id="groups">
+            <% groups.forEach( group => { %>
+                <div class="row my-2">
+                    <div class="col-1">
+                        <%- group.id %>
+                    </div>
+                    <div class="col-9 group" onclick="goToGroup(event, <%- group.id %>)">
+                        <%- group.name %>
+                    </div>
+                    <div class="col-2">
+                        <button type="button" value=<%- group.id %> class="btn btn-primary form-control" onclick="deleteGroup(event)">Delete</button>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+    const goToGroup = (e, id ) => {
+        window.location.href=`/admin/users?groupId=${id}`;
+    }
+
+    const addGroup = () => {
+        var groupName = $("#groupName").val()
+        $.ajax({
+            url: "/admin/groups",
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ groupName }),
+            success: function(response) {
+                location.reload();
+            },
+            error: function(response) {
+                console.log(response);
+            }
+        });
+    }
+
+    const deleteGroup = (e) => {
+        res = confirm("delete group?");
+        if (!res) return;
+        $.ajax({
+            url: `/admin/groups/${e.target.value}`,
+            type: 'DELETE',
+            success: function(response) {
+                location.reload();
+            },
+            error: function(response) {
+                console.log(response);
+            }
+        });
+    }
+</script>

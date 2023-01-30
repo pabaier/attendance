@@ -8,92 +8,90 @@ import crypto from 'crypto';
 export default function (dbClient: DbClient) {
     const router = express.Router()
 
-    router.get('/', async (req: Request, res: Response) => {
-        const groupString: string = req.query.group as string;
-        const group = groupString ? parseInt(groupString) : null;
-        const users = await dbClient.getUsers(group);
-        const usersList = renderFile('./views/admin/partials/users-list.ejs', { users })
-        const courses = await dbClient.getCourses();
-
-        // {action: form action, fields: [{id: field id, placeholder, }], }
-        const action = "/admin/users/add";
-        const fieldNames = ['email', 'firstName', 'lastName', 'roles', 'groups']
-        const fields = fieldNames.map(name => {
-            return {id: name, placeholder: name}
-        })
-        const addUserForm = renderFile('./views/partials/input-form.ejs', {action, fields});
-
-
-        res.render('admin/users', { usersList, courses, addForm: addUserForm, alert: req.session.alert });
+    router.get('/utils', async (req: Request, res: Response) => {
+        res.render('admin/utils');
     });
 
-    router.post('/add', async (req: Request, res: Response) => {
-        if (Object.keys(req.body).length == 0) {
-            if (!req.session.alert)
-                req.session.alert = [{type: 'success', message: 'success'}]
-            else
-                req.session.alert.push({type: 'success', message: 'success'})
-
-            res.redirect('/admin/users')
-            return
-        }
-        // bulk request has text field
-        var users: any[];
-        if (req.body.text) {
-            const rawBody: string = req.body.text;
-            const rawUsers: string[] = rawBody.split('\n');
-            users = rawUsers.map((rawUser) => {
-                const line: string[] = rawUser.split('|')
-                const email: string = line[0].trim()
-                const {password, salt} = createPasswordHash(email);
-                return {
-                    email,
-                    firstName: line[1].trim(),
-                    lastName: line[2].trim(),
-                    roles: line[3].trim(),
-                    groups: line[4].trim(),
-                    password,
-                    salt
+    router.get('/', async (req: Request, res: Response) => {
+        const groupQuery = req.query.groupId
+        var users = [];
+        var selected = 0;
+        if (groupQuery) {
+            const groupId = parseInt(groupQuery as string)
+            var selected = groupId;
+            var allUsers = await dbClient.getUsers([groupId]);
+            
+            var course = await dbClient.getCourseByGroupId(groupId);
+            if (course) {
+                var today = new Date();
+                for (const user of allUsers) {
+                    var totalDays = await dbClient.getTotalCourseDays(course?.id as number, today )
+                    var totalSignIns = await dbClient.getTotalUserSignIns(user.id as number, course?.id as number)
+                    var absences = totalDays - totalSignIns;
+                    users.push({
+                        ...user,
+                        absences,
+                    })
                 }
-            });
+            } else {
+                users = [...allUsers]
+            }
+
         } else {
-            const email = req.body.email.trim()
-            const {password, salt} = createPasswordHash(email);
-            users = [
-                {
-                    email,
-                    firstName: req.body.firstName.trim(),
-                    lastName: req.body.lastName.trim(),
-                    roles: req.body.roles.trim(),
-                    groups: req.body.groups.trim().split(' ').map((x: string) => parseInt(x)),
-                    password,
-                    salt
-                }
-            ];
+            const semesterId = req.session.userSettings?.semesterId;
+            const courses = await dbClient.getCourses(semesterId);
+            var groupIds: number[] = courses.map(course => course.groupId);
+            users = await dbClient.getUsers(groupIds);
         }
 
-        // users.roles and users.groups should now be a string of comma separated values ex: "group1,group2,group3"
-        // create object of {userEmail: groups list}
-        const emailGroups: {[key: string]: number[] } = {}
-        users.filter(user => user.groups).forEach(user => {
-            const groups: number[] = (user.groups as string).replaceAll(' ', '').split(',').map(x => parseInt(x));
-            emailGroups[user.email] = groups
+        const usersList = renderFile('./views/admin/partials/users-list.ejs', { users })
+
+        var groups = await dbClient.getGroups();
+        groups = groups.map(group => {
+            if(group.id == selected) {
+                return {...group, selected: true}
+            } else {
+                return {...group}
+            }
         })
 
-        // add users to db
-        const newUsers: User[] = await dbClient.addUsers(users);
+        res.render('admin/users', { usersList, userCount: users.length, groups });
+    });
 
-        // map new user ids to groups by email address
-        const userGroups: UserGroups[] = newUsers
-        .map(user => {
-            const groupIds: number[] = emailGroups[user.email];
-            return {userId: user.id as number, groupIds}
-        })
+    router.post('/bulkadd', async (req: Request, res: Response) => {
+        const groupId = parseInt(req.body.groupId);
+        const semesterId = req.session.userSettings?.semesterId as number
 
-        // add user groups to db
+        var emails = req.body.emails as string
+        var emailList = emails.replaceAll(' ', '').split('\n').map(z=>z.split(',')).flat()
+
+        // 'email', 'roles', 'salt', 'password_hash'
+        var users = emailList.map(email => {
+            const {password, salt} = createPasswordHash(email);
+            return {
+                email,
+                roles: 'student',
+                salt,
+                password,
+            }
+        });
+        var ids = await dbClient.createUsers(users);
+        var userGroups: UserGroups[] = ids.map(userId => {
+            return {
+                userId,
+                groupIds: [groupId]
+            }
+        });
         await dbClient.addUsersToGroups(userGroups);
 
-        res.redirect('/admin/users')
+        var userSettings = ids.map(userId => {
+            return {
+                userId,
+                semesterId
+            }
+        })
+        await dbClient.updateUserSettings(userSettings);
+        res.sendStatus(200);
     })
 
     router.get('/:userId', async (req: Request, res: Response) => {
@@ -131,7 +129,7 @@ export default function (dbClient: DbClient) {
             email: req.params.email,
             firstName: req.body.firstName,
             lastName: req.body.lastName,
-            roles: req.body.roles,
+            roles: req.body.roles.replaceAll(' ', '').split(','),
             groups: req.body.groups.map((gId: string) => parseInt(gId)),
         }
         await dbClient.updateUser(user);

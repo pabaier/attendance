@@ -7,9 +7,6 @@
                 <% } else { %>
                     <%- post.title %>
                 <% } %>
-                <% if (!post.visible) { %>
-                    (opens <%- post.openTime.toLocaleDateString() %> at <%- post.openTime.toLocaleTimeString() %> )
-                <% } %>
             </div>
             <div class="col">
                 <%- post.body %><br>

@@ -1,0 +1,212 @@
+<!-- requires courses {name, id},  -->
+<div class="jumbotron">
+    <h1>Announcements</h1>
+    <h3>New Announcement</h3>
+    <div class="container">
+        <div class="row  my-2">
+            <div class="col-3">
+                <%- groupsDropdown %>
+            </div>
+            <div class="col-3">
+                <%- postsDropdown %>
+            </div>
+            <div class="col-3">
+                <%- postTypesDropdown %>
+            </div>
+        </div>
+        <div class="row  my-2">
+            <div class="col-2">
+                Open
+            </div>
+            <div class="col-2">
+                Close
+            </div>
+            <div class="col-2">
+                Active Start
+            </div>
+            <div class="col-2">
+                Active End
+            </div>
+            <div class="col"></div>
+        </div>
+        <div class="row  mb-5">
+            <div class="col-2">
+                <input class="form-control my-2" type="datetime-local" id="open-time" name="meeting-time">
+            </div>
+            <div class="col-2">
+                <input class="form-control my-2" type="datetime-local" id="close-time" name="meeting-time">
+            </div>
+            <div class="col-2">
+                <input class="form-control my-2" type="datetime-local" id="active-start-time" name="meeting-time">
+            </div>
+            <div class="col-2">
+                <input class="form-control my-2" type="datetime-local" id="active-end-time" name="meeting-time">
+            </div>
+            <div class="col-2">
+                <button type="submit" id="submit" class="btn btn-primary form-control my-2">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <h3>Announcements</h3>
+    <div class="container">
+        <% announcementGroups.forEach(ag => { %>
+            <div class="mb-5 border-bottom border-5">
+                <div class="row">
+                    <div class="col-3">
+                        <%- include('partials/group-select-dropdown', {groups: groups, selected: ag.groupId, id: `${ag.groupId}-${ag.postId}-${ag.postTypeId}`}); %>
+                    </div>
+                    <div class="col-3">
+                        <%- include('partials/post-select-dropdown', {posts: posts, selected: ag.postId, id: `${ag.groupId}-${ag.postId}-${ag.postTypeId}`}); %>
+                    </div>
+                    <div class="col-3">
+                        <%- include('partials/post-type-select-dropdown', {postTypes: postTypes, selected: ag.postTypeId, id: `${ag.groupId}-${ag.postId}-${ag.postTypeId}`}); %>
+                    </div>
+                    <div class="col-1">
+                        <button type="button" id="save-<%=ag.groupId%>-<%=ag.postId%>-<%=ag.postTypeId%>" class="btn-save btn btn-primary btn-sm my-2">&#x2713</button>
+                        <button type="button" id="del-<%=ag.groupId%>-<%=ag.postId%>-<%=ag.postTypeId%>" class="btn-del btn btn-primary btn-sm my-2">&#x2715</button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-3">
+                        Open
+                    </div>
+                    <div class="col-3">
+                        Close
+                    </div>
+                    <div class="col-3">
+                        Active Start
+                    </div>
+                    <div class="col-3">
+                        Active End
+                    </div>
+                </div>
+                <div class="row mb-5">
+                    <div class="col-3">
+                        <input class="form-control my-2" type="datetime-local" id="open-time-<%=ag.groupId%>-<%=ag.postId%>-<%=ag.postTypeId%>" value="<%=ag.openTime%>" name="meeting-time">
+                    </div>
+                    <div class="col-3">
+                        <input class="form-control my-2" type="datetime-local" id="close-time-<%=ag.groupId%>-<%=ag.postId%>-<%=ag.postTypeId%>" value="<%=ag.closeTime%>" name="meeting-time">
+                    </div>
+                    <div class="col-3">
+                        <input class="form-control my-2" type="datetime-local" id="active-start-time-<%=ag.groupId%>-<%=ag.postId%>-<%=ag.postTypeId%>" value="<%=ag.activeStartTime%>" name="meeting-time">
+                    </div>
+                    <div class="col-3">
+                        <input class="form-control my-2" type="datetime-local" id="active-end-time-<%=ag.groupId%>-<%=ag.postId%>-<%=ag.postTypeId%>" value="<%=ag.activeEndTime%>" name="meeting-time">
+                    </div>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+</div>
+
+<script>
+    $('#submit').click(e => {
+        var groupId = $('#group-select-0').val()
+        var postId = $('#post-select-0').val()
+        var postTypeId = $('#post-type-select-0').val()
+
+        var openVal = $(`#open-time`).val();
+        var closeVal = $(`#close-time`).val();
+        var startVal = $(`#active-start-time`).val();
+        var endVal = $(`#active-end-time`).val()
+        var open = openVal ? new Date(openVal) : undefined;
+        var close = closeVal ? new Date(closeVal) : undefined;
+        var start = startVal ? new Date(startVal) : undefined;
+        var end = endVal ? new Date(endVal) : undefined;
+
+        var data = {
+            groupId,
+            postId,
+            postTypeId,
+            open: open ? open.toISOString() : undefined,
+            close: close?  close.toISOString() : undefined,
+            start: start ? start.toISOString() : undefined,
+            end: end ? end.toISOString() : undefined,
+        }
+
+        $.post(`/admin/announcements`,
+            data,
+            function( data ) {
+                window.location.reload();
+            }
+        ).fail( function(data) {
+            $('#toastHeader').html("Error");
+            $('#toastBody').html("Announcement creation error");
+            $('#liveToast').toast('show');
+        });
+    })
+
+    $('.btn-del').click(e => {
+        var ids = e.target.id.split('-');
+        var groupId = ids[1];
+        var postId = ids[2]
+        var postTypeId = ids[3]
+
+        res = confirm("delete announcement?");
+        if (!res) return;
+        $.ajax({
+            url: `/admin/announcements/`,
+            type: 'DELETE',
+            contentType: 'application/json',
+            data: JSON.stringify({ groupId, postId, postTypeId }),
+            success: function(response) {
+                location.reload();
+            },
+            error: function(response) {
+                $('#toastHeader').html("Error");
+                $('#toastBody').html(response);
+                $('#liveToast').toast('show');
+            }
+        });
+    })
+
+    $('.btn-save').click(e => {
+        var ids = e.target.id.split('-');
+        var groupId = ids[1];
+        var postId = ids[2]
+        var postTypeId = ids[3]
+
+        var newGroupId = $(`#group-select-${groupId}-${postId}-${postTypeId}`).val()
+        var newPostId = $(`#post-select-${groupId}-${postId}-${postTypeId}`).val()
+        var newPostTypeId = $(`#post-type-select-${groupId}-${postId}-${postTypeId}`).val()
+
+        var openVal = $(`#open-time-${groupId}-${postId}-${postTypeId}`).val();
+        var closeVal = $(`#close-time-${groupId}-${postId}-${postTypeId}`).val();
+        var startVal = $(`#active-start-time-${groupId}-${postId}-${postTypeId}`).val();
+        var endVal = $(`#active-end-time-${groupId}-${postId}-${postTypeId}`).val()
+        var open = openVal ? new Date(openVal) : undefined;
+        var close = closeVal ? new Date(closeVal) : undefined;
+        var start = startVal ? new Date(startVal) : undefined;
+        var end = endVal ? new Date(endVal) : undefined;
+        
+        var data = {
+            groupId,
+            postId,
+            postTypeId,
+            newGroupId,
+            newPostId,
+            newPostTypeId,
+            open: open ? open.toISOString() : undefined,
+            close: close?  close.toISOString() : undefined,
+            start: start ? start.toISOString() : undefined,
+            end: end ? end.toISOString() : undefined,
+        }
+
+        $.ajax({
+            url: `/admin/announcements/`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                window.location.reload();
+            },
+            error: function(response) {
+                $('#toastHeader').html("Error");
+                $('#toastBody').html("Unable to update record");
+                $('#liveToast').toast('show');
+            }
+        });
+    })
+
+</script>

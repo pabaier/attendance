@@ -1,38 +1,64 @@
 <!-- requires courses list {id, courseNumber}, users, addForm -->
 <div class="jumbotron">
-    <h1>Users</h1>
+    <table>
+        <tr>
+            <td class="px-3">
+                <h1 style="display:inline;">Users</h1> (<%- userCount %>)
+            </td>
+            <td>
+                <select class="form-select my-2" id="group-select" aria-label="Default select section">
+                    <option selected value="-1">Select Group</option>
+                    <% groups.forEach(group => { %>
+                        <% if (group.selected) { %>
+                            <option selected value="<%=group.id%>"><%=group.name%></option>
+                        <% } else { %>
+                            <option value="<%=group.id%>"><%=group.name%></option>
+                        <% } %>
+                    <% }) %>
+                </select>
+            </td>
+        </tr>
+    </table>
+    <a href="/admin/users/utils">Utils</a>
 
     <%- usersList %>
     
-    <%- include('partials/course-select-dropdown.ejs', {courses: courses}); %>
+    <div class="my-5 w-50 start-0 center">
+        <h5>Add Users</h5>
+        <textarea class="form-control" id="addUsers-textarea" rows="3" placeholder="email1, email2,"></textarea>
+        <button type="submit" id="bulk-add-btn" class="btn btn-primary my-2 col-2">Submit</button>
+    </div>
 
-    <button type="submit" id="add-class-btn" class="btn btn-primary form-control my-2">Add Users To Course</button>
-    
-    <%- addForm %>
-    
-    <form id="bulk-add-form" action="/admin/users/add" method="POST">
-        <textarea class="form-control my-2" name="text" id="bulk-add-area" placeholder="Add Users&#10;Email|FirstName|LastName|Role1,Role2|Group1,Group2" aria-label="Email" aria-describedby="basic-addon1"></textarea>
-        <button type="submit" id="bulk-add-btn" class="btn btn-primary form-control my-2">Add New Users</button>
-    </form>
 </div>
 
 <script>
-    $('#add-class-btn').click(function() {
-        var courseId = $('#course-select').val()
-        var userIds = []
-        $('.userc:checkbox:checked').each(function() {userIds.push(this.value)})
-        $.post(`/admin/courses/${courseId}/users`, { userIds }, function( data ) {
-            if (data) {
-                window.location.href=`/admin/courses/${courseId}`;
-            } else {
-                console.log('nope')
-            }
-        })
-    })
+    $('#bulk-add-btn').click(function() {
+        var emails = $('#addUsers-textarea').val()
+        var groupId = $('#group-select').val()
+        if (groupId == '-1') {
+            $('#toastHeader').html('Error');
+            $('#toastBody').html('Select a group first.');
+            $('#liveToast').toast('show'); 
+        }
+        else {
+            $.post(`/admin/users/bulkadd`, { emails, groupId }, function( data ) {
+                if (data) {
+                    window.location.href=`/admin/users?groupId=${groupId}`;
+                } else {
+                    $('#toastHeader').html('Error');
+                    $('#toastBody').html('Error adding users to group');
+                    $('#liveToast').toast('show'); 
+                }
+            })
+        }
+    });
 
-    $('#filter-class-select').change(function(e) {
-        const course = e.target.value;
-        if (course == 'Select Course') return;
-        window.location.href=`/admin/courses/${course}`;
+    $('#group-select').change(function(e) {
+        const group = e.target.value;
+        if (group == '-1') {
+            window.location.href=`/admin/users`;
+        } else {
+            window.location.href=`/admin/users?groupId=${group}`;
+        }
     })
 </script>

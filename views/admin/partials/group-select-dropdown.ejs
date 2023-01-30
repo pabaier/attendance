@@ -1,0 +1,11 @@
+<select class="form-select my-2" id="group-select-<%= id %>" aria-label="Default select section">
+    <option>Select Group</option>
+    <% groups.forEach(group => { %>
+        <% if (group.id == selected) { %>
+            <option selected value="<%=group.id%>"><%=group.name%></option>
+        
+        <% } else { %>
+            <option value="<%=group.id%>"><%=group.name%></option>
+        <% } %>
+    <% }) %>
+</select>

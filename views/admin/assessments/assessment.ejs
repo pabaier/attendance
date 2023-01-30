@@ -1,0 +1,316 @@
+<!-- requires courses {name, id},  -->
+<div class="jumbotron">
+    <div class="container my-5">
+        <div class="row my-2">
+            <div class="col-3">
+                <input class="form-control" value="<%= assessment.name %>" id="edit-name">
+            </div>
+        </div>
+        <div class="row my-2">
+            <div class="col-10">
+                <textarea class="form-control" id="edit-description"><%= assessment.description %></textarea>
+            </div>
+        </div>
+        <div class="row my-2">
+            <div class="col-10">
+                <button type="button" id="edit-save" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+        <div class="mt-4" id="link"></div>
+    </div>
+
+    <h3>Questions</h3>
+    <div class="container">
+        <div class="mb-3 border-bottom border-2">
+            <div class="row">
+                <div class="col-3"></div>
+                <div class="col-1">
+                    Attempts
+                </div>
+                <div class="col-1">
+                    Ordinal
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-3">
+                    <%- questionsDropdown %>
+                </div>
+                <div class="col-1 my-2">
+                    <input type="number" class="form-control" id="new-question-attempts">
+                </div>
+                <div class="col-1 my-2">
+                    <input type="number" class="form-control" id="new-question-ordinal">
+                </div>
+                <div class="col-1 my-2">
+                    <button type="button" id="new-question-save" class="btn btn-primary btn-sm">New</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="container mb-5">
+        <% testQuestions.forEach(q => { %>
+            <div class="row  my-2">
+                <div class="col-3">
+                    <%- q.questionId %>-<%- q.title %>
+                </div>
+                <div class="col-1">
+                    <input type="number" class="form-control" id="attempts-<%- q.questionId %>" value="<%- q.attempts %>">
+                </div>
+                <div class="col-1">
+                    <input type="number" class="form-control" id="ordinal-<%- q.questionId %>" value="<%- q.ordinal %>">
+                </div>
+                <div class="col-1">
+                    <button type="button" id="save-<%=q.assessmentId%>-<%=q.questionId%>" class="btn-question-save btn btn-primary btn-sm my-2">&#x2713</button>
+                    <button type="button" id="del-<%=q.assessmentId%>-<%=q.questionId%>" class="btn-question-del btn btn-primary btn-sm my-2">&#x2715</button>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+
+    <h3>Settings</h3>
+    <div class="container">
+        <div class="mb-3 border-bottom border-2">
+            <div class="row">
+                <div class="col-3"></div>
+                <div class="col-3">
+                    Start
+                </div>
+                <div class="col-3">
+                    End
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-3">
+                    <%- groupsDropdown %>
+                </div>
+                <div class="col-3">
+                    <input class="form-control my-2" type="datetime-local" id="start-time" name="meeting-time">
+                </div>
+                <div class="col-3">
+                    <input class="form-control my-2" type="datetime-local" id="end-time" name="meeting-time">
+                </div>
+                <div class="col-1">
+                    <button type="button" id="new-settings-save" class="btn btn-primary btn-sm my-2">New</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="container">
+        <% settings.forEach(q => { %>
+            <div class="row my-2">
+                <div class="col-3">
+                    <%=q.groupName%>
+                </div>
+                <div class="col-3">
+                    <input class="form-control my-2" type="datetime-local" id="start-time-<%=q.assessmentId%>-<%=q.groupId%>" value="<%=q.startTime%>" name="meeting-time">
+                </div>
+                <div class="col-3">
+                    <input class="form-control my-2" type="datetime-local" id="end-time-<%=q.assessmentId%>-<%=q.groupId%>" value="<%=q.endTime%>" name="meeting-time">
+                </div>
+                <div class="col-1">
+                    <button type="button" id="save-<%=q.assessmentId%>-<%=q.groupId%>" class="btn-settings-save btn btn-primary btn-sm my-2">&#x2713</button>
+                    <button type="button" id="del-<%=q.assessmentId%>-<%=q.groupId%>" class="btn-settings-del btn btn-primary btn-sm my-2">&#x2715</button>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+</div>
+
+<script>
+    window.onload = function() {
+        var baseURL = window.location.host
+        var url = `${window.location.protocol}//${baseURL}/assessment?slug=<%= assessment.slug %>`
+        $('#link').html(`<a href=${url}>${url}</a>`)
+    }
+
+    $('.btn-question-save').click(e => {
+        var ids = e.target.id.split('-');
+        var assessmentId = parseInt(ids[1]);
+        var questionId = parseInt(ids[2])
+        var attempts = parseInt($(`#attempts-${questionId}`).val()) | undefined;
+        var ordinal = parseInt($(`#ordinal-${questionId}`).val())
+
+        var data = {
+            attempts,
+            ordinal,
+        }
+
+        $.ajax({
+            url: `/admin/assessments/${assessmentId}/${questionId}`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                $('#toastHeader').html("Success");
+                $('#toastBody').html(response.message);
+                $('#liveToast').toast('show');
+            },
+            error: function(response) {
+                $('#toastHeader').html("Question Update Error<br>Possible duplicate ordinal.");
+                $('#toastBody').html(response.message);
+                $('#liveToast').toast('show');
+            }
+        });
+    })
+
+    $('.btn-question-del').click(e => {
+        var ids = e.target.id.split('-');
+        var assessmentId = parseInt(ids[1]);
+        var questionId = parseInt(ids[2])
+
+        res = confirm("delete question from assessment?");
+        if (!res) return;
+        $.ajax({
+            url: `/admin/assessments/${assessmentId}/${questionId}`,
+            type: 'DELETE',
+            success: function(response) {
+                location.reload();
+            },
+            error: function(response) {
+                $('#toastHeader').html("Error");
+                $('#toastBody').html(response.message);
+                $('#liveToast').toast('show');
+            }
+        });
+    })
+
+    $('#new-question-save').click(e => {
+        var assessmentId = <%= assessment.id %>;
+        var questionId = parseInt($(`#question-select-0`).val())
+        var attempts = parseInt($('#new-question-attempts').val()) || undefined
+        var ordinal = parseInt($('#new-question-ordinal').val()) || undefined
+
+        var data = {
+            questionId,
+            attempts,
+            ordinal,
+        }
+
+        $.post(`/admin/assessments/${assessmentId}/question`,
+            data,
+            function(response) {
+                window.location.reload();
+            }
+        ).fail( function(response) {
+            $('#toastHeader').html("Assessment Creation Error");
+            $('#toastBody').html(data.message);
+            $('#liveToast').toast('show');
+        });
+    })
+
+    $('.btn-settings-save').click(e => {
+        var ids = e.target.id.split('-');
+        var assessmentId = parseInt(ids[1]);
+        var groupId = parseInt(ids[2])
+
+        var startVal = $(`#start-time-${assessmentId}-${groupId}`).val();
+        var endVal = $(`#end-time-${assessmentId}-${groupId}`).val();
+        var start = startVal ? new Date(startVal) : undefined;
+        var end = endVal ? new Date(endVal) : undefined;
+        
+        var data = {
+            groupId,
+            start: start ? start.toISOString() : undefined,
+            end: end ? end.toISOString() : undefined,
+        }
+
+        $.ajax({
+            url: `/admin/assessments/${assessmentId}/settings`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                $('#toastHeader').html("Success");
+                $('#toastBody').html(response.message);
+                $('#liveToast').toast('show');
+            },
+            error: function(response) {
+                $('#toastHeader').html("Assessment Creation Error");
+                $('#toastBody').html(response.message);
+                $('#liveToast').toast('show');
+            }
+        });
+    })
+
+    $('.btn-settings-del').click(e => {
+        var ids = e.target.id.split('-');
+        var assessmentId = parseInt(ids[1]);
+        var groupId = parseInt(ids[2])
+
+        res = confirm("delete settings?");
+        if (!res) return;
+        $.ajax({
+            url: `/admin/assessments/${assessmentId}/settings`,
+            type: 'DELETE',
+            contentType: 'application/json',
+            data: JSON.stringify({ groupId }),
+            success: function(response) {
+                location.reload();
+            },
+            error: function(response) {
+                $('#toastHeader').html("Error");
+                $('#toastBody').html(response.message);
+                $('#liveToast').toast('show');
+            }
+        });
+    })
+
+    $('#new-settings-save').click(e => {
+        var assessmentId = <%= assessment.id %>;
+        var groupId = parseInt($(`#group-select-0`).val())
+        if(!groupId) {
+            $('#toastHeader').html("Error");
+            $('#toastBody').html("Select a group first.");
+            $('#liveToast').toast('show');
+            return
+        }
+
+        var startVal = $(`#start-time`).val();
+        var endVal = $(`#end-time`).val();
+        var start = startVal ? new Date(startVal) : undefined;
+        var end = endVal ? new Date(endVal) : undefined;
+        
+        var data = {
+            groupId,
+            start: start ? start.toISOString() : undefined,
+            end: end ? end.toISOString() : undefined,
+        }
+
+        $.post(`/admin/assessments/${assessmentId}/settings`,
+            data,
+            function( data ) {
+                window.location.reload();
+            }
+        ).fail( function(data) {
+            $('#toastHeader').html("Assessment Creation Error");
+            $('#toastBody').html(data.message);
+            $('#liveToast').toast('show');
+        });
+    })
+
+    $('#edit-save').click(e => {
+        var description = $('#edit-description').val()
+        var name = $('#edit-name').val()
+
+        $.ajax({
+            url: `/admin/assessments/<%= assessment.id %>`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({ name, description }),
+            success: function(data) {
+                $('#toastHeader').html("Success");
+                $('#toastBody').html(data.message);
+                $('#liveToast').toast('show');
+            },
+            error: function(data) {
+                $('#toastHeader').html("Error");
+                $('#toastBody').html(data.message);
+                $('#liveToast').toast('show');
+            }
+        });
+    })
+</script>

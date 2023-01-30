@@ -1,0 +1,10 @@
+<select class="form-select my-2" id="post-select-<%= id %>" aria-label="Default select section">
+    <option>Select Post</option>
+    <% posts.forEach(post => { %>
+        <% if (post.id == selected) { %>
+            <option selected value="<%=post.id%>"><%=post.title%></option>
+        <% } else { %>
+            <option value="<%=post.id%>"><%=post.title%></option>
+        <% } %>
+    <% }) %>
+</select>

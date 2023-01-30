@@ -1,4 +1,4 @@
 export default interface CourseDate {
-    course_id?: number,
+    courseId?: number,
 	meeting: Date,
 }

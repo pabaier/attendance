@@ -1,0 +1,18 @@
+<div class="jumbotron">
+    <h1>Utils</h1>
+    <h5>Extract Emails</h5>
+    
+    <textarea class="form-control" id="textArea" rows="10"></textarea>
+    <button type="submit" id="extract-btn" class="btn btn-primary my-2 col-2">Extract</button>
+    
+</div>
+
+<script>
+    $("#extract-btn").click(e => {
+        var text = $("#textArea").val();
+        var x = text.replaceAll(' ', ',').replaceAll('\t', ',').replaceAll('\n', ',').split(',');
+        var y = x.filter(z => z.includes('@'))
+        $("#textArea").val(y.join('\n'))
+    })
+
+</script>

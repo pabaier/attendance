@@ -1,6 +1,6 @@
 import { DbClient } from './dbClient';
 import pgp from 'pg-promise'
-import { Assignment, Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest } from '../models';
+import { Course, CourseDate, User, UserGroups, PostGroup, Group, Test, UserQuestionGrade, TestUserData, UserTest, UserSettings, Semester, Post, PostType, Assessment, AssessmentQuestion, AssessmentSettings, GlobalSettings, Question, UserQuestion, UserAssessment } from '../models';
 
 class DbClientPSQLImpl implements DbClient {
   connection: any;
@@ -16,6 +16,644 @@ class DbClientPSQLImpl implements DbClient {
         ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false
       }
     )
+  }
+
+  async updateUserAssessment(userAssessment: UserAssessment): Promise<boolean> {
+    const cols = ["user_id", "assessment_id", "grade", "comment", "start_time", "end_time"]
+    const cs = new this.pg.helpers.ColumnSet(cols);
+    const data = {
+      user_id: userAssessment.userId,
+      assessment_id: userAssessment.assessmentId,
+      grade: userAssessment.grade,
+      comment: userAssessment.comment,
+      start_time: userAssessment.start,
+      end_time: userAssessment.end,
+    };
+    const conditionData = [userAssessment.userId, userAssessment.assessmentId]
+    const condition = pgp.as.format(' WHERE user_id = $1 and assessment_id = $2', conditionData);
+    const query = this.pg.helpers.update(data, cs, 'user_assessment') + condition;
+    return this.connection.none(query)
+    .then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async createUserAssessment(userAssessment: UserAssessment): Promise<boolean> {
+    const cols = ["user_id", "assessment_id", "grade", "comment", "start_time", "end_time"]
+    const cs = new this.pg.helpers.ColumnSet(cols, {table: 'user_assessment'});
+    const data = {
+      user_id: userAssessment.userId,
+      assessment_id: userAssessment.assessmentId,
+      grade: userAssessment.grade,
+      comment: userAssessment.comment,
+      start_time: userAssessment.start,
+      end_time: userAssessment.end,
+    };
+    const query = this.pg.helpers.insert(data, cs);
+    return this.connection.none(query)
+    .then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async getUserAssessment(userId: number, assessmentId: number): Promise<UserAssessment> {
+     var query = `SELECT ua.user_id "userId", ua.assessment_id "assessmentId", ua.grade, ua.comment, ua.start_time "start", ua.end_time "end"
+                  FROM user_assessment ua
+                  WHERE ua.user_id = $1 and ua.assessment_id = $2`
+    return this.connection.any(query, [userId, assessmentId])
+      .then((data: UserAssessment[]) => {
+        return data.length ? data[0] : undefined
+      })
+      .catch((error: any) => {
+        console.log('ERROR:', error);
+        return undefined;
+      });
+  }
+
+  async updateUserQuestion(userQuestion: UserQuestion): Promise<boolean> {
+    const cols = ['assessment_id', 'question_id', 'user_id', 'user_answer', 'variables', 'question_answer', 'code', 'attempts']
+    const cs = new this.pg.helpers.ColumnSet(cols);
+    const data = {
+      assessment_id: userQuestion.assessmentId,
+      question_id: userQuestion.questionId,
+      user_id: userQuestion.userId,
+      user_answer: userQuestion.userAnswer,
+      variables: userQuestion.variables,
+      question_answer: userQuestion.questionAnswer,
+      code: userQuestion.code,
+      attempts: userQuestion.attempts,
+    };
+    const conditionData = [userQuestion.assessmentId, userQuestion.questionId, userQuestion.userId]
+    const condition = pgp.as.format(' WHERE assessment_id = $1 and question_id = $2 and user_id = $3', conditionData);
+    const query = this.pg.helpers.update(data, cs, 'user_question') + condition;
+    return this.connection.none(query)
+    .then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async createUserQuestion(userQuestion: UserQuestion): Promise<boolean> {
+    const cols = ['assessment_id', 'question_id', 'user_id', 'user_answer', 'variables', 'question_answer', 'code', 'attempts']
+    const cs = new this.pg.helpers.ColumnSet(cols, {table: 'user_question'});
+    const data = {
+      assessment_id: userQuestion.assessmentId,
+      question_id: userQuestion.questionId,
+      user_id: userQuestion.userId,
+      user_answer: userQuestion.userAnswer,
+      variables: userQuestion.variables,
+      question_answer: userQuestion.questionAnswer,
+      code: userQuestion.code,
+      attempts: userQuestion.attempts,
+    };
+    const query = this.pg.helpers.insert(data, cs);
+    return this.connection.none(query)
+    .then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async getUserQuestion(assessmentId: number, questionId: number, userId: number): Promise<UserQuestion> {
+     var query = `SELECT uq.assessment_id "assessmentId", uq.question_id "questionId", uq.user_id "userId", uq.user_answer "userAnswer",
+                  uq.variables, uq.question_answer "questionAnswer", uq.code, uq.attempts
+                  FROM user_question uq
+                  WHERE uq.assessment_id = $1 and uq.question_id = $2 and uq.user_id = $3`
+    return this.connection.any(query, [assessmentId, questionId, userId])
+      .then((data: UserQuestion[]) => {
+        return data.length ? data[0] : undefined
+      })
+      .catch((error: any) => {
+        console.log('ERROR:', error);
+        return undefined;
+      });
+  }
+
+  async updateQuestion(question: Question): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['title', 'question_description']);
+    const data = {
+      title: question.title,
+      question_description: question.description,
+    };
+    const condition = pgp.as.format(' WHERE id = $1', [question.id]);
+    const query = this.pg.helpers.update(data, cs, 'question') + condition;
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async deleteQuestion(questionId: number): Promise<boolean> {
+    var query = 'delete from question where id = $1'
+    return this.connection.none(query, [questionId])
+    .then((data: any) => {
+      return true;
+    })
+    .catch((error: any) => {
+      console.log(error)
+      return false;
+    })
+  }
+
+  async updateGlobalSettings(settings: GlobalSettings): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['code_refresh_rate', 'code_time_window', 'code_time_start']);
+    const data = {
+      code_refresh_rate: settings.codeRefreshRate,
+      code_time_window: settings.codeTimeWindow,
+      code_time_start: settings.codeTimeStart,
+    };
+    const condition = pgp.as.format(' WHERE user_id = $1', [settings.userId]);
+    const query = this.pg.helpers.update(data, cs, 'global_settings') + condition;
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async getGlobalSettings(userId: number): Promise<GlobalSettings> {
+    var query = `SELECT gs.user_id "userId", gs.code_refresh_rate "codeRefreshRate", gs.code_time_window "codeTimeWindow", gs.code_time_start "codeTimeStart"
+                 FROM global_settings gs
+                 WHERE gs.user_id = $1`
+    return this.connection.one(query, [userId])
+      .then((data: GlobalSettings) => {
+        return data
+      })
+      .catch((error: any) => {
+        console.log('ERROR:', error);
+        return undefined;
+      });
+  }
+  
+  async getCourseByGroupId(groupId: number): Promise<Course | undefined> {
+    var query = `SELECT c.id, c.semester_id "semesterId", c.start_time "startTime", c.end_time "endTime",
+                 c.course_number "courseNumber", c.course_name "courseName", c.group_id "groupId"
+                 FROM courses c
+                 WHERE c.group_id = $1`
+    return this.connection.any(query, [groupId])
+      .then((data: Course[]) => {
+        return data.length ? data[0] : undefined
+      })
+      .catch((error: any) => {
+        console.log('ERROR:', error);
+        return undefined;
+      });
+  }
+
+  async deleteAssessmentQuestion(assessmentId: number, questionId: number): Promise<boolean> {
+    var query = 'delete from assessment_question where assessment_id = $1 and question_id = $2'
+    return this.connection.none(query, [assessmentId, questionId])
+    .then((data: any) => {
+      return true;
+    })
+    .catch((error: any) => {
+      console.log(error)
+      return false;
+    })
+  }
+
+  async createAssessmentQuestion(assessmentQuestion: AssessmentQuestion): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['assessment_id', 'question_id', 'attempts', 'ordinal'], {table: 'assessment_question'});
+    const data = {
+        assessment_id: assessmentQuestion.assessmentId,
+        question_id: assessmentQuestion.questionId,
+        attempts: assessmentQuestion.attempts,
+        ordinal: assessmentQuestion.ordinal,
+    };
+    const query = this.pg.helpers.insert(data, cs);
+    return this.connection.none(query)
+    .then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async updateAssessmentSettings(assessmentSettings: AssessmentSettings): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['start_time', 'end_time']);
+    const data = {
+      start_time: assessmentSettings.startTime,
+      end_time: assessmentSettings.endTime,
+    };
+    const condition = pgp.as.format(' WHERE assessment_id = $1 and group_id = $2', [assessmentSettings.assessmentId, assessmentSettings.groupId]);
+    const query = this.pg.helpers.update(data, cs, 'assessment_settings') + condition;
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async deleteAssessmentSettings(assessmentId: number, groupId: number): Promise<boolean> {
+    var query = 'delete from assessment_settings where assessment_id = $1 and group_id = $2'
+    return this.connection.none(query, [assessmentId, groupId])
+    .then((data: any) => {
+      return true;
+    })
+    .catch((error: any) => {
+      console.log(error)
+      return false;
+    })
+  }
+
+  async createAssessmentSettings(assessmentSettings: AssessmentSettings): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['assessment_id', 'group_id', 'start_time', 'end_time'], {table: 'assessment_settings'});
+    const data = {
+        assessment_id: assessmentSettings.assessmentId,
+        group_id: assessmentSettings.groupId,
+        start_time: assessmentSettings.startTime,
+        end_time: assessmentSettings.endTime,
+    };
+    const query = this.pg.helpers.insert(data, cs);
+    return this.connection.none(query)
+    .then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async getGroupsNotPartOfAssessment(assessmentId: number): Promise<Group[]> {
+    var query = `SELECT g.id, g.group_name "name"
+                 FROM "groups" g
+                 WHERE g.id NOT IN (
+                  SELECT as2.group_id 
+                  FROM assessment_settings as2 
+                  WHERE as2.assessment_id = $1
+                 )
+                 ORDER BY g.id DESC`
+    return this.connection.any(query, [assessmentId])
+    .then((data: Group[]) => {
+      return data;
+    })
+    .catch((error: any) => {
+      console.log(error)
+      return [];
+    })
+  }
+
+  async updateAssessmentQuestion(assessmentQuestion: AssessmentQuestion): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['attempts', 'ordinal']);
+    const data = {
+      attempts: assessmentQuestion.attempts,
+      ordinal: assessmentQuestion.ordinal,
+    };
+    const condition = pgp.as.format(' WHERE assessment_id = $1 and question_id = $2', [assessmentQuestion.assessmentId, assessmentQuestion.questionId]);
+    const query = this.pg.helpers.update(data, cs, 'assessment_question') + condition;
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async updateAssessment(assessment: Assessment): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['id', 'assessment_name', 'assessment_description']);
+    const data = {
+      id: assessment.id,
+      assessment_name: assessment.name,
+      assessment_description: assessment.description,
+    };
+    const condition = pgp.as.format(' WHERE id = $1', [assessment.id]);
+    const query = this.pg.helpers.update(data, cs, 'assessment') + condition;
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async getAssessmentSettings(assessmentId: number): Promise<(AssessmentSettings & {name: string, groupName: string, description: string})[]> {
+    var text = `SELECT a.assessment_id "assessmentId", a.group_id "groupId", a.start_time "startTime", a.end_time "endTime",
+                g.group_name "groupName", aa.assessment_name "name", aa.assessment_description "description"
+                FROM assessment_settings a
+                JOIN "groups" g
+                ON g.id = a.group_id
+                JOIN assessment aa
+                ON a.assessment_id = aa.id
+                WHERE a.assessment_id = $1
+                ORDER BY a.start_time DESC
+                `;
+    var data = [assessmentId]
+    return await this.connection.any(text, data).then((data: (AssessmentSettings  & {name: string, groupName: string, description: string})[]) => {
+      return data
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
+  }
+
+  async getAssessmentQuestions(assessmentId: number, questionId?: number): Promise<(AssessmentQuestion & Question)[]> {
+    var inputs = [assessmentId]
+    var text = `SELECT aq.assessment_id "assessmentId", aq.question_id "questionId", aq.ordinal, aq.attempts "attempts",
+                q.title, q.question_description "description"
+                FROM assessment_question aq
+                JOIN question q
+                ON aq.question_id = q.id
+                WHERE aq.assessment_id = $1`;
+    if (questionId) {
+      text += ` and aq.question_id = $2`;
+      inputs.push(questionId);
+    }
+    text += ` ORDER BY aq.ordinal`
+    return await this.connection.any(text, inputs)
+    .then((data: any[]) => {
+      return data
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
+  }
+
+  async createQuestion(question: Question): Promise<number | undefined> {
+    const cs = new this.pg.helpers.ColumnSet(['title', 'question_description'], {table: 'question'});
+    const values = {
+      title: question.title,
+      question_description: question.description
+    }
+    const query = this.pg.helpers.insert(values, cs) + ' RETURNING id';
+    return this.connection.one(query).then((data: number) => {
+      return data;
+    }).catch((error: any) => {
+      console.log(error)
+      return undefined;
+    });
+  }
+
+  async getQuestions(questionId?: number): Promise<Question[]> {
+    var inputs = []
+    var text = `SELECT q.id, q.title, q.question_description "description"
+                FROM question q`
+    if (questionId) {
+      text += ` WHERE q.id = $1`
+      inputs.push(questionId);
+    }
+    text += ' ORDER BY q.id DESC'
+    return await this.connection.any({
+      name: 'getQuestions',
+      text,
+    }, inputs).then((data: Question[]) => {
+      return data
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
+  }
+
+  async createAssessment(name: string): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['assessment_name'], {table: 'assessment'});
+    const values = {
+      assessment_name: name,
+    }
+    const query = this.pg.helpers.insert(values, cs);
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async getAssessment(assessmentSlug: string): Promise<Assessment> {
+    var text = `SELECT a.id, a.slug, a.assessment_name "name", a.assessment_description "description"
+                FROM assessment a
+                where a.slug = $1`
+    var data: any[] = [assessmentSlug]
+    return await this.connection.any(text, data).then((data: Assessment[]) => {
+      if (data.length) return data[0]
+      return []
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
+  }
+
+  async getAssessments(assessmentId? : number): Promise<Assessment[]> {
+    var text = `SELECT a.id, a.slug, a.assessment_name "name", a.assessment_description "description"
+                FROM assessment a`
+    var data: any[] = []
+    if (assessmentId) {
+      text += ` where a.id = ${assessmentId}`
+      data = [assessmentId]
+    }
+    else
+      text += ' ORDER BY a.id DESC'
+    return await this.connection.any(text, data).then((data: Assessment[]) => {
+      return data
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
+  }
+
+  async updateSemester(userId: number, semesterId: number): Promise<boolean> {
+    const columns = ['semester_id'];
+    const cs = new this.pg.helpers.ColumnSet(columns);
+    const data = {semester_id: semesterId}
+    const condition = pgp.as.format(' WHERE user_id = $1', userId);
+    const query = this.pg.helpers.update(data, cs, 'user_settings') + condition;
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });  
+  }
+
+  async getPostTypes(): Promise<PostType[]> {
+    return await this.connection.any({
+      name: 'getPostTypes',
+      text: `SELECT pt.id, pt.post_type "postType"
+             FROM post_types pt`,
+    }).then((data: PostType[]) => {
+      return data
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
+  }
+
+  async updatePostGroup(oldIds: {groupId: number, postId: number, postTypeId: number}, postGroup: PostGroup): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['post_id', 'group_id', 'open_time', 'close_time', 'active_start_time', 'active_end_time', 'post_type_id']);
+    const data = {
+      post_id: postGroup.postId,
+      group_id: postGroup.groupId,
+      open_time: postGroup.openTime,
+      close_time: postGroup.closeTime,
+      active_start_time: postGroup.activeStartTime,
+      active_end_time: postGroup.activeEndTime,
+      post_type_id: postGroup.postTypeId
+    };
+    const condition = pgp.as.format(' WHERE post_id = $1 and group_id = $2 and post_type_id = $3', [oldIds.postId, oldIds.groupId, oldIds.postTypeId]);
+    const query = this.pg.helpers.update(data, cs, 'post_group') + condition;
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async deletePostGroup(groupId: number, postId: number, postTypeId: number): Promise<boolean> {
+    var query = 'delete from post_group where group_id = $1 and post_id = $2 and post_type_id = $3'
+    return this.connection.none(query, [groupId, postId, postTypeId])
+    .then((data: any) => {
+      return true;
+    })
+    .catch((error: any) => {
+      return false;
+    })
+  }
+
+  async getPostGroups(postTypeIds: number[]): Promise<PostGroup[]> {
+    return await this.connection.any(
+      `SELECT pg.post_id "postId", pg.group_id "groupId", pg.open_time "openTime", pg.close_time "closeTime",
+      pg.active_start_time "activeStartTime", pg.active_end_time "activeEndTime", pg.post_type_id "postTypeId"
+      FROM post_group pg
+      WHERE pg.post_type_id in ($1:csv)
+      order by pg.open_time DESC`, [postTypeIds]
+    ).then((data: PostGroup[]) => {
+      return data
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
+  }
+
+  async createPostGroup(postGroup: PostGroup): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['post_id', 'group_id', 'open_time', 'close_time', 'active_start_time', 'active_end_time', 'post_type_id'], {table: 'post_group'});
+    const values = {
+      post_id: postGroup.postId,
+      group_id: postGroup.groupId,
+      open_time: postGroup.openTime,
+      close_time: postGroup.closeTime,
+      active_start_time: postGroup.activeStartTime,
+      active_end_time: postGroup.activeEndTime,
+      post_type_id: postGroup.postTypeId
+    }
+    const query = this.pg.helpers.insert(values, cs);
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async updatePost(post: Post): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['title', 'body', 'url_link']);
+    const data = {title: post.title, body: post.body, url_link: post.link}
+    const condition = pgp.as.format(' WHERE id = $1', post.id);
+    const query = this.pg.helpers.update(data, cs, 'posts') + condition;
+    return this.connection.none(query).then((data: any) => {
+      return true;
+    }).catch((error: any) => {
+      console.log(error)
+      return false;
+    });
+  }
+
+  async deletePost(postId: number): Promise<boolean> {
+    var query = 'delete from posts where id = $1'
+    return this.connection.none(query, [postId])
+    .then((data: any) => {
+      return true;
+    })
+    .catch((error: any) => {
+      return false;
+    })
+  }
+
+  async createPost(post: Post): Promise<number> {
+    const cs = new this.pg.helpers.ColumnSet(['title', 'body', 'url_link'], {table: 'posts'});
+    const values = {
+      title: post.title,
+      body: post.body,
+      url_link: post.link
+    }
+    const query = this.pg.helpers.insert(values, cs) + ' RETURNING id';
+    const res = await this.connection.one(query);
+    return res.id;
+  }
+
+  async getAllPosts(): Promise<Post[]> {
+    return await this.connection.any({
+      name: 'getAllPosts',
+      text: `SELECT p.id, p.title, p.body, p.url_link link
+      FROM posts p
+      order by p.id DESC`,
+    }).then((data: Post[]) => {
+      return data;
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
+  }
+
+  async updateUserSettings(userSettings: (UserSettings & {userId: number})[]): Promise<boolean> {
+    const cs = new this.pg.helpers.ColumnSet(['user_id', 'semester_id'], {table: 'user_settings'});
+    const us = userSettings.map(x => {return {user_id: x.userId, semester_id: x.semesterId}});
+    const query = this.pg.helpers.insert(us, cs) + ' ON CONFLICT (user_id) DO UPDATE SET semester_id=EXCLUDED.semester_id';
+    const res = await this.connection.any(query);
+    return res ? true : false;  
+  }
+
+  async createUsers(users: any): Promise<number[]> {
+    const cs = new this.pg.helpers.ColumnSet(['email', 'roles', 'salt', 'password_hash'], {table: 'users'});
+    const values = users.map((u: { email: any; roles: any; salt: any; password: any; }) => { return {
+      email: u.email, 
+      roles: u.roles,
+      salt: u.salt,
+      password_hash: u.password,
+    }})
+    const query = this.pg.helpers.insert(values, cs) + ' ON CONFLICT (email) DO UPDATE SET email=EXCLUDED.email RETURNING id';
+    const res = await this.connection.many(query);
+    return res.map((obj: { id: any; }) => obj.id);
+  }
+
+  async getSemesters(semesterId?: number): Promise<Semester[]> {
+    var query = 'SELECT s.id, s.season, s.semester_year "year" FROM public.semester s'
+    if (semesterId)
+      query += ' WHERE s.id = $1'
+    
+      return this.connection.any(query, [semesterId])
+      .then ((data: Semester[]) => {
+        return data;
+      }).catch((error: any) => {
+        console.log('ERROR:', error)
+      })
+  }
+
+  async getUserSettings(userId: number): Promise<UserSettings> {
+    var query = `SELECT us.semester_id "semesterId"
+    from user_settings us 
+    where us.user_id = $1`;
+  
+    return this.connection.one(query, [userId])
+    .then((data: UserSettings) => {
+        return data;
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return undefined;
+    })
   }
 
   async updateUserPassword(userId: number, password: string, salt?: string): Promise<boolean> {
@@ -53,7 +691,7 @@ class DbClientPSQLImpl implements DbClient {
     .catch((error: any) => {
       console.log('ERROR:', error);
       return [];
-    }) 
+    })
   }
 
   async setUserTestGrade(grade: number, userId: number, testDate: Date): Promise<boolean> {
@@ -126,25 +764,6 @@ class DbClientPSQLImpl implements DbClient {
       }) 
   }
 
-  async getUserAssignments(userId: number): Promise<Assignment[]> {
-    var query = `select a.id, a.title, a.start_time, a.end_time, a.url_link
-    from assignments a 
-    join assignment_group ag
-    on a.id = ag.assignment_id
-    join user_group ug
-    on ag.group_id = ug.group_id
-    where ug.user_id = $1
-    ORDER BY a.start_time`;
-    return this.connection.any(query, [userId])
-      .then((data: Assignment[]) => {
-        return data
-      })
-      .catch((error: any) => {
-        console.log('ERROR:', error);
-        return [];
-      })  
-  }
-
   async createGroup(groupName: string): Promise<number> {
     const cs = new this.pg.helpers.ColumnSet(['group_name'], {table: 'groups'});
     const query = this.pg.helpers.insert({group_name: groupName}, cs) + ' RETURNING id';
@@ -152,16 +771,22 @@ class DbClientPSQLImpl implements DbClient {
     return res.id;
   }
 
-  async getCourseIds(userId: number): Promise<number[]> {
+  async getCourseIds(userId: number, semesterId?: number): Promise<number[]> {
+    var values = [userId];
+    var query = `select c.id from users u
+                  join user_group ug
+                  on u.id = ug.user_id
+                  join courses c
+                  on ug.group_id = c.group_id 
+                  where u.id = $1`
+    if (semesterId) {
+      query += ' and c.semester_id = $2'
+      values.push(semesterId);
+    }
     return await this.connection.any({
       name: 'getCourseIds',
-      text: `select c.id from users u
-        join user_group ug
-        on u.id = ug.user_id
-        join courses c
-        on ug.group_id = c.group_id 
-        where u.id = $1`,
-      values: [userId],
+      text: query,
+      values,
       rowMode: 'array'
     }).then((data: any) => {
         return data.flat();
@@ -171,20 +796,17 @@ class DbClientPSQLImpl implements DbClient {
     }); 
   }
 
-  async getPosts(groupId: number): Promise<PostGroup[]> {
-    return await this.connection.any({
-      name: 'getPosts',
-      text: `SELECT p.id "postId", pg.group_id "groupId",
-      pg.open_time "openTime", pg.close_time "closeTime",
-      pg.visible, p.title, p.body, p.url_link link
-      FROM post_group pg 
-      inner join posts p
-      on pg.post_id = p.id 
-      where pg.group_id = $1 
-      order by pg.open_time desc, pg.post_id desc`,
-      values: [groupId],
-    }).then((data: PostGroup[][]) => {
-      return data.flat();
+  async getFullPosts(groupIds: number[], postTypeIds: number[]): Promise<(Post & PostGroup)[]> {
+    return await this.connection.any(`SELECT pg.post_id "postId", pg.group_id "groupId", pg.open_time "openTime", pg.close_time "closeTime",
+             pg.active_start_time "activeStartTime", pg.active_end_time "activeEndTime", pg.post_type_id "postTypeId",
+             p.title, p.body, p.url_link "link"
+             FROM post_group pg
+             join posts p 
+             on p.id = pg.post_id
+             where pg.group_id in ($1:csv) and pg.post_type_id in ($2:csv)
+             order by pg.open_time DESC`, [groupIds, postTypeIds]
+    ).then((data: (Post & PostGroup)[]) => {
+      return data;
     }).catch((error: any) => {
       console.log('ERROR:', error);
       return []
@@ -219,7 +841,7 @@ class DbClientPSQLImpl implements DbClient {
 
   async updateUser(user: User): Promise<boolean> {
     const cs = new this.pg.helpers.ColumnSet(['first_name', 'last_name', 'roles']);
-    const data = {first_name: user.firstName, last_name: user.lastName, roles: user.roles}
+    const data = {first_name: user.firstName, last_name: user.lastName, roles: user.roles.join()}
     const condition = pgp.as.format(' WHERE id = $1', user.id);
     const query = this.pg.helpers.update(data, cs, 'users') + condition;
     return this.connection.none(query).then((data: any) => {
@@ -275,19 +897,18 @@ class DbClientPSQLImpl implements DbClient {
   }
 
   async getTotalCourseDays(courseId: number, until?: Date): Promise<number> {
-    var values: (number | Date)[] = [courseId];
-    var text: string = 'SELECT * FROM course_dates where course_id = $1'
+    var values: any[] = [courseId];
+    var text: string = 'SELECT COUNT(course_id) FROM course_dates where course_id = $1'
     if (until) {
-      values.push(until.getTime());
-      text += ' and meeting <= to_timestamp(cast($2/1000 as bigint))'
+      values.push(Math.floor(until.getTime()/1000));
+      text += ' and meeting <= to_timestamp($2)'
     }
-    return await this.connection.any({
+    return await this.connection.one({
       name: 'getTotalCourseDays',
       text,
       values,
-      rowMode: 'array'
-    }).then((data: any) => {
-      return data.length;
+    }).then((data: {count: string}) => {
+      return parseInt(data.count);
     }).catch((error: any) => {
       console.log('ERROR:', error);
       return 0
@@ -311,7 +932,7 @@ class DbClientPSQLImpl implements DbClient {
   async getGroups(userId?: number): Promise<Group[]> {
     var request: any = {
       name: `getGroups${userId}`,
-      text: `SELECT g.id, g.group_name "name" FROM "groups" g`
+      text: `SELECT g.id, g.group_name "name" FROM "groups" g order by g.id DESC`
     };
     if (userId) {
       request.text = `
@@ -320,6 +941,7 @@ class DbClientPSQLImpl implements DbClient {
         left join "groups" g 
         on g.id = ug.group_id
         where user_id = $1
+        order by g.id DESC
       `;
       request.values = [userId]
     }
@@ -331,53 +953,18 @@ class DbClientPSQLImpl implements DbClient {
     }); 
   }
 
-  async addAssignmentToCourse(assignmentCourse: {assignment_id: number, course_id: number}[]): Promise<boolean> {
-    const cs = new this.pg.helpers.ColumnSet(['assignment_id', 'course_id'], {table: 'course_assignments'});
-    const query = this.pg.helpers.insert(assignmentCourse, cs);
-    await this.connection.any(query);
-    return true;
-  }
-
-  async addAssignments(assignments: Assignment[]): Promise<{id: number}[]> {
-    const cs = new this.pg.helpers.ColumnSet(['title', 'start_time', 'end_time', 'url_link'], {table: 'assignments'});
-    const query = this.pg.helpers.insert(assignments, cs) + ' RETURNING id';
-    const res: {id: number}[] = await this.connection.many(query);
-    return res;
-  }
-
-  async updateAssignment(assignment: Assignment): Promise<boolean> {
-    const a = assignment
-    var query = `
-      UPDATE assignments
-      SET title = $1, start_time = $2, end_time = $3, url_link = $4
-      WHERE id = $5;
-    `
-    return this.connection.none(query, [a.title, a.start_time, a.end_time, a.url_link, a.id])
-    .then((data: any) => {
-      return true;
+  async getGroup(groupId: number): Promise<Group> {
+    return this.connection.one(`
+      SELECT id, group_name "name"
+      FROM groups
+      WHERE id = $1`, [groupId])
+    .then((data: Group) => {
+      return data;
     })
     .catch((error: any) => {
-      return false;
+      return null
     })
   }
-
-  // (Course & Assignment)[]
-  async getAssignments(groupId: number): Promise<Assignment[]> {
-    var query = `select a.id, a.title, a.start_time, a.end_time, a.url_link
-    from assignment_group ga
-    inner join assignments a
-    on ga.assignment_id = a.id
-    where ga.group_id = $1
-    ORDER BY a.start_time`;
-    
-    return this.connection.any(query, [groupId])
-      .then((data: Assignment[]) => {
-        return data
-      })
-      .catch((error: any) => {
-        console.log('ERROR:', error);
-        return [];
-      })  }
 
   deleteUserFromGroup(groupName: string, userId: number): boolean {
     return this.connection.none('DELETE FROM user_group WHERE user_id = $1 AND group_name = $2', [userId, groupName])
@@ -398,14 +985,18 @@ class DbClientPSQLImpl implements DbClient {
     })
   }
 
-  async getUsers(groupId?: number | null): Promise<User[] | null> {
+  async getUsers(groupIds?: number[]): Promise<User[]> {
     var query = 'select u.id, u.email, u.first_name "firstName", u.last_name "lastName", u.roles from users u'
-    if (groupId) {
-      query = 'select u.id, u.email, u.first_name "firstName", u.last_name "lastName", u.roles from user_group ug inner join users u on u.id = ug.user_id'
-      query = query + ' where ug.group_id = $1';
+    if (groupIds) {
+      if (!groupIds.length) return [];
+      query = `select u.id, u.email, u.first_name "firstName", u.last_name "lastName", u.roles 
+                from user_group ug 
+                inner join users u 
+                on u.id = ug.user_id`
+      query = query + ` where ug.group_id in (${groupIds.join(',')})`;
     }
     query = query + ' order by u.roles desc, u.last_name';
-    return this.connection.any(query, [groupId])
+    return this.connection.any(query)
       .then((data: User[]) => {
         return data
       })
@@ -475,12 +1066,50 @@ class DbClientPSQLImpl implements DbClient {
     });
   };
 
-  async getCourses(): Promise<Course[]> {
+  async getUserCourses(userId: number, semesterId?: number): Promise<Course[]> {
+    var values = [userId];
+
     var query = `SELECT 
-    id, semester, course_year "courseYear", start_time "startTime", end_time "endTime",
-    course_number "courseNumber", course_name "courseName", group_id "groupId"
-    FROM courses`
-    return this.connection.any(query)
+    c.id, c.semester_id "semesterId", c.start_time "startTime", c.end_time "endTime",
+    c.course_number "courseNumber", c.course_name "courseName", c.group_id "groupId"
+    FROM users u
+    join user_group ug
+    on u.id = ug.user_id
+    join courses c
+    on ug.group_id = c.group_id
+    where u.id = $1
+    `
+    
+    if (semesterId) {
+      query += ` and c.semester_id = $2`
+      values.push(semesterId)
+    }
+
+    query += ` ORDER BY TO_TIMESTAMP(c.start_time, 'HH:MI:ss')`
+
+    return await this.connection.any({
+      name: 'getUserCourses',
+      text: query,
+      values
+    }).then((data: any) => {
+        return data;
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    }); 
+  }
+
+  async getCourses(semesterId?: number): Promise<Course[]> {
+    var query = `SELECT 
+    c.id, c.semester_id "semesterId", c.start_time "startTime", c.end_time "endTime",
+    c.course_number "courseNumber", c.course_name "courseName", c.group_id "groupId"
+    FROM courses c`
+    
+    if (semesterId)
+      query += ` WHERE c.semester_id = $1`
+
+    query += ` ORDER BY TO_TIMESTAMP(c.start_time, 'HH:MI:ss')`
+    return this.connection.any(query, [semesterId])
       .then((data: Course[]) => {
         return data
       })
@@ -493,9 +1122,12 @@ class DbClientPSQLImpl implements DbClient {
   async getCourse(courseId: number): Promise<Course> {
 
     return this.connection.one(`SELECT 
-    id, semester, course_year "courseYear", start_time "startTime", end_time "endTime",
-    course_number "courseNumber", course_name "courseName", group_id "groupId"
-    FROM courses WHERE id = $1`, courseId)
+    c.id, s.id "semesterId", s.season, s.semester_year "year", c.start_time "startTime", c.end_time "endTime",
+    c.course_number "courseNumber", c.course_name "courseName", c.group_id "groupId"
+    FROM courses c
+    JOIN semester s
+    on c.semester_id = s.id
+    WHERE c.id = $1`, courseId)
       .then((data: Course) => {
         return data;
       })
@@ -505,11 +1137,11 @@ class DbClientPSQLImpl implements DbClient {
   }
 
   async createCourse(course: Course): Promise<number> {
-    const cs = new this.pg.helpers.ColumnSet(['course_number', 'semester', 'course_year', 'start_time', 'end_time', 'group_id'], {table: 'courses'});
+    const cs = new this.pg.helpers.ColumnSet(['course_number', 'course_name', 'semester_id', 'start_time', 'end_time', 'group_id'], {table: 'courses'});
     const insertObj = {
       course_number: course.courseNumber,
-      semester: course.semester,
-      course_year: course.courseYear,
+      course_name: course.courseName,
+      semester_id: course.semesterId,
       start_time: course.startTime,
       end_time: course.endTime,
       group_id: course.groupId,
@@ -520,7 +1152,7 @@ class DbClientPSQLImpl implements DbClient {
     return res.id;
   }
 
-  deleteCourse(courseId: number) {
+  async deleteCourse(courseId: number): Promise<boolean> {
     return this.connection.none('DELETE FROM courses WHERE id = $1', courseId)
     .then((data: any) => { return true;})
     .catch((error: any) => {
@@ -529,8 +1161,17 @@ class DbClientPSQLImpl implements DbClient {
     });
   };
 
-  async addUsersToGroups(userGroups: UserGroups[]): Promise<{}[]> {
-    if(!userGroups.length) return [];
+  async deleteGroup(groupId: number): Promise<boolean> {
+    return this.connection.none('DELETE FROM groups WHERE id = $1', [groupId])
+    .then((data: any) => { return true;})
+    .catch((error: any) => {
+      console.log('ERROR:', error);
+      return false;
+    });
+  };
+
+  async addUsersToGroups(userGroups: UserGroups[]): Promise<boolean> {
+    if(!userGroups.length) return false;
     const cs = new this.pg.helpers.ColumnSet(['user_id', 'group_id'], {table: 'user_group'});
     var values: {}[] = []
     userGroups.forEach(entry => {
@@ -540,18 +1181,19 @@ class DbClientPSQLImpl implements DbClient {
       })
     })
     if (values.length) {
-      const query = this.pg.helpers.insert(values, cs) + ' RETURNING user_id, group_id';
-      const res = await this.connection.many(query);
-      return res;
+      const query = this.pg.helpers.insert(values, cs) + ' ON CONFLICT DO NOTHING';
+      const res = await this.connection.any(query);
+      if (res) return true;
+      return false;
     } else {
-      return []
+      return false
     }
   }
 
   async getCourseDates(courseId: number): Promise<Date[]> {
     return await this.connection.any({
       name: 'getCourseDates',
-      text: 'SELECT meeting FROM course_dates WHERE course_id = $1',
+      text: 'SELECT meeting FROM course_dates WHERE course_id = $1 ORDER BY meeting',
       values: [courseId],
       rowMode: 'array'
     }).then((data: Date[]) => {
@@ -564,9 +1206,33 @@ class DbClientPSQLImpl implements DbClient {
 
   async setCourseDates(courses: CourseDate[]): Promise<void> {
     const cs = new this.pg.helpers.ColumnSet(['course_id', 'meeting'], {table: 'course_dates'});
-    const query = this.pg.helpers.insert(courses, cs) + ' RETURNING course_id, meeting';
-    await this.connection.many(query);
+    courses = courses.map((x:CourseDate) => {return {...x, course_id: x.courseId} })
+    const query = this.pg.helpers.insert(courses, cs);
+    await this.connection.none(query);
   }
+
+  async deleteCourseDates(courseId: number): Promise<boolean> {
+    var query = 'delete from course_dates where course_id = $1'
+    return this.connection.none(query, [courseId])
+    .then((data: any) => {
+      return true;
+    })
+    .catch((error: any) => {
+      return false;
+    })
+  }
+
+  async deleteCourseDate(courseId: number, date: Date): Promise<boolean> {
+    var query = 'delete from course_dates where course_id = $1 and meeting = $2'
+    return this.connection.none(query, [courseId, date])
+    .then((data: any) => {
+      return true;
+    })
+    .catch((error: any) => {
+      return false;
+    })
+  }
+
 }
 
 export default new DbClientPSQLImpl();

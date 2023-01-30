@@ -10,10 +10,6 @@ processes = []
 
 [env]
   PORT = "8080"
-  CODE_REFRESH_RATE="2000"
-  CODE_TIME_START="3"
-  CODE_TIME_WINDOW="5"
-  SYLLABUS_URL="https://docs.google.com/document/d/19E1DKHJcHcmiGWqvRPOfrjg_MQ4P2cimzDdciefzggI/edit?usp=sharing"
   TZ="America/New_York"
   BASEURL="https://cofc.fly.dev/"
   PGSSLMODE="no-verify"
