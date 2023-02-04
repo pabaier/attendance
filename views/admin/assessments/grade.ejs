@@ -76,9 +76,9 @@
     var seed = parseInt(<%= assessmentId %>)
     var randFunc = randSeeded(seed);
     var userIds = <%=userIds%>;
-    var userIndex = 0;
+    var userIndex = -1;
     userIds.sort(() => Math.floor(randFunc() * 10) < 5 ? -1 : 1)
-
+    console.log(userIds)
     var userQuestionDetails;
     var questionDetailIndex;
     var userAssessment;
@@ -103,13 +103,19 @@
         moveQuestion(questionDetailIndex)
     }
 
-    const getNextUser = () => {
+    const getNextUser = (forward=true) => {
+        if(forward) {
+            userIndex = (userIndex + 1) % userIds.length
+        } else {
+            temp = userIndex - 1
+            userIndex = temp < 0 ? userIds.length - 1 : temp
+        }
         var userId = userIds[userIndex]
-        userIndex++
+        userIndex = (userIndex + 1) % userIds.length
+        console.log(userIndex, userId)
         var url = `/admin/assessments/<%= assessmentId %>/grade/${userId}`;
         $.get(url,
             function( data ) {
-                console.log(data)
                 userQuestionDetails = JSON.parse(data.userQuestionDetails);
                 userAssessment = data.userAssessment;
                 questionDetailIndex = -1
@@ -148,7 +154,7 @@
     })
 
     $("#student-prev-button").click( () => {
-        console.log('click')
+        getNextUser(false)
     })
 
     $("#student-next-button").click( () => {
