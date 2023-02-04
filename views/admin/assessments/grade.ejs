@@ -56,8 +56,8 @@
             </div>
         </div>
         <div class="btn-group" role="group" aria-label="Basic outlined example">
-            <button type="button" class="btn btn-primary form-control" id="save-grade-button">save</button>
             <button type="button" class="btn btn-primary form-control" id="clear-grade-button">clear</button>
+            <button type="button" class="btn btn-primary form-control" id="save-grade-button">save</button>
         </div>
     </div>
 </div>
@@ -78,7 +78,6 @@
     var userIds = <%=userIds%>;
     var userIndex = -1;
     userIds.sort(() => Math.floor(randFunc() * 10) < 5 ? -1 : 1)
-    console.log(userIds)
     var userQuestionDetails;
     var questionDetailIndex;
     var userAssessment;
@@ -111,11 +110,24 @@
             userIndex = temp < 0 ? userIds.length - 1 : temp
         }
         var userId = userIds[userIndex]
-        userIndex = (userIndex + 1) % userIds.length
-        console.log(userIndex, userId)
         var url = `/admin/assessments/<%= assessmentId %>/grade/${userId}`;
         $.get(url,
             function( data ) {
+                if(!data.userQuestionDetails?.length) {
+                    console.log('infinite recursion check')
+                    if(forward) {
+                        if(userIndex == userIds.length - 1) {
+                            return;
+                        }
+                        getNextUser()
+                    } else {
+                        if(userIndex == 0) {
+                            return;
+                        }
+                        getNextUser(false)
+                    }
+                    return;
+                }
                 userQuestionDetails = JSON.parse(data.userQuestionDetails);
                 userAssessment = data.userAssessment;
                 questionDetailIndex = -1
@@ -159,5 +171,43 @@
 
     $("#student-next-button").click( () => {
         getNextUser()
+    })
+
+    $("#clear-grade-button").click( () => {
+        $('#comment').val(userAssessment.comment)
+        $('#grade').val(userAssessment.grade)
+    })
+
+    $("#save-grade-button").click( () => {
+        var comment = $('#comment').val();
+        var grade = $('#grade').val();
+
+        var userId = userIds[userIndex]
+        var url = `/admin/assessments/<%= assessmentId %>/grade/${userId}`;
+
+        var data = {grade, comment};
+
+        $('#toastBody').removeClass('bg-success-custom bg-warning-custom text-white')
+        $.ajax({
+            url,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                userAssessment.comment = comment
+                userAssessment.grade = grade
+                console.log("response", response);
+                $('#toastBody').addClass('text-white bg-success-custom')
+                $('#toastHeader').html("Success");
+                $('#toastBody').html(response.message);
+                $('#liveToast').toast('show');
+            },
+            error: function(response) {
+                $('#toastBody').addClass('text-white bg-warning-custom')
+                $('#toastHeader').html("Error");
+                $('#toastBody').html("Unable to update record");
+                $('#liveToast').toast('show');
+            }
+        });
     })
 </script>

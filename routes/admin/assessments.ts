@@ -87,7 +87,8 @@ export default function (dbClient: DbClient) {
             correct: false, 
             questionAttempts: 0,
             title, 
-            userQuestion
+            userQuestion,
+            slug: '#',
         }
         const page = renderFile('./views/assessment/question.ejs', obj);
 
@@ -221,6 +222,22 @@ export default function (dbClient: DbClient) {
 
 
         return res.status(200).send({userQuestionDetails: userQuestionDetailsString, userAssessment});
+    });
+
+    router.put('/:assessmentId/grade/:userId', async (req: Request, res: Response) => {
+        var assessmentId = parseInt(req.params.assessmentId)
+        var userId = parseInt(req.params.userId)
+
+        var grade = req.body.grade;
+        var comment = req.body.comment;
+
+        var userAssessment = await dbClient.getUserAssessment(userId, assessmentId);
+        userAssessment.grade = grade;
+        userAssessment.comment = comment;
+        
+        var success = await dbClient.updateUserAssessment(userAssessment);
+
+        success ? res.status(200).send({message: `Grade Updated`}) : res.status(500).send({message: 'error'});
     });
 
     return router;
