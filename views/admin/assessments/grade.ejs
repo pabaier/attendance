@@ -1,0 +1,157 @@
+<!-- requires courses {name, id},  -->
+<div class="jumbotron">
+    <h1>Grading <%= assessmentId %></h1>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-xl-4 col-lg-12 border-end border-2" id="resi">
+                <div class="my-2">
+                    <iframe
+                        src="https://jupyterlite.github.io/demo/repl/index.html?kernel=python&toolbar=1&theme=JupyterLab Dark"
+                        width="100%"
+                        height="300px"
+                    ></iframe>
+                </div>
+            </div>
+            <div class="col" id="student-work">
+                <div class="btn-group" role="group" aria-label="Basic outlined example">
+                    <button type="button" class="btn btn-outline-primary" id="student-work-prev-button"><<</button>
+                    <button type="button" class="btn btn-outline-primary" id="student-work-next-button">>></button>
+                </div>
+                <input type="range" class="form-range" min="0" max="5" step="1" id="student-work-range" value="0">
+                <div class="row my-2">
+                    <div id="question">
+                        Question
+                    </div>
+                </div>
+                <div class="row my-2">
+                    <div id="code-area">
+                        <textarea class="form-control my-2" id="code" rows="7" cols="50"></textarea>
+                    </div>
+                </div>
+                <div class="row my-2">
+                    <div class="col-6 my-2" id="student-answer">
+                        Student Answer
+                    </div>
+                    <div class="col my-2" id="correct-answer">
+                        Correct Answer
+                    </div>
+                </div>
+                <div class="row  my-2 justify-content-center">
+                    <div class="col-2">
+                        <div class="btn-group" role="group" aria-label="Basic outlined example">
+                            <button type="button" class="btn btn-outline-primary" id="student-prev-button"><<</button>
+                            <button type="button" class="btn btn-outline-primary" id="student-next-button">>></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row my-5">
+            <div class="col-3" id="grade-container">
+                <input class="form-control my-2" id="grade" name="grade" placeholder="grade">
+            </div>
+            <div class="col" id="comment-container">
+                <textarea class="form-control my-2" id="comment" rows="7" cols="50" placeholder="comment"></textarea>
+            </div>
+        </div>
+        <div class="btn-group" role="group" aria-label="Basic outlined example">
+            <button type="button" class="btn btn-primary form-control" id="save-grade-button">save</button>
+            <button type="button" class="btn btn-primary form-control" id="clear-grade-button">clear</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // mulberry32
+    function randSeeded(seed) {
+        return function() {
+            var t = seed += 0x6D2B79F5;
+            t = Math.imul(t ^ t >>> 15, t | 1);
+            t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+            return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        }
+    }
+    
+    var seed = parseInt(<%= assessmentId %>)
+    var randFunc = randSeeded(seed);
+    var userIds = <%=userIds%>;
+    var userIndex = 0;
+    userIds.sort(() => Math.floor(randFunc() * 10) < 5 ? -1 : 1)
+
+    var userQuestionDetails;
+    var questionDetailIndex;
+    var userAssessment;
+
+    const moveQuestion = (index) => {
+        var question = userQuestionDetails[index]
+        $('#question').html(question.text)
+        $('#code').val(question.code)
+        var lineCount = question.code ? question.code.split('\n').length : 1
+        $('#code').attr('rows', lineCount)
+        $('#student-answer').html(question.userAnswer)
+        $('#correct-answer').html(question.ans)
+    }
+
+    const advanceQuestion = () => {
+        questionDetailIndex = (questionDetailIndex + 1) % userQuestionDetails.length
+        moveQuestion(questionDetailIndex)
+    }
+
+    const reverseQuestion = () => {
+        questionDetailIndex = questionDetailIndex == 0 ? userQuestionDetails.length - 1 : questionDetailIndex - 1
+        moveQuestion(questionDetailIndex)
+    }
+
+    const getNextUser = () => {
+        var userId = userIds[userIndex]
+        userIndex++
+        var url = `/admin/assessments/<%= assessmentId %>/grade/${userId}`;
+        $.get(url,
+            function( data ) {
+                console.log(data)
+                userQuestionDetails = JSON.parse(data.userQuestionDetails);
+                userAssessment = data.userAssessment;
+                questionDetailIndex = -1
+                $("#student-work-range").attr("max", userQuestionDetails.length - 1)
+                $("#student-work-range").prop("disabled", userQuestionDetails.length == 1)
+
+                $('#comment').val(userAssessment.comment)
+                $('#grade').val(userAssessment.grade)
+                advanceQuestion();
+            }
+        ).fail( function(data) {
+            console.log('whooops!')
+            // $('#page').html(data.responseJSON.page);
+        });
+    }
+
+    window.onload = function() {
+        getNextUser();
+    }
+
+    $("#resi").resizable({
+        handles: "e",
+        minWidth: 200
+    });
+
+    $("#student-work-next-button").click( () => {
+        var rangeVal = parseInt($("#student-work-range").val())
+        $("#student-work-range").val((rangeVal + 1) % userQuestionDetails.length)
+        advanceQuestion()
+    })
+
+    $("#student-work-prev-button").click( () => {
+        var rangeVal = parseInt($("#student-work-range").val()) == 0 ? userQuestionDetails.length : parseInt($("#student-work-range").val())
+        $("#student-work-range").val((rangeVal - 1))
+        reverseQuestion()
+    })
+
+    $("#student-prev-button").click( () => {
+        console.log('click')
+    })
+
+    $("#student-next-button").click( () => {
+        getNextUser()
+    })
+</script>

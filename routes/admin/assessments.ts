@@ -1,9 +1,22 @@
 import express, { Request, Response } from 'express';
 import { DbClient } from '../../db/dbClient';
-import { Assessment, AssessmentQuestion, AssessmentSettings, Question } from '../../models';
+import { Assessment, AssessmentQuestion, AssessmentSettings, Question, UserAssessment, UserQuestion } from '../../models';
 import { renderFile } from '../../views/helper';
 import { makeUTCDateString } from '../helpers';
-import questions from '../../questionLibrary';
+import questionLibrary from '../../questionLibrary';
+
+
+const getQuestionFromLibrary = (questionId: number, variables=undefined) => {
+    var allQuestionData: any = {...questionLibrary};
+    var questionData = allQuestionData[`q${questionId}`];
+    var vars = variables ?? questionData.vars()
+    var ans = questionData.ans(vars);
+    var text = questionData.text;
+    vars.forEach((v: any, i: number) => {
+        text = text.replaceAll(`{${i + 1}}`, v.toString())
+    });
+    return {vars, ans, text}
+}
 
 export default function (dbClient: DbClient) {
 
@@ -57,14 +70,7 @@ export default function (dbClient: DbClient) {
         var title = `${questionId}-${titleText}`
 
         // question data loaded from file
-        var allQuestionData: any = {...questions};
-        var questionData = allQuestionData[`q${questionId}`];
-        var vars = questionData.vars()
-        var ans = questionData.ans(vars);
-        var text = questionData.text;
-        vars.forEach((v: any, i: number) => {
-            text = text.replaceAll(`{${i + 1}}`, v.toString())
-        });
+        const {vars, ans, text} = getQuestionFromLibrary(questionId);
 
         var userQuestion = {
             assessmentId: 0,
@@ -76,9 +82,8 @@ export default function (dbClient: DbClient) {
         };
 
         var obj = {
-            vars, 
             text, 
-            ans, 
+            ans,
             correct: false, 
             questionAttempts: 0,
             title, 
@@ -154,7 +159,6 @@ export default function (dbClient: DbClient) {
         success ? res.status(200).send({message: `Assessment Settings Updated`}) : res.status(500).send({message: 'error'});
     });
 
-
     router.post('/:assessmentId/question', async (req: Request, res: Response) => {
         var assessmentId = parseInt(req.params.assessmentId)
         var questionId = parseInt(req.body.questionId)
@@ -182,6 +186,41 @@ export default function (dbClient: DbClient) {
 
         const success = await dbClient.deleteAssessmentQuestion(assessmentId, questionId)
         success ? res.status(200).send({message: `Assessment Deleted`}) : res.status(500).send({message: 'error'});
+    });
+
+    router.get('/:assessmentId/grade', async (req: Request, res: Response) => {
+        var assessmentId = parseInt(req.params.assessmentId)
+        var userIds: string = JSON.stringify(await dbClient.getAssessmentUsers(assessmentId));
+
+        res.render('admin/assessments/grade', { assessmentId, userIds });
+    });
+
+    router.get('/:assessmentId/grade/:userId', async (req: Request, res: Response) => {
+        var assessmentId = parseInt(req.params.assessmentId)
+        var userId = parseInt(req.params.userId)
+
+        var userQuestions: UserQuestion[] = await dbClient.getUserQuestions(userId, assessmentId);
+        if(!userQuestions.length) {
+            return res.status(200).send(userQuestions);
+        }
+
+        var userAssessment: UserAssessment = await dbClient.getUserAssessment(userId, assessmentId);
+
+        var userQuestionDetails = userQuestions.map( (userQuestion: UserQuestion) => {
+            var variables = JSON.parse(userQuestion.variables);
+            var questionDetails = getQuestionFromLibrary(userQuestion.questionId, variables);
+            var {userAnswer, code, attempts} = userQuestion
+            return {userAnswer, code, attempts, ...questionDetails}
+        })
+
+        var userQuestionDetailsString = JSON.stringify(userQuestionDetails, (key, value) =>
+            typeof value === 'bigint'
+                ? value.toString()
+                : value
+        );
+
+
+        return res.status(200).send({userQuestionDetails: userQuestionDetailsString, userAssessment});
     });
 
     return router;

@@ -23,14 +23,17 @@
     <h3>Assessments</h3>
     <div class="container">
         <% assessments.forEach(asst => { %>
-            <div class="col-4">
+            <div class="col-3">
                 <div class="mb-2 border-bottom border-2">
                     <div class="row my-2">
-                        <a href="/admin/assessments/<%=asst.id%>">
-                            <div class="col-3">
+                        <div class="col-5">
+                            <a href="/admin/assessments/<%=asst.id%>">
                                 <%=asst.id%> - <%=asst.name%>
-                            </div>
-                        </a>
+                            </a>
+                        </div>
+                        <div class="col-4">
+                            <button type="submit" id="grade-<%=asst.id%>" class="grade btn btn-primary form-control my-2">Grade</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -56,5 +59,10 @@
             $('#toastBody').html(response.message);
             $('#liveToast').toast('show');
         });
+    })
+
+    $('.grade').click(e => {
+        id = parseInt(e.target.id.split('-')[1])
+        window.location.href=`/admin/assessments/${id}/grade`;
     })
 </script>

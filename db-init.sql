@@ -152,6 +152,7 @@ CREATE TABLE user_assessment (
 	end_time timestamptz,
 	PRIMARY KEY(user_id, assessment_id)
 );
+CREATE INDEX user_assessment_assessment_id_email_idx ON user_assessment (assessment_id);
 
 CREATE TABLE global_settings (
 	user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,

@@ -18,6 +18,30 @@ class DbClientPSQLImpl implements DbClient {
     )
   }
 
+  async getUserQuestions(userId: number, assessmentId: number): Promise<UserQuestion[]> {
+    var text = `SELECT uq.assessment_id "assessmentId", uq.question_id "questionId", uq.user_id "userId",
+                uq.user_answer "userAnswer", uq.variables, uq.question_answer "questionAnswer", uq.code, uq.attempts
+                FROM user_question uq WHERE user_id = $1 and assessment_id = $2`
+
+    return await this.connection.any({text, values: [userId, assessmentId]}).then((data: UserQuestion[]) => {
+      return data.length ? data : []
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
+  }
+
+  async getAssessmentUsers(assessmentId: number): Promise<number[]> {
+    var text = 'SELECT a.user_id FROM user_assessment a WHERE assessment_id = $1'
+
+    return await this.connection.any({text, values: [assessmentId], rowMode: 'array'}).then((data: number[]) => {
+      return data.flat()
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
+  }
+
   async updateUserAssessment(userAssessment: UserAssessment): Promise<boolean> {
     const cols = ["user_id", "assessment_id", "grade", "comment", "start_time", "end_time"]
     const cs = new this.pg.helpers.ColumnSet(cols);
