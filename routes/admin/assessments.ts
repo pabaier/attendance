@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import { DbClient } from '../../db/dbClient';
-import { Assessment, AssessmentQuestion, AssessmentSettings, Question, UserAssessment, UserQuestion } from '../../models';
+import { Assessment, AssessmentQuestion, AssessmentSettings, Question, User, UserAssessment, UserQuestion } from '../../models';
 import { renderFile } from '../../views/helper';
 import { makeUTCDateString } from '../helpers';
 import questionLibrary from '../../questionLibrary';
@@ -200,6 +200,8 @@ export default function (dbClient: DbClient) {
         var assessmentId = parseInt(req.params.assessmentId)
         var userId = parseInt(req.params.userId)
 
+        var user: User = (await dbClient.getUser(userId)) as User;
+
         var userQuestions: UserQuestion[] = await dbClient.getUserQuestions(userId, assessmentId);
         if(!userQuestions.length) {
             return res.status(200).send(userQuestions);
@@ -221,7 +223,7 @@ export default function (dbClient: DbClient) {
         );
 
 
-        return res.status(200).send({userQuestionDetails: userQuestionDetailsString, userAssessment});
+        return res.status(200).send({userQuestionDetails: userQuestionDetailsString, userAssessment, user});
     });
 
     router.put('/:assessmentId/grade/:userId', async (req: Request, res: Response) => {

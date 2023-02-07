@@ -17,6 +17,7 @@
                 <div class="btn-group" role="group" aria-label="Basic outlined example">
                     <button type="button" class="btn btn-outline-primary" id="student-work-prev-button"><<</button>
                     <button type="button" class="btn btn-outline-primary" id="student-work-next-button">>></button>
+                    <div class="ms-3" id="user-container" style="cursor: pointer;">Show User</div>
                 </div>
                 <input type="range" class="form-range" min="0" max="5" step="1" id="student-work-range" value="0">
                 <div class="row my-2">
@@ -81,6 +82,8 @@
     var userQuestionDetails;
     var questionDetailIndex;
     var userAssessment;
+    var user;
+    var showUser = true;
 
     const moveQuestion = (index) => {
         var question = userQuestionDetails[index]
@@ -130,9 +133,16 @@
                 }
                 userQuestionDetails = JSON.parse(data.userQuestionDetails);
                 userAssessment = data.userAssessment;
+                user = data.user;
                 questionDetailIndex = -1
-                $("#student-work-range").attr("max", userQuestionDetails.length - 1)
-                $("#student-work-range").prop("disabled", userQuestionDetails.length == 1)
+                var rangeElement = $("#student-work-range");
+                rangeElement.attr("max", userQuestionDetails.length - 1)
+                rangeElement.prop("disabled", userQuestionDetails.length == 1)
+                if(userQuestionDetails.length == 1) {
+                    rangeElement.val(userQuestionDetails.length - 1)
+                } else {
+                    rangeElement.val(0)
+                }
 
                 $('#comment').val(userAssessment.comment)
                 $('#grade').val(userAssessment.grade)
@@ -209,5 +219,11 @@
                 $('#liveToast').toast('show');
             }
         });
+    })
+
+    $("#user-container").click( () => {
+        var text = showUser ? `${user.id}: ${user.email}` : "Show User"
+        $("#user-container").html(text)
+        showUser = !showUser
     })
 </script>
