@@ -1,6 +1,14 @@
 <!-- requires courses {name, id},  -->
 <div class="jumbotron">
     <h1>Grading <%= assessmentId %></h1>
+    <div class="row">
+        <div class="col-3">
+            <input class="form-control" id="go-to-user-input" placeholder="email">
+        </div>
+        <div class="col-1">
+            <button type="button" class="btn btn-primary form-control" id="go-to-button">find</button>
+        </div>
+    </div>
 
     <div class="container mt-4">
         <div class="row">
@@ -17,8 +25,8 @@
                 <div class="btn-group" role="group" aria-label="Basic outlined example">
                     <button type="button" class="btn btn-outline-primary" id="student-work-prev-button"><<</button>
                     <button type="button" class="btn btn-outline-primary" id="student-work-next-button">>></button>
-                    <div class="ms-3" id="user-container" style="cursor: pointer;">Show User</div>
                 </div>
+                <div class="ms-5" id="user-container" style="cursor: pointer;">Show User</div>
                 <input type="range" class="form-range" min="0" max="5" step="1" id="student-work-range" value="0">
                 <div class="row my-2">
                     <div id="question">
@@ -226,4 +234,29 @@
         $("#user-container").html(text)
         showUser = !showUser
     })
+
+    $("#go-to-button").click( () => {
+        var email = $('#go-to-user-input').val().trim()
+        $.get(`/admin/users/api/${email}`, function( data, statusCode ) {
+            var userId = parseInt(data.user.id)
+            newUserIndex = userIds.findIndex(id => id == userId);
+            if(newUserIndex >= 0) {
+                $('#toastHeader').html('Success');
+                $('#toastBody').html(`Showing assessment for ${email}`);
+                $('#liveToast').toast('show');            
+                userIndex = newUserIndex - 1
+                getNextUser();
+            } else {
+                $('#toastHeader').html('Not Found');
+                $('#toastBody').html('User not found');
+                $('#liveToast').toast('show');
+            }
+        }).fail((response, textStatus, errorThrown) => {
+            $('#toastHeader').html(textStatus);
+            $('#toastBody').html(`${errorThrown}-${JSON.parse(response.responseText).message}`);
+            $('#liveToast').toast('show');            
+        })
+    })
+
+    
 </script>
