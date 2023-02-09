@@ -203,11 +203,10 @@ export default function (dbClient: DbClient) {
         var user: User = (await dbClient.getUser(userId)) as User;
 
         var userQuestions: UserQuestion[] = await dbClient.getUserQuestions(userId, assessmentId);
-        if(!userQuestions.length) {
-            return res.status(200).send(userQuestions);
-        }
-
         var userAssessment: UserAssessment = await dbClient.getUserAssessment(userId, assessmentId);
+        if(!userQuestions.length) {
+            return res.status(200).send({user, userAssessment});
+        }
 
         var userQuestionDetails = userQuestions.map( (userQuestion: UserQuestion) => {
             var variables = JSON.parse(userQuestion.variables);
@@ -222,7 +221,6 @@ export default function (dbClient: DbClient) {
                 : value
         );
 
-
         return res.status(200).send({userQuestionDetails: userQuestionDetailsString, userAssessment, user});
     });
 
@@ -230,12 +228,12 @@ export default function (dbClient: DbClient) {
         var assessmentId = parseInt(req.params.assessmentId)
         var userId = parseInt(req.params.userId)
 
-        var grade = req.body.grade;
-        var comment = req.body.comment;
-
-        var userAssessment = await dbClient.getUserAssessment(userId, assessmentId);
-        userAssessment.grade = grade;
-        userAssessment.comment = comment;
+        var userAssessment: UserAssessment = await dbClient.getUserAssessment(userId, assessmentId);
+        if (!userAssessment) {
+            userAssessment = {userId, assessmentId}
+        }
+        userAssessment.grade = req.body.grade;
+        userAssessment.comment = req.body.comment;
         
         var success = await dbClient.updateUserAssessment(userAssessment);
 

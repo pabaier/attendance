@@ -91,10 +91,10 @@
     var questionDetailIndex;
     var userAssessment;
     var user;
-    var showUser = true;
+    var showUser = false;
 
     const moveQuestion = (index) => {
-        var question = userQuestionDetails[index]
+        var question = userQuestionDetails[index] || {text: '', code: '', userAnswer: '', ans: ''}
         $('#question').html(question.text)
         $('#code').val(question.code)
         var lineCount = question.code ? question.code.split('\n').length : 1
@@ -124,36 +124,38 @@
         var url = `/admin/assessments/<%= assessmentId %>/grade/${userId}`;
         $.get(url,
             function( data ) {
-                if(!data.userQuestionDetails?.length) {
-                    console.log('infinite recursion check')
-                    if(forward) {
-                        if(userIndex == userIds.length - 1) {
-                            return;
-                        }
-                        getNextUser()
-                    } else {
-                        if(userIndex == 0) {
-                            return;
-                        }
-                        getNextUser(false)
-                    }
-                    return;
-                }
-                userQuestionDetails = JSON.parse(data.userQuestionDetails);
-                userAssessment = data.userAssessment;
-                user = data.user;
-                questionDetailIndex = -1
                 var rangeElement = $("#student-work-range");
-                rangeElement.attr("max", userQuestionDetails.length - 1)
-                rangeElement.prop("disabled", userQuestionDetails.length == 1)
-                if(userQuestionDetails.length == 1) {
-                    rangeElement.val(userQuestionDetails.length - 1)
+                user = data.user;
+                if (data.userQuestionDetails) {
+                    userQuestionDetails = JSON.parse(data.userQuestionDetails);
+                    questionDetailIndex = -1
+                    rangeElement.attr("max", userQuestionDetails.length - 1)
+                    rangeElement.prop("disabled", userQuestionDetails.length == 1)
+                    if(userQuestionDetails.length == 1) {
+                        rangeElement.val(userQuestionDetails.length - 1)
+                    } else {
+                        rangeElement.val(0)
+                    }
                 } else {
-                    rangeElement.val(0)
+                    rangeElement.attr("max", 1)
+                    rangeElement.prop("disabled", true)
+                    rangeElement.val(1)
+                    userQuestionDetails = []
+                    questionDetailIndex = -1
+
+                }
+                if (data.userAssessment) {
+                    userAssessment = data.userAssessment;
+                    $('#comment').val(userAssessment.comment)
+                    $('#grade').val(userAssessment.grade)
+                } else {
+                    userAssessment = {}
+                    $('#comment').val('')
+                    $('#grade').val('')
                 }
 
-                $('#comment').val(userAssessment.comment)
-                $('#grade').val(userAssessment.grade)
+                var text = showUser ? `${user.id}: ${user.email}` : "Show User"
+                $("#user-container").html(text)
                 advanceQuestion();
             }
         ).fail( function(data) {
@@ -204,7 +206,6 @@
         var url = `/admin/assessments/<%= assessmentId %>/grade/${userId}`;
 
         var data = {grade, comment};
-
         $('#toastBody').removeClass('bg-success-custom bg-warning-custom text-white')
         $.ajax({
             url,
@@ -214,7 +215,6 @@
             success: function(response) {
                 userAssessment.comment = comment
                 userAssessment.grade = grade
-                console.log("response", response);
                 $('#toastBody').addClass('text-white bg-success-custom')
                 $('#toastHeader').html("Success");
                 $('#toastBody').html(response.message);
@@ -230,9 +230,9 @@
     })
 
     $("#user-container").click( () => {
+        showUser = !showUser
         var text = showUser ? `${user.id}: ${user.email}` : "Show User"
         $("#user-container").html(text)
-        showUser = !showUser
     })
 
     $("#go-to-button").click( () => {

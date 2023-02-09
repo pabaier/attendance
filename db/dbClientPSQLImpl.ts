@@ -32,7 +32,13 @@ class DbClientPSQLImpl implements DbClient {
   }
 
   async getAssessmentUsers(assessmentId: number): Promise<number[]> {
-    var text = 'SELECT a.user_id FROM user_assessment a WHERE assessment_id = $1'
+    var text = `
+      select distinct (ug.user_id) from user_group ug 
+      where ug.group_id in (
+        SELECT aset.group_id FROM public.assessment_settings aset
+        where aset.assessment_id = $1
+      )
+    `
 
     return await this.connection.any({text, values: [assessmentId], rowMode: 'array'}).then((data: number[]) => {
       return data.flat()
@@ -44,7 +50,7 @@ class DbClientPSQLImpl implements DbClient {
 
   async updateUserAssessment(userAssessment: UserAssessment): Promise<boolean> {
     const cols = ["user_id", "assessment_id", "grade", "comment", "start_time", "end_time"]
-    const cs = new this.pg.helpers.ColumnSet(cols);
+    const cs = new this.pg.helpers.ColumnSet(cols, {table: 'user_assessment'});
     const data = {
       user_id: userAssessment.userId,
       assessment_id: userAssessment.assessmentId,
@@ -53,9 +59,9 @@ class DbClientPSQLImpl implements DbClient {
       start_time: userAssessment.start,
       end_time: userAssessment.end,
     };
-    const conditionData = [userAssessment.userId, userAssessment.assessmentId]
-    const condition = pgp.as.format(' WHERE user_id = $1 and assessment_id = $2', conditionData);
-    const query = this.pg.helpers.update(data, cs, 'user_assessment') + condition;
+
+    const query = this.pg.helpers.insert(data, cs) + ` ON CONFLICT (user_id, assessment_id) 
+                                                        DO UPDATE SET grade=EXCLUDED.grade, comment=EXCLUDED.comment `;
     return this.connection.none(query)
     .then((data: any) => {
       return true;
