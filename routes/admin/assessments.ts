@@ -208,12 +208,14 @@ export default function (dbClient: DbClient) {
             return res.status(200).send({user, userAssessment});
         }
 
-        var userQuestionDetails = userQuestions.map( (userQuestion: UserQuestion) => {
+        var userQuestionDetails = []
+        for (const userQuestion of userQuestions) {
             var variables = JSON.parse(userQuestion.variables);
             var questionDetails = getQuestionFromLibrary(userQuestion.questionId, variables);
+            var question = (await dbClient.getQuestions(userQuestion.questionId))[0];
             var {userAnswer, code, attempts} = userQuestion
-            return {userAnswer, code, attempts, ...questionDetails}
-        })
+            userQuestionDetails.push({userAnswer, code, attempts, title: question.title, ...questionDetails})
+        }
 
         var userQuestionDetailsString = JSON.stringify(userQuestionDetails, (key, value) =>
             typeof value === 'bigint'

@@ -29,9 +29,10 @@
                 <div class="ms-5" id="user-container" style="cursor: pointer;">Show User</div>
                 <input type="range" class="form-range" min="0" max="5" step="1" id="student-work-range" value="0">
                 <div class="row my-2">
-                    <div id="question">
-                        Question
-                    </div>
+                    <div id="title"></div>
+                </div>
+                <div class="row my-2">
+                    <div id="question"></div>
                 </div>
                 <div class="row my-2">
                     <div id="code-area">
@@ -39,18 +40,21 @@
                     </div>
                 </div>
                 <div class="row my-2">
-                    <div class="col-6 my-2" id="student-answer">
-                        Student Answer
-                    </div>
-                    <div class="col my-2" id="correct-answer">
-                        Correct Answer
-                    </div>
+                    <div class="col-6 my-2" id="student-answer"></div>
+                    <div class="col my-2" id="correct-answer"></div>
                 </div>
                 <div class="row  my-2 justify-content-center">
                     <div class="col-2">
                         <div class="btn-group" role="group" aria-label="Basic outlined example">
                             <button type="button" class="btn btn-outline-primary" id="student-prev-button"><<</button>
                             <button type="button" class="btn btn-outline-primary" id="student-next-button">>></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="row  my-2 justify-content-center">
+                    <div class="col-2">
+                        <div>
+                            Change User
                         </div>
                     </div>
                 </div>
@@ -94,7 +98,8 @@
     var showUser = false;
 
     const moveQuestion = (index) => {
-        var question = userQuestionDetails[index] || {text: '', code: '', userAnswer: '', ans: ''}
+        var question = userQuestionDetails[index] || {title: '', text: '', code: '', userAnswer: '', ans: ''}
+        $('#title').html(`<h5>${question.title}<\h5>`)
         $('#question').html(question.text)
         $('#code').val(question.code)
         var lineCount = question.code ? question.code.split('\n').length : 1
