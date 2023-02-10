@@ -21,12 +21,15 @@
                     ></iframe>
                 </div>
             </div>
-            <div class="col" id="student-work">
-                <div class="btn-group" role="group" aria-label="Basic outlined example">
-                    <button type="button" class="btn btn-outline-primary" id="student-work-prev-button"><<</button>
-                    <button type="button" class="btn btn-outline-primary" id="student-work-next-button">>></button>
+            <div class="col justify-content-center" id="student-work">
+                <div class="row">
+                    <div class="col-2">
+                        <div class="btn-group" role="group" aria-label="Basic outlined example">
+                            <button type="button" class="btn btn-outline-primary" id="student-work-prev-button"><<</button>
+                            <button type="button" class="btn btn-outline-primary" id="student-work-next-button">>></button>
+                        </div>
+                    </div>
                 </div>
-                <div class="ms-5" id="user-container" style="cursor: pointer;">Show User</div>
                 <input type="range" class="form-range" min="0" max="5" step="1" id="student-work-range" value="0">
                 <div class="row my-2">
                     <div id="title"></div>
@@ -43,7 +46,7 @@
                     <div class="col-6 my-2" id="student-answer"></div>
                     <div class="col my-2" id="correct-answer"></div>
                 </div>
-                <div class="row  my-2 justify-content-center">
+                <div class="row my-2 justify-content-center">
                     <div class="col-2">
                         <div class="btn-group" role="group" aria-label="Basic outlined example">
                             <button type="button" class="btn btn-outline-primary" id="student-prev-button"><<</button>
@@ -51,11 +54,16 @@
                         </div>
                     </div>
                 </div>
-                <div class="row  my-2 justify-content-center">
-                    <div class="col-2">
-                        <div>
-                            Change User
+                <div class="row my-2 justify-content-center">
+                    <div class="col">
+                        <div class="text-center">
+                            Change User: <span id="ratio"></span>
                         </div>
+                    </div>
+                </div>
+                <div class="row  my-2 justify-content-center">
+                    <div class="col">
+                        <div class="text-center" id="user-container" style="cursor: pointer;">Show User</div>
                     </div>
                 </div>
             </div>
@@ -161,6 +169,7 @@
 
                 var text = showUser ? `${user.id}: ${user.email}` : "Show User"
                 $("#user-container").html(text)
+                $("#ratio").html(`${userIndex + 1}/${userIds.length}`)
                 advanceQuestion();
             }
         ).fail( function(data) {
