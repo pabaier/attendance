@@ -212,10 +212,12 @@ export default function (dbClient: DbClient) {
         for (const userQuestion of userQuestions) {
             var variables = JSON.parse(userQuestion.variables);
             var questionDetails = getQuestionFromLibrary(userQuestion.questionId, variables);
-            var question = (await dbClient.getQuestions(userQuestion.questionId))[0];
+            var question: Question = (await dbClient.getQuestions(userQuestion.questionId))[0];
             var {userAnswer, code, attempts} = userQuestion
             userQuestionDetails.push({userAnswer, code, attempts, title: question.title, ...questionDetails})
         }
+
+        userQuestionDetails.sort((a, b) => (a.title as string).toLowerCase() < (b.title as string).toLowerCase() ? -1 : 1)
 
         var userQuestionDetailsString = JSON.stringify(userQuestionDetails, (key, value) =>
             typeof value === 'bigint'
