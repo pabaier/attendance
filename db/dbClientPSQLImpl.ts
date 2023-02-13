@@ -274,10 +274,11 @@ class DbClientPSQLImpl implements DbClient {
   }
 
   async updateAssessmentSettings(assessmentSettings: AssessmentSettings): Promise<boolean> {
-    const cs = new this.pg.helpers.ColumnSet(['start_time', 'end_time']);
+    const cs = new this.pg.helpers.ColumnSet(['start_time', 'end_time', 'graded']);
     const data = {
       start_time: assessmentSettings.startTime,
       end_time: assessmentSettings.endTime,
+      graded: assessmentSettings.graded == undefined ? false : assessmentSettings.graded 
     };
     const condition = pgp.as.format(' WHERE assessment_id = $1 and group_id = $2', [assessmentSettings.assessmentId, assessmentSettings.groupId]);
     const query = this.pg.helpers.update(data, cs, 'assessment_settings') + condition;
@@ -372,7 +373,7 @@ class DbClientPSQLImpl implements DbClient {
   }
 
   async getAssessmentSettings(assessmentId: number): Promise<(AssessmentSettings & {name: string, groupName: string, description: string})[]> {
-    var text = `SELECT a.assessment_id "assessmentId", a.group_id "groupId", a.start_time "startTime", a.end_time "endTime",
+    var text = `SELECT a.assessment_id "assessmentId", a.group_id "groupId", a.start_time "startTime", a.end_time "endTime", a.graded,
                 g.group_name "groupName", aa.assessment_name "name", aa.assessment_description "description"
                 FROM assessment_settings a
                 JOIN "groups" g

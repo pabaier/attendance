@@ -155,8 +155,9 @@ export default function (dbClient: DbClient) {
         var groupId = parseInt(req.body.groupId);
         var startTime = req.body.start ? new Date(req.body.start) : undefined;
         var endTime = req.body.end ? new Date(req.body.end) : undefined;
+        var graded = req.body.graded;
 
-        const success = await dbClient.updateAssessmentSettings({ assessmentId, groupId, startTime, endTime })
+        const success = await dbClient.updateAssessmentSettings({ assessmentId, groupId, startTime, endTime, graded })
         success ? res.status(200).send({message: `Assessment Settings Updated`}) : res.status(500).send({message: 'error'});
     });
 
