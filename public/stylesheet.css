@@ -53,6 +53,10 @@ header {
   background-color: #FF8427;
 }
 
+.bg-secondary-custom {
+  background-color: #E8E8E8;
+}
+
 .btn-primary {
   background-color: #2B2D42;
   border-color: #2B2D42;

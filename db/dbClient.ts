@@ -93,6 +93,7 @@ export interface DbClient {
     updateUserQuestion(userQuestion: UserQuestion): Promise<boolean>;
 
     getUserAssessment(userId: number, assessmentId: number): Promise<UserAssessment>;
+    getUserAssessmentIds(userId: number): Promise<{assessmentId: number, graded: boolean}[]>;
     createUserAssessment(UserAssessment: UserAssessment): Promise<boolean>;
     updateUserAssessment(UserAssessment: UserAssessment): Promise<boolean>;
 }

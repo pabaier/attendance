@@ -2,21 +2,7 @@ import express, { Request, Response } from 'express';
 import { DbClient } from '../../db/dbClient';
 import { Assessment, AssessmentQuestion, AssessmentSettings, Question, User, UserAssessment, UserQuestion } from '../../models';
 import { renderFile } from '../../views/helper';
-import { makeUTCDateString } from '../helpers';
-import questionLibrary from '../../questionLibrary';
-
-
-const getQuestionFromLibrary = (questionId: number, variables=undefined) => {
-    var allQuestionData: any = {...questionLibrary};
-    var questionData = allQuestionData[`q${questionId}`];
-    var vars = variables ?? questionData.vars()
-    var ans = questionData.ans(vars);
-    var text = questionData.text;
-    vars.forEach((v: any, i: number) => {
-        text = text.replaceAll(`{${i + 1}}`, v.toString())
-    });
-    return {vars, ans, text}
-}
+import { getQuestionFromLibrary, makeUTCDateString } from '../helpers';
 
 export default function (dbClient: DbClient) {
 

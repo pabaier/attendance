@@ -2,8 +2,8 @@ import express, { NextFunction, Request, Response } from 'express';
 import NodeCache from 'node-cache';
 import { authCheckMiddleware, resourceAccessMiddleware, rollCheckMiddleware } from '../middleware/auth';
 import { DbClient } from '../db/dbClient';
-import { Alert, Course, Group, Post, PostGroup, Semester, User, UserSettings } from '../models';
-import { signIn } from './helpers';
+import { Alert, Assessment, AssessmentQuestion, AssessmentSettings, Course, Group, Post, PostGroup, Question, Semester, User, UserAssessment, UserQuestion, UserSettings } from '../models';
+import { getQuestionFromLibrary, signIn } from './helpers';
 import { renderFile } from '../views/helper';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {
@@ -36,6 +36,60 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         announcements = filterPosts(announcements);
         pinnedAnnouncements = filterPosts(pinnedAnnouncements);
         res.render('user/posts', { pinnedAnnouncements, announcements })
+    });
+
+    router.get('/grades', async (req: Request, res: Response) => {
+        const userId = req.session.user?.id as number;
+        const userAssessments: {assessmentId: number, graded: boolean}[] = await dbClient.getUserAssessmentIds(userId);
+        var assessments = [];
+        var index = 0
+        for (const userAssessment of userAssessments) {
+            var assessment: Assessment = (await dbClient.getAssessments(userAssessment.assessmentId))[0];
+            var dups = userAssessments.some((x, i) => {return x.assessmentId == userAssessment.assessmentId && !userAssessment.graded && index != i});
+            index ++;
+            if (dups) {
+                continue;
+            }
+            assessments.push({...assessment, ...userAssessment})
+        }
+        res.render('user/grades/index', { assessments })
+    });
+
+    router.get('/grades/:assessmentId', async (req: Request, res: Response) => {
+        const userId = req.session.user?.id as number;
+        const userGroups = await dbClient.getGroups(userId);
+        const assessmentId = parseInt(req.params.assessmentId)
+        
+        // check if the user is part of a graded group
+        var assessmentSettings: (AssessmentSettings & {name: string, groupName: string, description: string})[] = (await dbClient.getAssessmentSettings(assessmentId));
+        if (!assessmentSettings.some( assessment => { return assessment.graded && userGroups.some( group => group.id as number === assessment.groupId)})) {
+            res.redirect('/auth/logout')
+            return;
+        }
+        const assessment: Assessment = (await dbClient.getAssessments(assessmentId))[0]
+
+        var userAssessment: UserAssessment = await dbClient.getUserAssessment(userId, assessmentId);
+        const questions: (AssessmentQuestion & Question)[] = await dbClient.getAssessmentQuestions(assessmentId);
+        var userQuestions = []
+        for (const question of questions) {
+            const questionId = question.questionId as number;
+            var userQuestion: UserQuestion = await dbClient.getUserQuestion(assessmentId, questionId, userId)
+            var questionDetails: {vars: any, ans: any, text: any} = getQuestionFromLibrary(questionId, userQuestion?.variables );
+            
+            if (!userQuestion) {
+                userQuestion = {
+                    assessmentId,
+                    questionId,
+                    userId,
+                    variables: JSON.stringify(questionDetails.vars),
+                    questionAnswer: questionDetails.ans,
+                    userAnswer: '',
+                    attempts: 0,
+                };
+            }
+            userQuestions.push({...userQuestion, title: question.title, text: questionDetails.text});
+        }
+        res.render('user/grades/grades', { userAssessment: { ...userAssessment, name: assessment.name }, userQuestions })
     });
 
     const filterPosts = (posts : (Post & PostGroup)[]) : (Post & PostGroup)[] => {

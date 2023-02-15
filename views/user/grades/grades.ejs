@@ -1,0 +1,44 @@
+<div class="jumbotron">
+    <h1><%= userAssessment.name %></h1>
+    <div class="row m-3">
+        <div class="col-1 h5">
+            Grade: <%= userAssessment.grade %>
+        </div>
+        <div class="col-6 border border-2 rounded">
+            <%= userAssessment.comment %>
+        </div>
+    </div>
+
+    <div class="container mb-5">
+        <div class="row justify-content-center">
+            <div class="col-8">
+                <% userQuestions.forEach( (question) => { %>
+                    <div class="row m-2 border border-2 rounded">
+                        <div class="col-1">
+                            <h3><%= question.title %></h3>
+                        </div>
+                        <div class="col">
+                            <div class="row my-2">
+                                <div class="col p-3 m-2 bg-secondary-custom rounded">
+                                    <%- question.text %>
+                                </div>
+                            </div>
+                            <div class="row my-2">
+                                <div class="col-6">Your answer: <%= question.userAnswer %></div>
+                                <div class="col">Answer: <%= question.questionAnswer %></div>
+                            </div>
+                            <div class="row my-2">
+                                <div class="col">
+                                    <textarea class="form-control my-2 bg-dark text-white" style="resize: none; overflow: hidden" id="code" 
+                                        rows="<%= question.code ? question.code.split('\n').length + 1 : 1 %>" cols="50" disabled><%= question.code %></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+    </div>
+</div>
+            
+<script></script>

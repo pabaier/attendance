@@ -18,6 +18,22 @@ class DbClientPSQLImpl implements DbClient {
     )
   }
 
+  async getUserAssessmentIds(userId: number): Promise<{assessmentId: number, graded: boolean}[]> {
+    var text = `SELECT x.assessment_id "assessmentId", x.graded FROM public.assessment_settings x
+                where x.group_id in (
+                  select group_id from public.user_group ug
+                  where ug.user_id = $1
+                )
+                group by x.assessment_id, x.graded`
+
+    return await this.connection.any({text, values: [userId]}).then((data: {assessmentId: number, graded: boolean}[]) => {
+      return data.length ? data : []
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
+  }
+
   async getUserQuestions(userId: number, assessmentId: number): Promise<UserQuestion[]> {
     var text = `SELECT uq.assessment_id "assessmentId", uq.question_id "questionId", uq.user_id "userId",
                 uq.user_answer "userAnswer", uq.variables, uq.question_answer "questionAnswer", uq.code, uq.attempts
