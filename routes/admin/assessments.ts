@@ -197,8 +197,7 @@ export default function (dbClient: DbClient) {
 
         var userQuestionDetails = []
         for (const userQuestion of userQuestions) {
-            var variables = JSON.parse(userQuestion.variables);
-            var questionDetails = getQuestionFromLibrary(userQuestion.questionId, variables);
+            var questionDetails = getQuestionFromLibrary(userQuestion.questionId, userQuestion.variables);
             var question: Question = (await dbClient.getQuestions(userQuestion.questionId))[0];
             var {userAnswer, code, attempts} = userQuestion
             userQuestionDetails.push({userAnswer, code, attempts, title: question.title, ...questionDetails})

@@ -131,8 +131,8 @@ export const numberToGrade = (numberGrade: number) => {
 
 // given a question id, this returns the text, answer, and variables for the question
 var allQuestionData: any = {...questionLibrary};
-export const getQuestionFromLibrary = (questionId: number, variables?: any) => {
-    variables = JSON.parse(variables);
+export const getQuestionFromLibrary = (questionId: number, variables?: string) => {
+    variables = variables ? JSON.parse(variables) : undefined;
     var questionData = allQuestionData[`q${questionId}`];
     var vars = variables ?? questionData.vars()
     var ans = questionData.ans(vars);
