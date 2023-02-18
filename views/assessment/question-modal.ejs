@@ -1,64 +1,62 @@
-<div class="jumbotron">
-    <h1><%- title %> <span style="cursor: pointer;" class="fs-6 back-span text-decoration-underline text-primary" id="/assessment/<%= slug %>">(back)</span></h1>
-    <%- text %>
-
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-xl-8 col-lg-12 border-end border-2" id="resi">
-                <div class="my-2">
-
-                    <iframe
-                        src="https://baierpa.github.io/220-repl/repl/index.html?kernel=python&toolbar=1&theme=JupyterLab Dark"
-                        width="100%"
-                        height="500px">
-                    </iframe>
-
-                </div>
+<div class="modal fade" id="modal-page" data-bs-backdrop="static" data-bs-keyboard="true" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title ms-5" id="modal-page-title"></h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="col">
-                <div class="row">
-                    <div class="col-4">
-                        answer:
+            <div class="modal-page-body m-3">
+                <div class="container mt-4">
+                    <div class="modal-question-text mb-3" id="question-text"></div>
+                    <div class="row">
+                        <div class="col-8 border-end border-2" id="resi">
+                            <div class="my-2">
+            
+                                <iframe id="console-window"
+                                    src="https://baierpa.github.io/220-repl/repl/index.html?kernel=python&toolbar=1&theme=JupyterLab Dark"
+                                    width="100%"
+                                    height="500px">
+                                </iframe>
+            
+                            </div>
+                        </div>
+                        <div class="col question-container">
+                            <div class="row">
+                                <div class="col-4">
+                                    answer:
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-4">
+                                    <input class="form-control my-2" id="answer"></input>
+                                </div>
+                                <div class="col-3">
+                                    <button type="submit" id="check" class="btn btn-primary form-control my-2" >Submit</button>
+                                </div>
+                                <div class="col my-3">
+                                    <span id="attempts"></span> attempt(s) left
+                                </div>
+                            </div>
+                            <div class="row my-2">
+                                <div class="col-2">
+                                    code:
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <textarea class="form-control my-2" id="code" rows="7" cols="50"></textarea>
+                                </div>
+                                <div class="col-3">
+                                    <button type="submit" id="submit-question" class="btn btn-primary form-control my-2">Save</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-4">
-                        <input class="form-control my-2 
-                            <%- (userQuestion.userAnswer && correct) ? 'border border-3 border-success-custom' : 
-                                (userQuestion.userAnswer) ? 'border border-3 border-warning-custom' : '' %>" 
-                            id="answer" value="<%= userQuestion.userAnswer %>" <%- (questionAttempts - userQuestion.attempts) <= 0 ? 'disabled' : '' %> ></input>
-                    </div>
-                    <div class="col-3">
-                        <button type="submit" id="check" class="btn btn-primary form-control my-2" <%- (questionAttempts - userQuestion.attempts) <= 0 ? 'disabled' : '' %> >Submit</button>
-                    </div>
-                    <div class="col my-3">
-                        <span id="attempts"><%= (questionAttempts - userQuestion.attempts) < 0 ? 0 : (questionAttempts - userQuestion.attempts) %></span> attempt(s) left
-                    </div>
-                </div>
-                <div class="row my-2">
-                    <div class="col-2">
-                        code:
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-12">
-                        <textarea class="form-control my-2
-                            <%- userQuestion.code ? 'border border-3 border-change-custom' : 'border border-3 border-warning-custom' %>"
-                            id="code" rows="7" cols="50"><%= userQuestion.code %></textarea>
-                    </div>
-                    <div class="col-3">
-                        <button type="submit" id="submit" class="btn btn-primary form-control my-2">Save</button>
-                    </div>
-                </div>
+
             </div>
         </div>
     </div>
-
-    <!-- <iframe src="https://jupyterlite.github.io/demo/repl/index.html?kernel=python&toolbar=1&theme=JupyterLab Dark" width="100%" height="500px"></iframe> -->
-
-    <!-- <iframe src="https://trinket.io/embed/python3/050a6c1569?runOption=run" width="100%" height="356" frameborder="0" marginwidth="0" marginheight="0" allowfullscreen></iframe> -->
-
-    <!-- <iframe frameborder="0" width="100%" height="500px" src="https://replit.com/@PaulBaier/220?embed=true"></iframe> -->
 </div>
 
 <script>
@@ -84,6 +82,8 @@
         var answer = $("#answer").val();
         var attemptsElement = $("#attempts");
         var attemptsLeft = parseInt(attemptsElement.text()) - 1;
+        var questionId = parseInt($('.question-container').attr('id'))
+        console.log('check', answer)
 
         attemptsElement.text(`${attemptsLeft}`)
 
@@ -94,14 +94,14 @@
 
         data = { answer }
 
-        $.post(`/assessment/<%= slug %>/<%= userQuestion.questionId %>/answer`,
+        $.post(`/assessment/<%= assessment.slug %>/${questionId}/answer`,
             data,
             function( data ) {
                 $('#toastHeader').html("Feedback");
                 $('#toastBody').html(data.message);
                 $('#liveToast').toast('show');
 
-                $('#toastBody').removeClass('bg-success-custom bg-warning-custom text-white')
+                $('#toastBody').removeClass('bg-success-custom bg-warning-custom bg-notify-custom text-white')
                 $('#answer').removeClass('border-success-custom border-warning-custom')
 
                 if (data.correct) {
@@ -127,12 +127,14 @@
         });
     })
 
-    $("#submit").click(e => {
+    $("#submit-question").click(e => {
         var code = $("#code").val();
+        var questionId = parseInt($('.question-container').attr('id'))
+
         $('#toastBody').removeClass('bg-success-custom bg-warning-custom text-white')
         $('#code').removeClass('border-success-custom border-warning-custom border-change-custom')
 
-        $.post(`/assessment/<%= slug %>/<%= userQuestion.questionId %>/code`,
+        $.post(`/assessment/<%= assessment.slug %>/${questionId}/code`,
             { code },
             function( data ) {
                 $('#toastHeader').html("Submission");
@@ -144,7 +146,7 @@
             }
         ).fail( function( data ) {
             if (data.responseJSON.verificationError)
-                window.location.href='/assessment/<%= userQuestion.assessmentId %>';
+                window.location.href='/assessment/<%= assessment.assessmentId %>';
             $('#toastBody').addClass('text-white bg-warning-custom')
             $('#toastHeader').html("Submission Error");
             $('#toastBody').html(data.responseJSON.message);
@@ -170,4 +172,5 @@
             e.target.selectionEnd = e.target.selectionStart;
         }
     })
+
 </script>

@@ -15,7 +15,7 @@
         <% questions.forEach(question => { %>
             <div class="row my-4">
                 <div class="col">
-                        <div class='link' id='/assessment/<%= assessment.slug %>/<%= question.questionId %>'>
+                        <div class='link' data-bs-toggle="modal" data-bs-target="#modal-page" id='/assessment/<%= assessment.slug %>/<%= question.questionId %>'>
                             <h5><span class="text-decoration-underline text-primary" style="cursor: pointer;"><%= question.title %></span></h5>
                         </div>
                         <div class="ms-4">
@@ -36,7 +36,7 @@
         </div>
     </div>
 
-      <!-- Modal -->
+      <!-- Submit Assessment Modal -->
     <div class="modal fade" id="submitModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -55,14 +55,57 @@
         </div>
     </div>
 
+    <!-- Question Modal -->
+    <%- include('question-modal.ejs') %>
+
 </div>
 
 <script>
     $('.link').click( (e) => {
         var url = e.currentTarget.id;
-        $.get(url,
-            function( data ) {
-                $('#page').html(data.page);
+        $.get(url, function({ vars, 
+                              text, 
+                              ans, 
+                              correct, 
+                              questionAttempts,
+                              title, 
+                              userQuestion,
+                              slug }) 
+            {
+                // title
+                $('#modal-page-title').html(title)
+
+                // text
+                $('#question-text').html(text)
+                
+                // answer
+                $('#answer').removeClass('border border-3 border-success-custom border-warning-custom')
+                if (userQuestion.userAnswer && correct) {
+                    $('#answer').addClass('border border-3 border-success-custom')
+                } else if (userQuestion.userAnswer) {
+                    $('#answer').addClass('border border-3 border-warning-custom')
+                } else {
+                    $('#answer').removeClass('border border-3 border-success-custom border-warning-custom')
+                }
+                $('#answer').val(userQuestion.userAnswer)     
+                $('#answer').prop('disabled', (questionAttempts - userQuestion.attempts) <= 0 )
+
+                // submit
+                $('#check').prop('disabled', (questionAttempts - userQuestion.attempts) <= 0 )
+
+                // attempts
+                $('#attempts').html((questionAttempts - userQuestion.attempts) < 0 ? 0 : (questionAttempts - userQuestion.attempts))
+
+                // code
+                $('#code').addClass(userQuestion.code ? 'border border-3 border-change-custom' : 'border border-3 border-warning-custom')
+                $('#code').val(userQuestion.code)
+
+                // set question id
+                $('.question-container').attr('id', userQuestion.questionId)
+
+                // set iframe height
+                var height = $(window).height();
+                $('#console-window').attr('height', `${height / 1.8}px`)
             }
         ).fail( function(data) {
             $('#toastHeader').html("Error");
@@ -85,4 +128,5 @@
         // $('#submitModal').modal('toggle');
         // window.close();
     })
+
 </script>
