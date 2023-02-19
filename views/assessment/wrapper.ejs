@@ -4,8 +4,14 @@
 <script>
 
     var intervalId;
+    var endTime;
 
-    const startTimer = (seconds, timer) => {
+    const startTimer = (timeNow) => {
+        var now = new Date(timeNow)
+        var end = new Date(endTime)
+        var seconds = (end - now) / 1000
+        var timer = $("#timer");
+
         intervalId = setInterval(() => {
             var h = Math.floor(seconds / 3600);
             var m = Math.floor(seconds % 3600 / 60);
@@ -43,13 +49,9 @@
         $.get(url,
             function( data ) {
                 $('#page').html(data.page);
-
-                var now = new Date(data.now)
-                var end = new Date(data.end)
-                var seconds = (end - now) / 1000
-                var timer = $("#timer");
-                startTimer(seconds, timer)
-
+                endTime = data.end;
+                
+                startTimer(data.now)
             }
         ).fail( function(data) {
             $('#page').html(data.responseJSON.page);

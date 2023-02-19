@@ -137,6 +137,9 @@
         $.post(`/assessment/<%= assessment.slug %>/${questionId}/code`,
             { code },
             function( data ) {
+                // restart timer to compensate for any delays
+                clearInterval(intervalId);
+                startTimer(data.now);
                 $('#toastHeader').html("Submission");
                 $('#toastBody').html(data.message);
                 $('#liveToast').toast('show');

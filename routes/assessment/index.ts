@@ -239,7 +239,7 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
 
         var result = await dbClient.updateUserQuestion(newUserQuestion);
 
-        result ? res.status(200).send({message: 'submission received' }) : 
+        result ? res.status(200).send({message: 'submission received', now: new Date()}) : 
                  res.status(500).send({message: 'error saving submission' });
     });
 
