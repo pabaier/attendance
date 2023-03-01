@@ -1072,6 +1072,7 @@ class DbClientPSQLImpl implements DbClient {
       on u.id = ug.user_id
       WHERE u.${userOption} = $1`, [user]
     ).then((users: any[]) => {
+      if(!users.length) return null;
       var u: User = {
         id: users[0].id,
         email: users[0].email,

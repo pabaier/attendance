@@ -192,6 +192,10 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         const answer = req.body.answer;
 
         const userQuestion = await dbClient.getUserQuestion(assessmentId, questionId, userId)
+        if(userQuestion?.attempts === undefined) {
+            res.status(400).send({message: 'no attempts allowed.', disable: true});
+            return;
+        }
         const assessmentQuestion: AssessmentQuestion & Question = (await dbClient.getAssessmentQuestions(assessmentId, questionId))[0];
 
         const userAttempts = userQuestion.attempts + 1;
