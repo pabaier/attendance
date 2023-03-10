@@ -119,8 +119,10 @@ CREATE TABLE assessment_settings (
 	group_id INTEGER REFERENCES groups (id) ON DELETE CASCADE,
 	start_time timestamptz,
 	end_time timestamptz,
+	graded boolean NOT NULL DEFAULT FALSE, 
 	PRIMARY KEY(assessment_id, group_id)
 );
+CREATE INDEX assessment_settings_graded_idx ON assessment_settings (graded);
 
 CREATE TABLE assessment_question (
 	assessment_id INTEGER REFERENCES assessment (id) ON DELETE CASCADE,
@@ -152,6 +154,7 @@ CREATE TABLE user_assessment (
 	end_time timestamptz,
 	PRIMARY KEY(user_id, assessment_id)
 );
+CREATE INDEX user_assessment_assessment_id_email_idx ON user_assessment (assessment_id);
 
 CREATE TABLE global_settings (
 	user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,

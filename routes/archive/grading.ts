@@ -1,10 +1,10 @@
 import express, { NextFunction, Request, Response } from 'express';
 import NodeCache from 'node-cache';
-import { authCheckMiddleware, rollCheckMiddleware } from '../middleware/auth';
-import { DbClient } from '../db/dbClient';
-import { Test, TestUserData, UserQuestionGrade, UserTest } from '../models';
-import { renderFile } from '../views/helper';
-import * as helpers from './helpers';
+import { authCheckMiddleware, rollCheckMiddleware } from '../../middleware/auth';
+import { DbClient } from '../../db/dbClient';
+import { Test, TestUserData, UserQuestionGrade, UserTest } from '../../models';
+import { renderFile } from '../../views/helper';
+import * as helpers from '../helpers';
 import path from 'path';
 
 export default function (myCache: NodeCache, dbClient: DbClient) {

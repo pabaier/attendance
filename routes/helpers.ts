@@ -1,5 +1,6 @@
 import { DbClient } from '../db/dbClient';
-import { Course } from '../models';
+import { AssessmentQuestion, Course, Question, UserQuestion } from '../models';
+import questionLibrary from '../questionLibrary';
 
 export const makeCourseName = (course: Course) => {
     return `${course.courseNumber} - ${course.startTime}`
@@ -126,4 +127,18 @@ export const numberToGrade = (numberGrade: number) => {
     if(numberGrade > 0.85) return 'D'
     if(numberGrade > 0.5) return 'D-'
     return 'F'
+}
+
+// given a question id, this returns the text, answer, and variables for the question
+var allQuestionData: any = {...questionLibrary};
+export const getQuestionFromLibrary = (questionId: number, variables?: string) => {
+    variables = variables ? JSON.parse(variables) : undefined;
+    var questionData = allQuestionData[`q${questionId}`];
+    var vars = variables ?? questionData.vars()
+    var ans = questionData.ans(vars);
+    var text = questionData.text;
+    vars.forEach((v: any, i: number) => {
+        text = text.replaceAll(`{${i + 1}}`, v.toString())
+    });
+    return {vars, ans, text}
 }

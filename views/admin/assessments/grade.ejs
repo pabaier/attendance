@@ -1,0 +1,277 @@
+<!-- requires courses {name, id},  -->
+<div class="jumbotron">
+    <h1>Grading <%= assessmentId %></h1>
+    <div class="row">
+        <div class="col-3">
+            <input class="form-control" id="go-to-user-input" placeholder="email">
+        </div>
+        <div class="col-1">
+            <button type="button" class="btn btn-primary form-control" id="go-to-button">find</button>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-xl-4 col-lg-12 border-end border-2" id="resi">
+                <div class="row my-2">
+                    <iframe
+                        src="https://jupyterlite.github.io/demo/repl/index.html?kernel=python&toolbar=1&theme=JupyterLab Dark"
+                        width="100%"
+                        height="300px"
+                    ></iframe>
+                </div>
+                <div class="row my-2 justify-content-center">
+                    <div class="col-4">
+                        <div class="justify-content-center btn-group" role="group" aria-label="Basic outlined example">
+                            <button type="button" class="btn btn-outline-primary" id="student-prev-button"><<</button>
+                            <button type="button" class="btn btn-outline-primary" id="student-next-button">>></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="row my-2 justify-content-center">
+                    <div class="col">
+                        <div class="text-center">
+                            Change User: <span id="ratio"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row  my-2 justify-content-center">
+                    <div class="col">
+                        <div class="text-center" id="user-container" style="cursor: pointer;">Show User</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col justify-content-center" id="student-work">
+                <div class="row">
+                    <div class="col-2">
+                        <div class="btn-group" role="group" aria-label="Basic outlined example">
+                            <button type="button" class="btn btn-outline-primary" id="student-work-prev-button"><<</button>
+                            <button type="button" class="btn btn-outline-primary" id="student-work-next-button">>></button>
+                        </div>
+                    </div>
+                </div>
+                <input type="range" class="form-range" min="0" max="5" step="1" id="student-work-range" value="0">
+                <div class="row my-2">
+                    <div id="title"></div>
+                </div>
+                <div class="row my-2">
+                    <div id="question"></div>
+                </div>
+                <div class="row my-2">
+                    <div id="code-area">
+                        <textarea class="form-control my-2" id="code" rows="7" cols="50"></textarea>
+                    </div>
+                </div>
+                <div class="row my-2">
+                    <div class="col-6 my-2" id="student-answer"></div>
+                    <div class="col my-2" id="correct-answer"></div>
+                </div>
+            </div>
+        </div>
+        <div class="row my-5">
+            <div class="col-3" id="grade-container">
+                <input class="form-control my-2" id="grade" name="grade" placeholder="grade">
+            </div>
+            <div class="col" id="comment-container">
+                <textarea class="form-control my-2" id="comment" rows="7" cols="50" placeholder="comment"></textarea>
+            </div>
+        </div>
+        <div class="btn-group" role="group" aria-label="Basic outlined example">
+            <button type="button" class="btn btn-primary form-control" id="clear-grade-button">clear</button>
+            <button type="button" class="btn btn-primary form-control" id="save-grade-button">save</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // mulberry32
+    function randSeeded(seed) {
+        return function() {
+            var t = seed += 0x6D2B79F5;
+            t = Math.imul(t ^ t >>> 15, t | 1);
+            t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+            return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        }
+    }
+    
+    var seed = parseInt(<%= assessmentId %>)
+    var randFunc = randSeeded(seed);
+    var userIds = <%=userIds%>;
+    var userIndex = -1;
+    userIds.sort(() => Math.floor(randFunc() * 10) < 5 ? -1 : 1)
+    var userQuestionDetails;
+    var questionDetailIndex;
+    var userAssessment;
+    var user;
+    var showUser = false;
+    var defaultCommentText = 'Credit for A, B, C, D, Plus, Required\n\nA: \nB: \nC: \nD: \nPlus: \nRequired: '
+
+    const moveQuestion = (index) => {
+        var question = userQuestionDetails[index] || {title: '', text: '', code: '', userAnswer: '', ans: ''}
+        $('#title').html(`<h5>${question.title}<\h5>`)
+        $('#question').html(question.text)
+        $('#code').val(question.code)
+        var lineCount = question.code ? question.code.split('\n').length : 1
+        $('#code').attr('rows', lineCount)
+        $('#student-answer').html(question.userAnswer)
+        $('#correct-answer').html(question.ans)
+    }
+
+    const advanceQuestion = () => {
+        questionDetailIndex = (questionDetailIndex + 1) % userQuestionDetails.length
+        moveQuestion(questionDetailIndex)
+    }
+
+    const reverseQuestion = () => {
+        questionDetailIndex = questionDetailIndex == 0 ? userQuestionDetails.length - 1 : questionDetailIndex - 1
+        moveQuestion(questionDetailIndex)
+    }
+
+    const getNextUser = (forward=true) => {
+        if(forward) {
+            userIndex = (userIndex + 1) % userIds.length
+        } else {
+            temp = userIndex - 1
+            userIndex = temp < 0 ? userIds.length - 1 : temp
+        }
+        var userId = userIds[userIndex]
+        var url = `/admin/assessments/<%= assessmentId %>/grade/${userId}`;
+        $.get(url,
+            function( data ) {
+                var rangeElement = $("#student-work-range");
+                user = data.user;
+                if (data.userQuestionDetails) {
+                    userQuestionDetails = JSON.parse(data.userQuestionDetails);
+                    questionDetailIndex = -1
+                    rangeElement.attr("max", userQuestionDetails.length - 1)
+                    rangeElement.prop("disabled", userQuestionDetails.length == 1)
+                    if(userQuestionDetails.length == 1) {
+                        rangeElement.val(userQuestionDetails.length - 1)
+                    } else {
+                        rangeElement.val(0)
+                    }
+                } else {
+                    rangeElement.attr("max", 1)
+                    rangeElement.prop("disabled", true)
+                    rangeElement.val(1)
+                    userQuestionDetails = []
+                    questionDetailIndex = -1
+
+                }
+                if (data.userAssessment) {
+                    userAssessment = data.userAssessment;
+                    $('#comment').val(userAssessment.comment ? userAssessment.comment : defaultCommentText)
+                    $('#grade').val(userAssessment.grade)
+                } else {
+                    userAssessment = {}
+                    $('#comment').val(defaultCommentText)
+                    $('#grade').val('')
+                }
+
+                var text = showUser ? `${user.id}: ${user.email}` : "Show User"
+                $("#user-container").html(text)
+                $("#ratio").html(`${userIndex + 1}/${userIds.length}`)
+                advanceQuestion();
+            }
+        ).fail( function(data) {
+            console.log('whooops!')
+            // $('#page').html(data.responseJSON.page);
+        });
+    }
+
+    window.onload = function() {
+        getNextUser();
+    }
+
+    $("#resi").resizable({
+        handles: "e",
+        minWidth: 200
+    });
+
+    $("#student-work-next-button").click( () => {
+        var rangeVal = parseInt($("#student-work-range").val())
+        $("#student-work-range").val((rangeVal + 1) % userQuestionDetails.length)
+        advanceQuestion()
+    })
+
+    $("#student-work-prev-button").click( () => {
+        var rangeVal = parseInt($("#student-work-range").val()) == 0 ? userQuestionDetails.length : parseInt($("#student-work-range").val())
+        $("#student-work-range").val((rangeVal - 1))
+        reverseQuestion()
+    })
+
+    $("#student-prev-button").click( () => {
+        getNextUser(false)
+    })
+
+    $("#student-next-button").click( () => {
+        getNextUser()
+    })
+
+    $("#clear-grade-button").click( () => {
+        $('#comment').val(userAssessment.comment ? userAssessment.comment : defaultCommentText)
+        $('#grade').val(userAssessment.grade)
+    })
+
+    $("#save-grade-button").click( () => {
+        var comment = $('#comment').val();
+        var grade = $('#grade').val();
+
+        var userId = userIds[userIndex]
+        var url = `/admin/assessments/<%= assessmentId %>/grade/${userId}`;
+
+        var data = {grade, comment};
+        $('#toastBody').removeClass('bg-success-custom bg-warning-custom text-white')
+        $.ajax({
+            url,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                userAssessment.comment = comment
+                userAssessment.grade = grade
+                $('#toastBody').addClass('text-white bg-success-custom')
+                $('#toastHeader').html("Success");
+                $('#toastBody').html(response.message);
+                $('#liveToast').toast('show');
+            },
+            error: function(response) {
+                $('#toastBody').addClass('text-white bg-warning-custom')
+                $('#toastHeader').html("Error");
+                $('#toastBody').html("Unable to update record");
+                $('#liveToast').toast('show');
+            }
+        });
+    })
+
+    $("#user-container").click( () => {
+        showUser = !showUser
+        var text = showUser ? `${user.id}: ${user.email}` : "Show User"
+        $("#user-container").html(text)
+    })
+
+    $("#go-to-button").click( () => {
+        var email = $('#go-to-user-input').val().trim()
+        $.get(`/admin/users/api/${email}`, function( data, statusCode ) {
+            var userId = parseInt(data.user.id)
+            newUserIndex = userIds.findIndex(id => id == userId);
+            if(newUserIndex >= 0) {
+                $('#toastHeader').html('Success');
+                $('#toastBody').html(`Showing assessment for ${email}`);
+                $('#liveToast').toast('show');            
+                userIndex = newUserIndex - 1
+                getNextUser();
+            } else {
+                $('#toastHeader').html('Not Found');
+                $('#toastBody').html('User not found');
+                $('#liveToast').toast('show');
+            }
+        }).fail((response, textStatus, errorThrown) => {
+            $('#toastHeader').html(textStatus);
+            $('#toastBody').html(`${errorThrown}-${JSON.parse(response.responseText).message}`);
+            $('#liveToast').toast('show');            
+        })
+    })
+
+    
+</script>

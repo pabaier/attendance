@@ -180,9 +180,7 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         const now = new Date();
         const end = req.session.userSettings?.assessment?.expires ?? undefined
 
-        var page = renderFile('./views/assessment/question.ejs', { vars, text, ans, correct, questionAttempts: assessmentQuestion.attempts, title: assessmentQuestion.title, userQuestion, slug: assessmentSlug});
-        res.status(200).send({message: 'correct!', page });
-        // res.render('assessment/wrapper', { page, now, end })
+        res.status(200).send({message: 'ok', vars, text, ans, correct, questionAttempts: assessmentQuestion.attempts, title: assessmentQuestion.title, userQuestion, slug: assessmentSlug });
     });
 
     router.post('/:assessmentSlug/:questionId/answer', assessmentAccessMiddleware, async (req: Request, res: Response) => {
@@ -194,6 +192,10 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
         const answer = req.body.answer;
 
         const userQuestion = await dbClient.getUserQuestion(assessmentId, questionId, userId)
+        if(userQuestion?.attempts === undefined) {
+            res.status(400).send({message: 'no attempts allowed.', disable: true});
+            return;
+        }
         const assessmentQuestion: AssessmentQuestion & Question = (await dbClient.getAssessmentQuestions(assessmentId, questionId))[0];
 
         const userAttempts = userQuestion.attempts + 1;
@@ -241,7 +243,7 @@ export default function (myCache: NodeCache, dbClient: DbClient) {
 
         var result = await dbClient.updateUserQuestion(newUserQuestion);
 
-        result ? res.status(200).send({message: 'submission received' }) : 
+        result ? res.status(200).send({message: 'submission received', now: new Date()}) : 
                  res.status(500).send({message: 'error saving submission' });
     });
 

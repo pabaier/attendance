@@ -123,6 +123,12 @@ export default function (dbClient: DbClient) {
         res.render('admin/user', {profile: {...user, groups: userGroups}, allGroups, calendar, attendance})
     })
 
+    router.get('/api/:userEmail', async (req: Request, res: Response) => {
+        const userEmail: string = req.params.userEmail
+        const user: User | null= await dbClient.getUser(userEmail)
+        user ? res.status(200).send({ user }) : res.status(400).send({message: 'user not found'});
+    })
+
     router.put('/:userId', async (req: Request, res: Response) => {
         const user: User = {
             id: parseInt(req.params.userId),

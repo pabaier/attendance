@@ -1,9 +1,8 @@
 import express, { Request, Response } from 'express';
 import { DbClient } from '../../db/dbClient';
-import { Assessment, AssessmentQuestion, AssessmentSettings, Question } from '../../models';
+import { Assessment, AssessmentQuestion, AssessmentSettings, Question, User, UserAssessment, UserQuestion } from '../../models';
 import { renderFile } from '../../views/helper';
-import { makeUTCDateString } from '../helpers';
-import questions from '../../questionLibrary';
+import { getQuestionFromLibrary, makeUTCDateString } from '../helpers';
 
 export default function (dbClient: DbClient) {
 
@@ -57,14 +56,7 @@ export default function (dbClient: DbClient) {
         var title = `${questionId}-${titleText}`
 
         // question data loaded from file
-        var allQuestionData: any = {...questions};
-        var questionData = allQuestionData[`q${questionId}`];
-        var vars = questionData.vars()
-        var ans = questionData.ans(vars);
-        var text = questionData.text;
-        vars.forEach((v: any, i: number) => {
-            text = text.replaceAll(`{${i + 1}}`, v.toString())
-        });
+        const {vars, ans, text} = getQuestionFromLibrary(questionId);
 
         var userQuestion = {
             assessmentId: 0,
@@ -76,13 +68,13 @@ export default function (dbClient: DbClient) {
         };
 
         var obj = {
-            vars, 
             text, 
-            ans, 
+            ans,
             correct: false, 
             questionAttempts: 0,
             title, 
-            userQuestion
+            userQuestion,
+            slug: '#',
         }
         const page = renderFile('./views/assessment/question.ejs', obj);
 
@@ -149,11 +141,11 @@ export default function (dbClient: DbClient) {
         var groupId = parseInt(req.body.groupId);
         var startTime = req.body.start ? new Date(req.body.start) : undefined;
         var endTime = req.body.end ? new Date(req.body.end) : undefined;
+        var graded = req.body.graded;
 
-        const success = await dbClient.updateAssessmentSettings({ assessmentId, groupId, startTime, endTime })
+        const success = await dbClient.updateAssessmentSettings({ assessmentId, groupId, startTime, endTime, graded })
         success ? res.status(200).send({message: `Assessment Settings Updated`}) : res.status(500).send({message: 'error'});
     });
-
 
     router.post('/:assessmentId/question', async (req: Request, res: Response) => {
         var assessmentId = parseInt(req.params.assessmentId)
@@ -182,6 +174,60 @@ export default function (dbClient: DbClient) {
 
         const success = await dbClient.deleteAssessmentQuestion(assessmentId, questionId)
         success ? res.status(200).send({message: `Assessment Deleted`}) : res.status(500).send({message: 'error'});
+    });
+
+    router.get('/:assessmentId/grade', async (req: Request, res: Response) => {
+        var assessmentId = parseInt(req.params.assessmentId)
+        var userIds: string = JSON.stringify(await dbClient.getAssessmentUsers(assessmentId));
+
+        res.render('admin/assessments/grade', { assessmentId, userIds });
+    });
+
+    router.get('/:assessmentId/grade/:userId', async (req: Request, res: Response) => {
+        var assessmentId = parseInt(req.params.assessmentId)
+        var userId = parseInt(req.params.userId)
+
+        var user: User = (await dbClient.getUser(userId)) as User;
+
+        var userQuestions: UserQuestion[] = await dbClient.getUserQuestions(userId, assessmentId);
+        var userAssessment: UserAssessment = await dbClient.getUserAssessment(userId, assessmentId);
+        if(!userQuestions.length) {
+            return res.status(200).send({user, userAssessment});
+        }
+
+        var userQuestionDetails = []
+        for (const userQuestion of userQuestions) {
+            var questionDetails = getQuestionFromLibrary(userQuestion.questionId, userQuestion.variables);
+            var question: Question = (await dbClient.getQuestions(userQuestion.questionId))[0];
+            var {userAnswer, code, attempts} = userQuestion
+            userQuestionDetails.push({userAnswer, code, attempts, title: question.title, ...questionDetails})
+        }
+
+        userQuestionDetails.sort((a, b) => (a.title as string).toLowerCase() < (b.title as string).toLowerCase() ? -1 : 1)
+
+        var userQuestionDetailsString = JSON.stringify(userQuestionDetails, (key, value) =>
+            typeof value === 'bigint'
+                ? value.toString()
+                : value
+        );
+
+        return res.status(200).send({userQuestionDetails: userQuestionDetailsString, userAssessment, user});
+    });
+
+    router.put('/:assessmentId/grade/:userId', async (req: Request, res: Response) => {
+        var assessmentId = parseInt(req.params.assessmentId)
+        var userId = parseInt(req.params.userId)
+
+        var userAssessment: UserAssessment = await dbClient.getUserAssessment(userId, assessmentId);
+        if (!userAssessment) {
+            userAssessment = {userId, assessmentId}
+        }
+        userAssessment.grade = req.body.grade;
+        userAssessment.comment = req.body.comment;
+        
+        var success = await dbClient.updateUserAssessment(userAssessment);
+
+        success ? res.status(200).send({message: `Grade Updated`}) : res.status(500).send({message: 'error'});
     });
 
     return router;

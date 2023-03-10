@@ -112,6 +112,10 @@
                     <input class="form-control my-2" type="datetime-local" id="end-time-<%=q.assessmentId%>-<%=q.groupId%>" value="<%=q.endTime%>" name="meeting-time">
                 </div>
                 <div class="col-1">
+                    <input class="form-check-input my-2" type="checkbox" id="graded-<%=q.assessmentId%>-<%=q.groupId%>" value="" <%= q.graded ? 'checked' : '' %>>
+                    graded
+                </div>
+                <div class="col-1">
                     <button type="button" id="save-<%=q.assessmentId%>-<%=q.groupId%>" class="btn-settings-save btn btn-primary btn-sm my-2">&#x2713</button>
                     <button type="button" id="del-<%=q.assessmentId%>-<%=q.groupId%>" class="btn-settings-del btn btn-primary btn-sm my-2">&#x2715</button>
                 </div>
@@ -209,6 +213,7 @@
 
         var startVal = $(`#start-time-${assessmentId}-${groupId}`).val();
         var endVal = $(`#end-time-${assessmentId}-${groupId}`).val();
+        var graded = $(`#graded-${assessmentId}-${groupId}`).prop('checked');
         var start = startVal ? new Date(startVal) : undefined;
         var end = endVal ? new Date(endVal) : undefined;
         
@@ -216,8 +221,8 @@
             groupId,
             start: start ? start.toISOString() : undefined,
             end: end ? end.toISOString() : undefined,
+            graded
         }
-
         $.ajax({
             url: `/admin/assessments/${assessmentId}/settings`,
             type: 'PUT',

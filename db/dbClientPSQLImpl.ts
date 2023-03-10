@@ -18,9 +18,55 @@ class DbClientPSQLImpl implements DbClient {
     )
   }
 
+  async getUserAssessmentIds(userId: number): Promise<{assessmentId: number, graded: boolean}[]> {
+    var text = `SELECT x.assessment_id "assessmentId", x.graded FROM public.assessment_settings x
+                where x.group_id in (
+                  select group_id from public.user_group ug
+                  where ug.user_id = $1
+                )
+                group by x.assessment_id, x.graded`
+
+    return await this.connection.any({text, values: [userId]}).then((data: {assessmentId: number, graded: boolean}[]) => {
+      return data.length ? data : []
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
+  }
+
+  async getUserQuestions(userId: number, assessmentId: number): Promise<UserQuestion[]> {
+    var text = `SELECT uq.assessment_id "assessmentId", uq.question_id "questionId", uq.user_id "userId",
+                uq.user_answer "userAnswer", uq.variables, uq.question_answer "questionAnswer", uq.code, uq.attempts
+                FROM user_question uq WHERE user_id = $1 and assessment_id = $2`
+
+    return await this.connection.any({text, values: [userId, assessmentId]}).then((data: UserQuestion[]) => {
+      return data.length ? data : []
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
+  }
+
+  async getAssessmentUsers(assessmentId: number): Promise<number[]> {
+    var text = `
+      select distinct (ug.user_id) from user_group ug 
+      where ug.group_id in (
+        SELECT aset.group_id FROM public.assessment_settings aset
+        where aset.assessment_id = $1
+      )
+    `
+
+    return await this.connection.any({text, values: [assessmentId], rowMode: 'array'}).then((data: number[]) => {
+      return data.flat()
+    }).catch((error: any) => {
+      console.log('ERROR:', error);
+      return []
+    });
+  }
+
   async updateUserAssessment(userAssessment: UserAssessment): Promise<boolean> {
     const cols = ["user_id", "assessment_id", "grade", "comment", "start_time", "end_time"]
-    const cs = new this.pg.helpers.ColumnSet(cols);
+    const cs = new this.pg.helpers.ColumnSet(cols, {table: 'user_assessment'});
     const data = {
       user_id: userAssessment.userId,
       assessment_id: userAssessment.assessmentId,
@@ -29,9 +75,9 @@ class DbClientPSQLImpl implements DbClient {
       start_time: userAssessment.start,
       end_time: userAssessment.end,
     };
-    const conditionData = [userAssessment.userId, userAssessment.assessmentId]
-    const condition = pgp.as.format(' WHERE user_id = $1 and assessment_id = $2', conditionData);
-    const query = this.pg.helpers.update(data, cs, 'user_assessment') + condition;
+
+    const query = this.pg.helpers.insert(data, cs) + ` ON CONFLICT (user_id, assessment_id) 
+                                                        DO UPDATE SET grade=EXCLUDED.grade, comment=EXCLUDED.comment `;
     return this.connection.none(query)
     .then((data: any) => {
       return true;
@@ -244,10 +290,11 @@ class DbClientPSQLImpl implements DbClient {
   }
 
   async updateAssessmentSettings(assessmentSettings: AssessmentSettings): Promise<boolean> {
-    const cs = new this.pg.helpers.ColumnSet(['start_time', 'end_time']);
+    const cs = new this.pg.helpers.ColumnSet(['start_time', 'end_time', 'graded']);
     const data = {
       start_time: assessmentSettings.startTime,
       end_time: assessmentSettings.endTime,
+      graded: assessmentSettings.graded == undefined ? false : assessmentSettings.graded 
     };
     const condition = pgp.as.format(' WHERE assessment_id = $1 and group_id = $2', [assessmentSettings.assessmentId, assessmentSettings.groupId]);
     const query = this.pg.helpers.update(data, cs, 'assessment_settings') + condition;
@@ -342,7 +389,7 @@ class DbClientPSQLImpl implements DbClient {
   }
 
   async getAssessmentSettings(assessmentId: number): Promise<(AssessmentSettings & {name: string, groupName: string, description: string})[]> {
-    var text = `SELECT a.assessment_id "assessmentId", a.group_id "groupId", a.start_time "startTime", a.end_time "endTime",
+    var text = `SELECT a.assessment_id "assessmentId", a.group_id "groupId", a.start_time "startTime", a.end_time "endTime", a.graded,
                 g.group_name "groupName", aa.assessment_name "name", aa.assessment_description "description"
                 FROM assessment_settings a
                 JOIN "groups" g
@@ -1025,6 +1072,7 @@ class DbClientPSQLImpl implements DbClient {
       on u.id = ug.user_id
       WHERE u.${userOption} = $1`, [user]
     ).then((users: any[]) => {
+      if(!users.length) return null;
       var u: User = {
         id: users[0].id,
         email: users[0].email,

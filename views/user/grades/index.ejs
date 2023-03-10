@@ -1,0 +1,21 @@
+<div class="jumbotron">
+    <h1>Grades</h1>
+
+    <div class="container mb-5">
+        <% assessments.forEach( assessment => { %>
+            <div class="row m-3">
+                <div class="col-2">
+                    <% if (assessment.graded) { %>
+                        <a href='/user/grades/<%= assessment.assessmentId %>'><%= assessment.name %></a>
+                    <% } else { %>
+                        <%= assessment.name %>
+                    <% } %>
+                </div>
+                <div class="col-1">
+                    <%= assessment.graded ? "" : "Ungraded" %>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+
+<script></script>

@@ -80,16 +80,20 @@ export interface DbClient {
     updateAssessmentQuestion(assessmentQuestion: AssessmentQuestion): Promise<boolean>;
     deleteAssessmentQuestion(assessmentId: number, questionId: number): Promise<boolean>;
 
+    getAssessmentUsers(assessmentId: number): Promise<number[]>;
+
     getQuestions(questionId?: number): Promise<Question[]>;
     createQuestion(question: Question): Promise<number | undefined>;
     updateQuestion(question: Question): Promise<boolean>;
     deleteQuestion(questionId: number): Promise<boolean>;
 
     getUserQuestion(assessmentId: number, questionId: number, userId: number): Promise<UserQuestion>;
+    getUserQuestions(userId: number, assessmentId: number): Promise<UserQuestion[]>;
     createUserQuestion(userQuestion: UserQuestion): Promise<boolean>;
     updateUserQuestion(userQuestion: UserQuestion): Promise<boolean>;
 
     getUserAssessment(userId: number, assessmentId: number): Promise<UserAssessment>;
+    getUserAssessmentIds(userId: number): Promise<{assessmentId: number, graded: boolean}[]>;
     createUserAssessment(UserAssessment: UserAssessment): Promise<boolean>;
     updateUserAssessment(UserAssessment: UserAssessment): Promise<boolean>;
 }

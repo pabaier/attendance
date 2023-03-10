@@ -2,5 +2,6 @@ export default interface AssessmentSettings {
 	assessmentId: number,
 	groupId: number,
 	startTime?: Date,
-	endTime?: Date
+	endTime?: Date,
+	graded?: Boolean,
 }
