@@ -104,6 +104,7 @@
     var userAssessment;
     var user;
     var showUser = false;
+    var defaultCommentText = 'Credit for A, B, C, D, Plus, Required\n\nA: \nB: \nC: \nD: \nPlus: \nRequired: '
 
     const moveQuestion = (index) => {
         var question = userQuestionDetails[index] || {title: '', text: '', code: '', userAnswer: '', ans: ''}
@@ -159,11 +160,11 @@
                 }
                 if (data.userAssessment) {
                     userAssessment = data.userAssessment;
-                    $('#comment').val(userAssessment.comment)
+                    $('#comment').val(userAssessment.comment ? userAssessment.comment : defaultCommentText)
                     $('#grade').val(userAssessment.grade)
                 } else {
                     userAssessment = {}
-                    $('#comment').val('')
+                    $('#comment').val(defaultCommentText)
                     $('#grade').val('')
                 }
 
@@ -208,7 +209,7 @@
     })
 
     $("#clear-grade-button").click( () => {
-        $('#comment').val(userAssessment.comment)
+        $('#comment').val(userAssessment.comment ? userAssessment.comment : defaultCommentText)
         $('#grade').val(userAssessment.grade)
     })
 
