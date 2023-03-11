@@ -9,6 +9,8 @@ import NodeCache from "node-cache";
 import { Alert, User, UserSettings } from './models';
 import { admin, assessment, auth, base, user } from './routes';
 import dbClient from './db/dbClientPSQLImpl';
+import {createClient} from "redis"
+import RedisStore from "connect-redis"
 
 const app = express();
 const port = process.env.PORT;
@@ -33,14 +35,27 @@ declare module "express-session" {
 
 // server side cookie storage
 // users only store a session id in a local cookie
+// REDIS URL is in the form redis://username:password@db_url:db_port/db_number
+// REDIS NAME is the db name
+let redisClient = createClient({
+  url: process.env.REDIS_URL,
+  name: process.env.REDIS_NAME,
+})
+redisClient.connect().catch(console.error)
+
+// Initialize store.
+let redisStore = new RedisStore({
+  client: redisClient,
+  prefix: "myapp:",
+})
+
+
 app.use(session({
-  cookie: { maxAge: 86400000, sameSite: 'strict' },
-  store: new MemoryStore({
-    checkPeriod: 86400000 // prune expired entries every 24h
-  }),
+  cookie: { maxAge: 604800000, sameSite: 'strict' }, // one week
+  store: redisStore,
+  saveUninitialized: true,
   resave: false,
   secret: [process.env.SESSION_SECRET as string, 'keyboard cat'],
-  saveUninitialized: true
 }))
 
 // used to get the body from post requests
